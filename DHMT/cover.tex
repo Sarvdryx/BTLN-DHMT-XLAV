@@ -1,0 +1,58 @@
+\begin{titlepage}
+\begin{tikzpicture}[remember picture,overlay,inner sep=0,outer sep=0]
+     \draw[blue!70!black,line width=4pt] ([xshift=-1.5cm,yshift=-2cm]current page.north east) coordinate (A)--([xshift=1.5cm,yshift=-2cm]current page.north west) coordinate(B)--([xshift=1.5cm,yshift=2cm]current page.south west) coordinate (C)--([xshift=-1.5cm,yshift=2cm]current page.south east) coordinate(D)--cycle;
+
+     \draw ([yshift=0.5cm,xshift=-0.5cm]A)-- ([yshift=0.5cm,xshift=0.5cm]B)--
+     ([yshift=-0.5cm,xshift=0.5cm]B) --([yshift=-0.5cm,xshift=-0.5cm]B)--([yshift=0.5cm,xshift=-0.5cm]C)--([yshift=0.5cm,xshift=0.5cm]C)--([yshift=-0.5cm,xshift=0.5cm]C)-- ([yshift=-0.5cm,xshift=-0.5cm]D)--([yshift=0.5cm,xshift=-0.5cm]D)--([yshift=0.5cm,xshift=0.5cm]D)--([yshift=-0.5cm,xshift=0.5cm]A)--([yshift=-0.5cm,xshift=-0.5cm]A)--([yshift=0.5cm,xshift=-0.5cm]A);
+
+
+     \draw ([yshift=-0.3cm,xshift=0.3cm]A)-- ([yshift=-0.3cm,xshift=-0.3cm]B)--
+     ([yshift=0.3cm,xshift=-0.3cm]B) --([yshift=0.3cm,xshift=0.3cm]B)--([yshift=-0.3cm,xshift=0.3cm]C)--([yshift=-0.3cm,xshift=-0.3cm]C)--([yshift=0.3cm,xshift=-0.3cm]C)-- ([yshift=0.3cm,xshift=0.3cm]D)--([yshift=-0.3cm,xshift=0.3cm]D)--([yshift=-0.3cm,xshift=-0.3cm]D)--([yshift=0.3cm,xshift=-0.3cm]A)--([yshift=0.3cm,xshift=0.3cm]A)--([yshift=-0.3cm,xshift=0.3cm]A);
+
+   \end{tikzpicture}
+
+
+  % HEADER
+\begin{center}
+    \normalfont\bfseries TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN \\[0.1cm]
+    \textbf{KHOA CÔNG NGHỆ THÔNG TIN}\\
+    \includegraphics[scale=0.5]{hcmus_logo.png}\\[0.5cm]
+    {\LARGE \textbf{ĐỒ HỌA MÁY TÍNH}} \\[0.3cm]
+    {\Large \textbf{BÀI TẬP LỚP NHÀ}}
+\end{center}
+
+
+\vspace*{1.2cm}
+ % MENTOR LIST
+\hspace*{2cm}
+{\small % hoặc \footnotesize / \scriptsize
+\begin{tabular}{@{}l l@{}}
+{\normalsize \textbf{Giảng viên:}} & Thầy Lý Quốc Ngọc
+\end{tabular}
+}
+
+\vspace*{0.6cm}
+  % AUTHOR LIST
+\hspace*{2cm} {\normalsize \textbf{Sinh viên thực hiện:}}
+\begin{center}
+  \setlength{\tabcolsep}{1.8em}
+  {\normalfont
+    \renewcommand{\arraystretch}{0.9} % giảm khoảng cách dòng
+    \small % hoặc footnotesize / scriptsize
+    \begin{tabular}{@{}c c c@{}} % <-- 3 cột
+      \textbf{Họ và tên} & \textbf{Mã số sinh viên} & \textbf{Lớp} \\
+            Tô Thành Đạt    & 24127153 & 24TGMT \\
+            Lương Hưng Phát & 24127298 & 24TGMT \\
+            Nguyễn Nhựt Huy & 24127398 & 24TGMT
+    \end{tabular}
+  }
+\end{center}
+
+  % FOOTER DATE
+\vspace*{2.5cm}
+  \begin{center}
+    TP. Hồ Chí Minh, tháng 10/2026
+  \end{center}
+\end{titlepage}
+
+
