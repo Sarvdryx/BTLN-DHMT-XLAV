@@ -1,0 +1,310 @@
+\section{Tuần 1: Tổng quan Khoa học Dữ liệu Thị giác \& Computer Graphics}
+\label{sec:week1}
+
+\subsection{Đối tượng nghiên cứu của Khoa học Dữ liệu Thị giác và Dữ liệu Đa phương thức}
+
+Khoa học Dữ liệu Thị giác (Visual Data Science) là lĩnh vực liên ngành nghiên cứu các nguyên lý toán học, cấu trúc dữ liệu và mô hình thuật toán nhằm thu thập, biểu diễn, trích xuất đặc trưng và suy luận thông tin từ dữ liệu trực quan. Dữ liệu này bao gồm hình ảnh số 2D, chuỗi khung hình video có tính liên tục thời gian, đám mây điểm 3D (Point Clouds) từ LiDAR, thể tích voxel trong chẩn đoán y khoa (CT, MRI), dữ liệu ảnh viễn thám đa phổ, v.v.
+
+Bên cạnh dữ liệu thị giác thuần túy, ngành còn mở rộng nghiên cứu sang dữ liệu đa phương thức (Multimodal Data). Việc liên kết dữ liệu thị giác với các phương thức khác như văn bản tự nhiên, tín hiệu âm thanh hay chuỗi thời gian từ cảm biến quán tính (IMU) giúp giải quyết các bài toán biểu diễn ngữ cảnh phức tạp. Một ví dụ tiêu biểu là bài toán phân đoạn đối tượng trong video dựa trên mô tả hành động bằng văn bản hoặc âm thanh (Text/Audio-based Referring Motion Expression Video Segmentation)~\citep{week1_MeViS}. Thay vì chỉ định mục tiêu bằng các index của class, mô hình tiếp nhận câu mô tả tự nhiên hoặc âm thanh đặc trưng để khoanh vùng chính xác mặt nạ pixel của đối tượng qua từng khung hình.
+
+\subsection{Mục tiêu và bản chất của cuộc Cách mạng Công nghiệp 4.0}
+
+Trọng tâm của Cách mạng Công nghiệp 4.0 (CMCN 4.0) là tự động hóa thông minh (Smartification) quy trình sản xuất và vận hành xã hội trên quy mô lớn, dựa trên nền tảng chuyển đổi số.
+
+Quá trình thông minh hóa biểu hiện ở khả năng tích hợp thuật toán học máy và mạng lưới cảm biến IoT vào thiết bị phần cứng, giúp hệ thống tự thu thập dữ liệu, tự hiệu chỉnh thông số vận hành và ra quyết định tối ưu theo thời gian thực mà không phụ thuộc vào sự can thiệp thủ công liên tục của con người.
+
+Trong \textbf{sản xuất} công nghiệp, giải pháp này giúp nâng cao năng suất, giảm thiểu chi phí vận hành và loại bỏ sai sót chủ quan, đồng thời cho phép tùy biến sản phẩm hàng loạt (Mass Customization). Trong \textbf{quản lý xã hội}, các hệ thống điều khiển giao thông thích ứng, lưới điện thông minh và y tế số giúp nâng cao chất lượng dịch vụ công và phân bổ nguồn lực đô thị minh bạch.
+
+Cần phân biệt rõ ba cấp độ chuyển đổi:
+\begin{itemize}
+    \item \textit{Số hóa dữ liệu (Digitization):} Chuyển đổi dữ liệu từ dạng vật lý hoặc tương tự (analog, giấy tờ, băng từ) sang định dạng nhị phân số (bit 0 và 1).
+    \item \textit{Số hóa quy trình (Digitalization):} Ứng dụng công nghệ kỹ thuật số và dữ liệu đã số hóa vào việc cải tiến hoặc tự động hóa các quy trình nghiệp vụ sẵn có mà không làm thay đổi bản chất mô hình vận hành.
+    \item \textit{Chuyển đổi số (Digital Transformation):} Tái cấu trúc toàn diện mô hình hoạt động, quy trình làm việc, chiến lược ra quyết định và văn hóa tổ chức dựa trên việc khai thác dữ liệu và công nghệ số thông minh.
+\end{itemize}
+
+Trong hệ sinh thái công nghệ 4.0, các ngành khoa học cơ bản như Toán học, Vật lý, Hóa học và Sinh học cung cấp cơ sở lý thuyết và chế tạo linh kiện bán dẫn, cảm biến quang học. Tuy nhiên, Trí tuệ nhân tạo (AI) giữ vai trò trung tâm vì là công cụ duy nhất có khả năng trích xuất tri thức từ các tập gồm lượng cực lớn dữ liệu phi cấu trúc và đưa ra quyết định trong môi trường biến động liên tục.
+
+\subsection{Tiến trình phát triển kỹ thuật qua các cuộc Cách mạng Công nghiệp}
+
+Lịch sử phát triển sản xuất của loài người gắn liền với 4 bước nhảy vọt về công nghệ:
+
+\textbf{CMCN 1.0 (Cuối thế kỷ 18 - đầu thế kỷ 19):} Bắt đầu khi động cơ hơi nước được thương mại hóa và ứng dụng vào ngành dệt, thay thế sức kéo cơ bắp và động vật bằng cơ giới hóa, thúc đẩy hình thành các đô thị công nghiệp đầu tiên.
+
+\textbf{CMCN 2.0 (Cuối thế kỷ 19 - đầu thế kỷ 20):} Đánh dấu sự ra đời của năng lượng điện, động cơ đốt trong và dây chuyền lắp ráp liên tục (Assembly Line), đưa sản xuất hàng loạt với giá thành thấp trở thành chuẩn mực công nghiệp, đồng thời phát triển mạng lưới viễn thông và giao thông hiện đại.
+
+\textbf{CMCN 3.0 (Thập niên 1960 - cuối thế kỷ 20):} Chuyển trọng tâm sang chất bán dẫn, máy vi tính và mạng Internet. Các bộ điều khiển logic lập trình được (PLC) trong tự động hóa công nghiệp đã thay đổi căn bản cách thức vận hành nhà máy và mở ra kỷ nguyên số hóa thông tin.
+
+\textbf{CMCN 4.0 (Từ đầu thế kỷ 21 đến nay):} Xây dựng các hệ thống không gian mạng - vật lý (Cyber-Physical Systems - CPS), nơi thế giới thực và mô hình số đồng bộ hai chiều thông qua AI, IoT, dữ liệu lớn và điện toán đám mây, hướng tới các nhà máy tự hành và đô thị thông minh.
+
+\subsection{Vai trò của dữ liệu thị giác trong sản xuất và quản lý xã hội}
+
+Thị giác cung cấp hơn 80\% lượng thông tin nhận thức của con người về thế giới xung quanh. Trong kỹ thuật, dữ liệu thị giác là phương thức thu thập thông tin không tiếp xúc (non-contact) và không phá hủy mẫu (non-destructive).
+
+Trong \textbf{sản xuất}, hệ thống camera công nghiệp thu thập dữ liệu hình ảnh với tần số quét cao để giám sát độ phẳng, kích thước hình học và phát hiện khuyết tật vật liệu theo thời gian thực. Trong quản trị xã hội, dữ liệu ảnh và video từ hệ thống camera giám sát đô thị và ảnh viễn thám cung cấp thông tin không gian chi tiết, hỗ trợ trích xuất luồng phương tiện, phát hiện ùn tắc và phục vụ công tác cứu hộ, an ninh trật tự.
+
+\subsection{Ứng dụng của dữ liệu thị giác trong công nghiệp, nông nghiệp và lâm nghiệp}
+
+\textbf{Trong công nghiệp sản xuất \& chế tạo:}
+\begin{itemize}
+    \item \textit{Kiểm tra khuyết tật tự động (AOI):} Phát hiện vết xước bề mặt linh kiện, lỗi hàn vi mạch, lệch mối nối trên dây chuyền tốc độ cao với độ phân giải micromet.
+    \item \textit{Thị giác robot (Vision-Guided Robotics):} Định vị tọa độ 3D để cánh tay robot tự động gắp thả linh kiện, hàn chính xác và lắp ráp phụ tùng.
+    \item \textit{An toàn lao động:} Giám sát trang bị bảo hộ cá nhân (PPE), phát hiện công nhân đi vào vùng nguy hiểm quanh máy móc công nghiệp nặng.
+\end{itemize}
+
+\textbf{Trong nông nghiệp công nghệ cao:}
+\begin{itemize}
+    \item \textit{Phân loại nông sản:} Tự động phân loại kích thước, độ chín, màu sắc và loại bỏ dị tật trái cây sau thu hoạch.
+    \item \textit{Bảo vệ thực vật:} Phát hiện sớm sâu bệnh và nấm lá qua camera trên cánh đồng, giúp phun thuốc chính xác theo vùng nhiễm bệnh.
+    \item \textit{Giám sát mùa màng:} Dùng ảnh quang học và đa phổ từ drone để ước lượng chỉ số sinh khối (NDVI), dự báo năng suất thu hoạch.
+\end{itemize}
+
+\textbf{Trong lâm nghiệp \& Môi trường:}
+\begin{itemize}
+    \item \textit{Giám sát diện tích rừng:} Phân tích ảnh vệ tinh đa thời gian để theo dõi độ che phủ rừng, phát hiện hành vi khai thác gỗ trái phép.
+    \item \textit{Cảnh báo sớm cháy rừng:} Hệ thống camera nhiệt và camera quang học tầm xa phát hiện cột khói và điểm nhiệt bất thường.
+\end{itemize}
+
+\subsection{Dữ liệu thị giác có được từ đâu? Sự khác biệt giữa mắt người và thiết bị thu nhận hình ảnh?}
+
+Dữ liệu thị giác được thu thập từ nhiều nguồn cảm biến: camera quang học dải khả kiến (RGB cảm biến CCD/CMOS), camera nhiệt hồng ngoại, thiết bị quét laser LiDAR, cảm biến thời gian bay (ToF), máy chụp cắt lớp y tế (X-ray, CT, MRI, siêu âm) và dữ liệu mô phỏng 3D từ các engine đồ họa.
+
+Cơ chế thị giác người và thiết bị thu nhận ảnh kỹ thuật số có những điểm khác biệt căn bản:
+\begin{itemize}
+    \item \textit{Cơ chế cảm nhận:} Mắt người sử dụng hàng triệu tế bào thụ cảm quang (tế bào que cho vùng tối và tế bào nón cho màu sắc) phân bố không đều trên võng mạc, tập trung mật độ cao nhất tại hoàng điểm (fovea). Tín hiệu được xử lý cục bộ tại võng mạc trước khi được truyền qua dây thần kinh thị giác lên vỏ não. Ngược lại, cảm biến máy ảnh kỹ thuật số dùng ma trận các điểm ảnh với bộ lọc màu Bayer (RGB), biến đổi photon thành điện tích tuyến tính tạo thành ma trận số thô.
+    \item \textit{Dải động (Dynamic Range):} Mắt người có khả năng thích ứng động học linh hoạt vượt quá 20 stop ($>100,000:1$), giúp nhìn rõ đồng thời cả chi tiết trong bóng râm lẫn nguồn sáng gắt. Cảm biến thông thường chỉ đạt dải động khoảng 10--14 stop, dễ dẫn đến hiện tượng cháy sáng hoặc mất chi tiết vùng tối do nhiễu.
+    \item \textit{Dải phổ (Spectral Range):} Mắt người chỉ cảm nhận được bước sóng trong khoảng $380\text - 740\text{ nm}$ (ánh sáng khả kiến). Thiết bị nhân tạo có thể thu nhận từ tia X, tia tử ngoại, hồng ngoại đến sóng radar vô tuyến với dải bước số rộng hơn.
+    \item \textit{Tính định lượng vs Định tính:} Thiết bị quang học đo lường chính xác cường độ ánh sáng bằng các giá trị số tuyệt đối, vận hành liên tục không mệt mỏi. Mắt người phụ thuộc vào cảm nhận tâm lý học thị giác, mang tính định tính và dễ bị ảnh hưởng và suy giảm độ tập trung do mệt mỏi.
+\end{itemize}
+
+\subsection{Ngoài đặc trưng thị giác và ngữ nghĩa thì còn đặc trưng nào khác không?}
+
+Bên cạnh các đặc trưng thị giác mức thấp (màu sắc, kết cấu texture, hình dạng) và đặc trưng ngữ nghĩa mức cao (nhãn lớp đối tượng), biểu diễn dữ liệu thị giác hiện đại bao gồm:
+
+\textbf{Đặc trưng không gian (Spatial Features):} Chiều sâu pixel, tọa độ không gian thực, vector pháp tuyến bề mặt, tư thế góc xoay và tịnh tiến 6 bậc tự do, mô hình đám mây điểm và lưới đa giác (3D Mesh).
+
+\textbf{Đặc trưng thời gian (Temporal Features):} Luồng quang học (Optical Flow) mô tả vector chuyển động của từng pixel giữa hai khung hình liên tiếp ($u, v$), quỹ đạo di chuyển (motion trajectory), vận tốc và gia tốc góc của thực thể.
+
+\textbf{Đặc trưng cấu trúc (Relational Features):} Đồ thị quan hệ cảnh (Scene Graphs) biểu diễn các nút là thực thể và các cạnh là quan hệ không gian hoặc tương tác người - vật (Human-Object Interaction - HOI), giúp mô hình nắm bắt toàn cảnh bức tranh thay vì từng đối tượng đơn lẻ.
+
+\textbf{Đặc trưng thống kê (Statistical Features):} Hệ số phổ Fourier biểu diễn tần số không gian cao/thấp, biến đổi Wavelet trích xuất cấu trúc đa tỷ lệ, ma trận đồng xuất mức xám (GLCM) và ma trận hiệp phương sai đặc trưng.
+
+\subsection{Khái niệm đối tượng trong ảnh: Phân biệt cấp độ lớp và cấp độ thực thể}
+
+Trong thị giác máy tính, một đối tượng thị giác (Visual Object) là một vùng không gian (hoặc tập hợp các pixel liên thông) tương ứng với một thực thể vật lý xác định trong thế giới thực, có ranh giới rõ ràng với hậu cảnh.
+
+Có hai cấp độ định danh đối tượng:
+\begin{itemize}
+    \item \textit{Đối tượng chung (General Object / Category-level):} Nhận diện một thực thể thuộc về một lớp hay danh mục khái niệm chung (ví dụ: xác định một vùng ảnh là ``nam giới'', ``xe hơi'', hoặc ``con chó'').
+    \item \textit{Đối tượng riêng (Specific Object / Instance-level):} Định danh chính xác một thực thể duy nhất trong vũ trụ đối tượng (ví dụ: nhận diện một người cụ thể là ``bạn An'', chiếc xe mang biển số riêng ``30F-999.99'', hoặc tòa nhà cụ thể ``Landmark 81'').
+\end{itemize}
+
+\subsection{Bản chất và thách thức của khoảng cách ngữ nghĩa (Semantic Gap)}
+
+Khoảng cách ngữ nghĩa (Semantic Gap) là sự chênh lệch căn bản giữa cách biểu diễn dữ liệu mức thấp của máy tính và cách hiểu ngữ nghĩa mức cao của con người.
+
+Về phía máy tính, hình ảnh chỉ là một mảng đa chiều chứa các giá trị số thô. Khi góc chiếu sáng, góc quan sát hoặc vị trí camera thay đổi, toàn bộ giá trị số trong tensor bị biến đổi hoàn toàn dù đối tượng thực tế không hề thay đổi.
+
+Ngược lại, hệ thống thị giác con người tự động trích xuất các cấu trúc bất biến, kết hợp với tri thức đã có về thế giới quan để nhận thức ngay lập tức các thực thể, bối cảnh không gian, cảm xúc và các mối quan hệ logic phức tạp. Thu hẹp khoảng cách này là mục tiêu nghiên cứu trung tâm của thị giác máy tính.
+
+\subsection{Tiến bộ hiện nay trong việc thu hẹp khoảng cách ngữ nghĩa}
+
+Quá trình giải quyết Semantic Gap trong thị giác máy tính đã trải qua ba giai đoạn phát triển chính:
+\begin{itemize}
+    \item \textit{Giai đoạn trích xuất đặc trưng thủ công (trước 2012):} Sử dụng các thuật toán toán học xác định như SIFT, SURF, HOG kết hợp với bộ phân loại SVM hoặc Random Forest. Phương pháp này chỉ mô tả được các mẫu cục bộ đơn giản và phụ thuộc nặng nề vào việc tinh chỉnh đặc trưng bằng tay (hand-crafted features), khiến Semantic Gap vẫn rất lớn.
+    \item \textit{Kỷ nguyên Học sâu với mạng CNN (2012--2020):} Sự xuất hiện của AlexNet, VGG và ResNet cho phép mạng tự động học biểu diễn đặc trưng phân tần. Điều này thu hẹp đáng kể khoảng cách ngữ nghĩa trong các tác vụ phân loại và phát hiện cơ bản.
+    \item \textit{Kỷ nguyên Mô hình Nền tảng và Thị giác - Ngôn ngữ (2020 đến nay):} Kiến trúc Vision Transformer (ViT) kết hợp với các mô hình học biểu diễn liên kết đa phương thức (CLIP, BLIP, LLaVA, GPT-4V) đã ánh xạ trực tiếp không gian ảnh và không gian ngôn ngữ tự nhiên vào cùng một không gian nhúng chung (shared embedding space). Từ đó mà mô hình có thể suy luận ngữ cảnh, sinh mô tả tự nhiên (Image Captioning) và trả lời câu hỏi trực quan (Visual Question Answering).
+\end{itemize}
+
+Mặc dù đạt độ chính xác cao trên các tập dữ liệu chuẩn, các mô hình học sâu hiện nay vẫn rất nhạy cảm với nhiễu pixel đối kháng (adversarial perturbations), dễ sinh ảo giác (hallucination) trong điều kiện thiếu sáng hoặc bị che khuất một phần (partial occlusion), đồng thời còn hạn chế trong suy luận nhân quả (Causal Reasoning).
+
+\subsection{Vì sao trong KHDL thị giác, ngoài dữ liệu hình ảnh và video thì ta còn phải mở rộng ra dữ liệu đa phương thức?}
+
+Việc giới hạn mô hình trong dữ liệu hình ảnh hoặc video đơn lẻ (Unimodal) bộc lộ nhiều điểm nghẽn: Hình ảnh 2D thực chất là hình chiếu thu nhỏ của thế giới thực 3D, làm mất thông tin chiều sâu và dẫn đến tính nhập nhằng (ambiguity) về kích thước vật thể. Hơn nữa, nhiều hiện tượng vật lý trong thế giới thực đòi hỏi tín hiệu bổ trợ như âm thanh (ví dụ: tiếng va chạm xe hơi, tiếng rò rỉ khí), văn bản ngữ cảnh (biển báo, nhãn kỹ thuật) hay dữ liệu cảm biến đo đạc (nhiệt độ, gia tốc).
+
+Dữ liệu đa phương thức cung cấp thêm thông tin cho dữ liệu thị giác và ngược lại. Ví dụ ngôn ngữ tự nhiên đóng vai trò là cầu nối ngữ nghĩa trừu tượng, trong khi dữ liệu thị giác cung cấp chi tiết hình học và vị trí không gian cụ thể. Sự kết hợp này là yêu cầu bắt buộc đối với các hệ thống tự hành như xe tự lái (phối hợp Camera RGB, Radar, LiDAR và bản đồ số HD) hay robot thông minh tương tác người - máy.
+
+\subsection{Phân định ranh giới giữa Đồ họa máy tính, Xử lý ảnh và Thị giác máy tính}
+
+Ba lĩnh vực này cùng thao tác trên dữ liệu thị giác nhưng có hướng chuyển đổi dữ liệu và mục tiêu hoàn toàn khác biệt. Bảng~\ref{tab:comparison_cg_ip_cv} so sánh tổng hợp giữa ba lĩnh vực trên các phương diện mục tiêu, dữ liệu đầu vào, dữ liệu đầu ra và bản chất chuyển đổi dữ liệu.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh toàn diện giữa Computer Graphics, Image Processing và Computer Vision}
+\label{tab:comparison_cg_ip_cv}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|p{2.0cm}|X|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Computer Graphics (CG)} & \textbf{Image Processing (IP)} & \textbf{Computer Vision (CV)} \\
+\hline
+\textbf{Mục tiêu chính (Goal)} & Mô phỏng, kiến tạo và kết xuất thế giới thực hoặc ảo trực quan lên màn hình. & Nâng cao chất lượng, khôi phục, lọc nhiễu hoặc nén/biến đổi dữ liệu ảnh. & Hiểu, phân tích và trích xuất ngữ nghĩa, tri thức và đưa ra quyết định từ ảnh/video. \\
+\hline
+\textbf{Dữ liệu đầu vào (Input)} & Mô hình hình học 2D/3D (tập điểm, mesh, spline), tên thực thể, thuộc tính chất liệu, nguồn sáng. & Dữ liệu ảnh thô (\textit{Raw Image Data}), ảnh có nhiễu hoặc ảnh cần biến đổi. & Hình ảnh hoặc chuỗi video (\textit{Visual Data}) từ thế giới thực. \\
+\hline
+\textbf{Dữ liệu đầu ra (Output)} & Hình ảnh hoặc video được kết xuất trực quan (\textit{Rendering Output}). & Hình ảnh đã qua xử lý, tăng cường hoặc nén (\textit{Processed Image Data}). & Thông tin ngữ nghĩa mức cao (nhãn, vị trí, tọa độ 3D, mô tả ngữ cảnh, quyết định hành động). \\
+\hline
+\textbf{Bản chất chuyển đổi} & \textbf{Dữ liệu trừu tượng $\rightarrow$ Hình ảnh} & \textbf{Hình ảnh $\rightarrow$ Hình ảnh} & \textbf{Hình ảnh $\rightarrow$ Dữ liệu ngữ nghĩa} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Khái quát các bài toán cốt lõi trong Thị giác máy tính}
+
+Các hệ thống thị giác máy tính hiện đại được cấu thành từ các bài toán cơ sở, trong đó mỗi bài toán được xác định rõ ràng qua mục tiêu (Goal), không gian dữ liệu đầu vào (Input) và dạng thức dữ liệu đầu ra (Output):
+
+\textbf{1. Classification (Phân loại ảnh):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Xác định và gán nhãn ngữ nghĩa ở mức toàn cảnh (Image-level) cho bức ảnh từ một tập danh mục lớp định trước.
+    \item \textbf{Đầu vào (Input):} Hình ảnh tĩnh $I \in \mathbb{R}^{H \times W \times C}$ (với chiều cao $H$, chiều rộng $W$ và $C$ kênh màu).
+    \item \textbf{Đầu ra (Output):} Nhãn danh mục $c \in \mathcal{C}$ hoặc vector phân phối xác suất dự đoán $P(Y = c \mid I)$ trên không gian $|\mathcal{C}|$ lớp.
+\end{itemize}
+
+\textbf{2. Detection (Phát hiện đối tượng):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Đồng thời xác định vị trí không gian (Localization) và phân loại ngữ nghĩa (Classification) cho tất cả các thực thể quan tâm trong ảnh.
+    \item \textbf{Đầu vào (Input):} Hình ảnh tĩnh hoặc từng khung hình video $I \in \mathbb{R}^{H \times W \times C}$.
+    \item \textbf{Đầu ra (Output):} Tập hợp các hộp bao đối tượng $\mathcal{B} = \{(x_i, y_i, w_i, h_i, c_i, s_i)\}_{i=1}^N$, trong đó $(x_i, y_i, w_i, h_i)$ là tọa độ tâm và kích thước khung chữ nhật bao bọc (Bounding Box), $c_i \in \mathcal{C}$ là nhãn lớp và $s_i \in [0, 1]$ là điểm số tin cậy (Confidence Score).
+\end{itemize}
+
+\textbf{3. Recognition (Nhận dạng):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Định danh cụ thể một cá thể (Instance-level identification) trong một tập danh tính/cơ sở dữ liệu đã biết (Closed-set) sau khi vùng đối tượng đã được cô lập.
+    \item \textbf{Đầu vào (Input):} Vùng ảnh chứa đối tượng đã cô lập $I_{\text{crop}} \in \mathbb{R}^{h \times w \times C}$ và cơ sở dữ liệu mẫu đã đăng ký $\mathcal{D}_{\text{gallery}}$.
+    \item \textbf{Đầu ra (Output):} Mã định danh cá thể cụ thể (Identity ID) $y \in \mathcal{Y}_{\text{known}}$ hoặc nhãn không xác định (\textit{Unknown}) kèm điểm số so khớp tương đồng.
+\end{itemize}
+
+\textbf{4. Tracking (Theo dõi đối tượng):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Duy trì mã định danh duy nhất (Track ID) và ước lượng quỹ đạo chuyển động không gian theo thời gian của từng đối tượng qua chuỗi khung hình liên tiếp.
+    \item \textbf{Đầu vào (Input):} Chuỗi khung hình video liên tục $\{I_t\}_{t=1}^T$ với $I_t \in \mathbb{R}^{H \times W \times C}$.
+    \item \textbf{Đầu ra (Output):} Tập các vết quỹ đạo không gian - thời gian $\mathcal{T} = \{(\text{ID}_i, t, x_{i,t}, y_{i,t}, w_{i,t}, h_{i,t})\}$, đảm bảo tính nhất quán định danh của từng cá thể qua trục thời gian $t$.
+\end{itemize}
+
+\textbf{5. Retrieval (Truy vấn hình ảnh):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Tìm kiếm và xếp hạng các hình ảnh có độ tương đồng ngữ nghĩa cao nhất với ảnh truy vấn từ một kho cơ sở dữ liệu lớn ở môi trường mở (Open-set).
+    \item \textbf{Đầu vào (Input):} Ảnh truy vấn (Query Image) $I_q$ và kho cơ sở dữ liệu ảnh mẫu $\mathcal{D} = \{I_1, I_2, \dots, I_M\}$.
+    \item \textbf{Đầu ra (Output):} Danh sách xếp hạng thứ tự (\textit{Ranked List}) các ảnh $\{I_{\pi(1)}, I_{\pi(2)}, \dots, I_{\pi(K)}\}$ có khoảng cách biểu diễn nhỏ nhất trong không gian nhúng đặc trưng (\textit{Embedding Space}).
+\end{itemize}
+
+\textbf{6. Counting (Đếm đối tượng):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Ước lượng tổng số lượng thực thể xuất hiện trong khung cảnh, đặc biệt hiệu quả trong các tình huống có mật độ dày đặc hoặc che khuất nghiêm trọng.
+    \item \textbf{Đầu vào (Input):} Hình ảnh tĩnh $I \in \mathbb{R}^{H \times W \times C}$.
+    \item \textbf{Đầu ra (Output):} Số lượng thực thể ước tính $N \in \mathbb{N}$ hoặc bản đồ mật độ liên tục (Density Map) $D \in \mathbb{R}^{H \times W}$, trong đó tổng tích phân $\sum_{x,y} D(x, y)$ xấp xỉ tổng số đối tượng.
+\end{itemize}
+
+\textbf{7. Generating (Sinh dữ liệu thị giác):}
+\begin{itemize}
+    \item \textbf{Mục tiêu (Goal):} Khởi tạo hình ảnh hoặc video mới hoàn chỉnh, mô phỏng đúng phân phối dữ liệu thị giác thực tế $P(X)$ hoặc sinh có điều kiện theo yêu cầu.
+    \item \textbf{Đầu vào (Input):} Vector nhiễu ngẫu nhiên $z \sim \mathcal{N}(0, I)$ trong không gian tiềm ẩn (Latent Space), kèm theo điều kiện dẫn đường tùy chọn (như mô tả văn bản $y_{\text{text}}$ hoặc ảnh điều kiện $I_{\text{cond}}$).
+    \item \textbf{Đầu ra (Output):} Hình ảnh hoặc chuỗi video tổng hợp mới $\hat{I} \in \mathbb{R}^{H \times W \times C}$ có độ chân thực cao và thỏa mãn các ràng buộc ngữ nghĩa đầu vào.
+\end{itemize}
+
+\subsection{So sánh bài toán Nhận dạng (Recognition) và Truy vấn ảnh (Image Retrieval)}
+
+Mặc dù đều phục vụ mục đích xác định sự tương đồng của đối tượng thị giác, Nhận dạng (Recognition) và Truy vấn ảnh (Image Retrieval) khác biệt căn bản về không gian bài toán, cơ chế tối ưu hóa hàm mất mát và khả năng mở rộng hệ thống.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Đối chiếu tiêu chí giữa bài toán Recognition và Image Retrieval}
+\label{tab:comp_rec_retrieval}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|p{2.3cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Nhận dạng (Recognition)} & \textbf{Truy vấn hình ảnh (Image Retrieval)} \\
+\hline
+\textbf{Không gian bài toán} & Tập đóng (\textit{Closed-set}): số lượng lớp và danh tính được cố định trước trong quá trình huấn luyện. & Tập mở (\textit{Open-set}): tìm kiếm các mẫu và thực thể chưa từng xuất hiện trong tập huấn luyện. \\
+\hline
+\textbf{Mục tiêu học} & Học các siêu phẳng phân tách ranh giới giữa các lớp xác định ($P(Y=c \mid X)$). & Học không gian nhúng (\textit{Metric Learning}) sao cho các vector cùng ngữ nghĩa nằm gần nhau và khác ngữ nghĩa nằm xa nhau. \\
+\hline
+\textbf{Hàm mất mát} & Cross-Entropy Loss, Focal Loss. & Contrastive Loss, Triplet Loss, CosFace, ArcFace. \\
+\hline
+\textbf{Cơ chế suy luận} & Dự đoán phân phối xác suất lớp bằng Softmax / Argmax. & Tính toán khoảng cách (Cosine, Euclidean) kết hợp thuật toán tìm kiếm lân cận gần nhất (k-NN, ANN). \\
+\hline
+\textbf{Khả năng mở rộng} & Kém linh hoạt: phải huấn luyện lại hoặc tinh chỉnh (Fine-tuning) mạng khi bổ sung danh tính mới. & Rất cao: chỉ cần trích xuất vector đặc trưng và nạp vào cơ sở dữ liệu mà không cần huấn luyện lại mô hình. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{So sánh bài toán Truy vấn ảnh (Retrieval) và Theo dõi đối tượng (Tracking)}
+
+Sự khác biệt cốt lõi giữa Truy vấn ảnh (Retrieval) và Theo dõi đối tượng (Tracking) bắt nguồn từ yếu tố phụ thuộc thời gian, miền không gian tìm kiếm và việc kết hợp các mô hình động học:
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Đối chiếu tiêu chí giữa bài toán Image Retrieval và Object Tracking}
+\label{tab:comp_retrieval_tracking}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|p{2.3cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Truy vấn hình ảnh (Retrieval)} & \textbf{Theo dõi đối tượng (Tracking)} \\
+\hline
+\textbf{Bản chất dữ liệu} & Kho ảnh tĩnh phi thời gian, các mẫu dữ liệu độc lập và không có liên kết thời gian vật lý. & Chuỗi khung hình video liên tục theo thời gian thực ($t, t+1, \dots$), có tương quan chặt chẽ về không - thời gian. \\
+\hline
+\textbf{Phạm vi tìm kiếm} & Toàn cục (\textit{Global Search}) trên quy mô toàn bộ kho dữ liệu cơ sở $\mathcal{D}$. & Cục bộ (\textit{Local Search}) trong vùng không gian lân cận dự đoán từ khung hình liền kề. \\
+\hline
+\textbf{Mô hình tích hợp} & Sử dụng thuần túy mô hình đặc trưng ngoại hình tĩnh (\textit{Static Appearance Model}). & Kết hợp mô hình ngoại hình (\textit{Appearance}) và mô hình chuyển động động học (\textit{Motion Model}: Kalman Filter, Optical Flow). \\
+\hline
+\textbf{Dạng thức đầu ra} & Danh sách các hình ảnh xếp hạng theo độ tương đồng (\textit{Ranked List}). & Mã định danh duy nhất (\textit{Track ID}) kèm quỹ đạo tọa độ không gian liên tục theo trục thời gian. \\
+\hline
+\textbf{Thách thức kỹ thuật} & Tối ưu hóa chỉ mục vector quy mô lớn (\textit{Vector Indexing}) và giảm độ trễ truy vấn dữ liệu lớn. & Hiện tượng che khuất tạm thời (\textit{Occlusion}), biến dạng chuyển động nhanh (\textit{Motion Blur}), và trôi dạt định danh (\textit{ID Switch}). \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{So sánh bài toán Đếm đối tượng (Counting) và Phát hiện đối tượng (Object Detection)}
+
+Trong các khung cảnh thông thường với mật độ thưa, bài toán đếm có thể giải quyết gián tiếp thông qua phát hiện từng đối tượng. Tuy nhiên, khi mật độ tăng cao và xuất hiện che khuất nghiêm trọng, hai phương pháp này thể hiện sự khác biệt rõ rệt:
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Đối chiếu tiêu chí giữa bài toán Object Detection và Crowd Counting}
+\label{tab:comp_detection_counting}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|p{2.3cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Phát hiện đối tượng (Detection)} & \textbf{Đếm đối tượng (Counting)} \\
+\hline
+\textbf{Phương pháp tiếp cận} & Định vị và hồi quy hộp bao từng cá thể độc lập (\textit{Bounding Box Regression}). & Hồi quy trường mật độ liên tục (\textit{Density Map Estimation}) trên toàn bộ khung cảnh. \\
+\hline
+\textbf{Dữ liệu gán nhãn} & Yêu cầu gán nhãn hộp bao chi tiết $(x, y, w, h)$ cho từng thực thể. & Chỉ yêu cầu nhãn điểm tâm (\textit{Dot/Point Annotation}) tại vị trí của từng cá thể. \\
+\hline
+\textbf{Độ bền vững mật độ cao} & Suy giảm nghiêm trọng: các hộp bao chồng lấn triệt tiêu lẫn nhau qua thuật toán lọc non-max (\textit{NMS}). & Bền vững cao: tổng tích phân mật độ không phụ thuộc vào việc tách biệt ranh giới pixel hay hộp bao từng cá thể. \\
+\hline
+\textbf{Độ phức tạp tính toán} & Tỉ lệ thuận với số lượng vùng đề xuất (Proposals), Anchors và số lượng đối tượng trong ảnh. & Cố định theo độ phân giải của bản đồ mật độ, không bị bùng nổ tính toán khi số lượng cá thể tăng cao. \\
+\hline
+\textbf{Dạng thức đầu ra} & Tập hợp các hộp bao rời rạc $\mathcal{B} \rightarrow N = |\mathcal{B}|$. & Bản đồ mật độ $D \in \mathbb{R}^{H \times W} \rightarrow \hat{N} = \sum_{x,y} D(x, y)$. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Mô hình Tạo sinh (Generative) và tương quan với các tác vụ Phân tích (Discriminative)}
+
+Các bài toán trong học máy và thị giác máy tính được phân chia thành hai trường phái nền tảng dựa trên mục tiêu mô hình hóa phân phối xác suất và hướng biến đổi thông tin:
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Đối chiếu tiêu chí giữa mô hình Phân tích (Discriminative) và mô hình Tạo sinh (Generative)}
+\label{tab:comp_disc_gen}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|p{2.3cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Tác vụ Phân tích (Discriminative)} & \textbf{Tác vụ Tạo sinh (Generative)} \\
+\hline
+\textbf{Bản chất xác suất} & Học phân phối xác suất có điều kiện $P(Y \mid X)$: dự đoán nhãn hoặc quyết định $Y$ dựa trên dữ liệu $X$. & Học phân phối dữ liệu thực $P(X)$ hoặc phân phối đồng thời có điều kiện $P(X \mid Y)$. \\
+\hline
+\textbf{Chiều biến đổi thông tin} & Ánh xạ giảm chiều (\textit{Dimensionality Reduction}): nén dữ liệu thị giác cao chiều sang không gian nhãn tóm lược ($f: \mathcal{X} \rightarrow \mathcal{Y}$). & Ánh xạ tăng chiều/tái tạo: sinh dữ liệu thị giác chi tiết từ không gian tiềm ẩn thấp chiều ($g: \mathcal{Z} \times \mathcal{Y} \rightarrow \mathcal{X}$). \\
+\hline
+\textbf{Hàm mất mát chủ đạo} & Cross-Entropy Loss, Focal Loss, Smooth L1 Loss, GIoU Loss. & Adversarial Loss (Minimax), KL-Divergence, Evidence Lower Bound (ELBO), Denoising MSE. \\
+\hline
+\textbf{Kiến trúc tiêu biểu} & ResNet, Vision Transformer (ViT), YOLO, Faster R-CNN, Mask R-CNN. & GAN (StyleGAN), VAE, Diffusion Models (DDPM, Stable Diffusion), Autoregressive Models (DALL-E). \\
+\hline
+\textbf{Ứng dụng chính} & Phân loại, phát hiện khuyết tật, nhận dạng khuôn mặt, phân đoạn ảnh, hỗ trợ ra quyết định tự động. & Tổng hợp hình ảnh/video từ văn bản, tăng cường dữ liệu huấn luyện (\textit{Data Augmentation}), phục chế và nâng cao chất lượng ảnh (\textit{Super-Resolution, Inpainting}). \\
+\hline
+\end{tabularx}
+\end{table}

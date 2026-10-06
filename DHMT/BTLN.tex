@@ -1,0 +1,103 @@
+\documentclass{article} % For LaTeX2e
+
+% Lưu lại định nghĩa gốc của \addcontentsline trước khi style file vô hiệu hoá nó
+\makeatletter
+\let\orig@addcontentsline\addcontentsline
+\makeatother
+
+\usepackage{iclr2026_conference,times}
+
+% Khôi phục lại \addcontentsline chuẩn cho mục lục
+\makeatletter
+\let\addcontentsline\orig@addcontentsline
+\makeatother
+
+\usepackage[utf8]{vietnam}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{url}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\setcounter{tocdepth}{2}
+
+\title{BÁO CÁO BÀI TẬP LỚP NHÀ: KHOA HỌC DỮ LIỆU THỊ GIÁC VÀ ĐỒ HỌA MÁY TÍNH}
+
+\author{
+  Tô Thành Đạt -- 24127153 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127153@student.hcmus.edu.vn} \\
+  \And
+  Lương Hưng Phát -- 24127298 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127298@student.hcmus.edu.vn} \\
+  \And
+  Nguyễn Nhựt Huy -- 24127398 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127398@student.hcmus.edu.vn} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\iclrfinalcopy % Uncommented for full header display
+
+\begin{document}
+
+% -------------------------------
+% Trang bìa
+% -------------------------------
+\input{cover}
+\clearpage
+
+\maketitle
+
+\begin{abstract}
+Báo cáo này tổng hợp toàn bộ nội dung bài học, câu hỏi lý thuyết và bài tập môn Khoa học Dữ liệu Thị giác (Visual Data Science) và Đồ họa Máy tính (Computer Graphics) theo lộ trình 12 tuần học. Nội dung bao gồm các nền tảng về cuộc Cách mạng Công nghiệp 4.0, xử lý ảnh, thị giác máy tính cổ điển, các kiến trúc học sâu tiên tiến (CNNs, Transformers, Generative Models, Multimodal AI) cũng như các ứng dụng thực tiễn trong sản xuất và đời sống.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% --- 12 Tuần học ---
+\input{week/week1.tex}
+\newpage
+\input{week/week2.tex}
+\newpage
+\input{week/week3.tex}
+\newpage
+\input{week/week4.tex}
+\newpage
+\input{week/week5.tex}
+\newpage
+\input{week/week6.tex}
+\newpage
+\input{week/week7.tex}
+\newpage
+\input{week/week8.tex}
+\newpage
+\input{week/week9.tex}
+\newpage
+\input{week/week10.tex}
+\newpage
+\input{week/week11.tex}
+\newpage
+\input{week/week12.tex}
+
+\bibliography{BTLN}
+\bibliographystyle{BTLN}
+
+\end{document}
