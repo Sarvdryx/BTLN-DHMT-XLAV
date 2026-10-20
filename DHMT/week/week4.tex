@@ -553,63 +553,66 @@ trong đó $A_{ji}$ là mức liên quan giữa primitive $j$ và token $i$. Li�
 Cách dựng như sau (Hình~\ref{fig:w4_ellipse}):
 \begin{enumerate}
     \item Vẽ hai đường tròn đồng tâm $O$: đường tròn lớn bán kính $a$ và đường tròn nhỏ bán kính $b$.
-    \item Từ tâm $O$ kẻ một tia hợp với trục $Ox$ góc $\alpha$. Tia cắt đường tròn lớn tại $A(a\cos\alpha,\, a\sin\alpha)$ và đường tròn nhỏ tại $B(b\cos\alpha,\, b\sin\alpha)$.
+    \item Quét một tia từ tâm $O$ hợp với trục $Ox$ góc $\theta$ (góc quét của đường tròn lớn). Tia cắt đường tròn lớn tại $A(a\cos\theta,\, a\sin\theta)$ và đường tròn nhỏ tại $B(b\cos\theta,\, b\sin\theta)$.
     \item Từ $A$ kẻ đường thẳng song song với $Oy$, từ $B$ kẻ đường thẳng song song với $Ox$. Giao điểm $P$ của hai đường này lấy hoành độ của $A$ và tung độ của $B$:
     \begin{equation}
-    P(\alpha) = (a\cos\alpha,\; b\sin\alpha).
+    P = (a\cos\theta,\; b\sin\theta).
     \end{equation}
-    \item Cho $\alpha$ chạy từ $0$ đến $2\pi$, điểm $P(\alpha)$ vạch nên toàn bộ elip.
+    \item Cho $\theta$ chạy từ $0$ đến $2\pi$, điểm $P$ vạch nên toàn bộ elip.
 \end{enumerate}
 
 \textbf{Chứng minh $P$ nằm trên elip.}
 \begin{equation}
-\frac{(a\cos\alpha)^2}{a^2} + \frac{(b\sin\alpha)^2}{b^2} = \cos^2\alpha + \sin^2\alpha = 1.
+\frac{(a\cos\theta)^2}{a^2} + \frac{(b\sin\theta)^2}{b^2} = \cos^2\theta + \sin^2\theta = 1.
 \end{equation}
-Ngược lại, với mọi điểm $(x, y)$ trên elip, $\left(\frac{x}{a}\right)^2 + \left(\frac{y}{b}\right)^2 = 1$ nên tồn tại duy nhất $\alpha \in [0, 2\pi)$ với $\cos\alpha = x/a$, $\sin\alpha = y/b$. Vậy phép dựng cho đúng và đủ các điểm của elip.
+Ngược lại, với mọi điểm $(x, y)$ trên elip, $\left(\frac{x}{a}\right)^2 + \left(\frac{y}{b}\right)^2 = 1$ nên tồn tại duy nhất $\theta \in [0, 2\pi)$ với $\cos\theta = x/a$, $\sin\theta = y/b$. Vậy phép dựng cho đúng và đủ các điểm của elip.
 
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[scale=1.15]
-    \def\a{2.4} \def\b{1.4} \def\al{50}
+    \def\a{2.4} \def\b{1.4} \def\th{50}
     \draw[->] (-2.8,0) -- (2.9,0) node[right] {$x$};
     \draw[->] (0,-2.7) -- (0,2.8) node[above] {$y$};
     \draw[gray] (0,0) circle (\a);
     \draw[gray] (0,0) circle (\b);
     \draw[very thick, blue] (0,0) ellipse ({\a} and {\b});
-    \coordinate (A) at (\al:\a);
-    \coordinate (B) at (\al:\b);
-    \coordinate (P) at ({\a*cos(\al)},{\b*sin(\al)});
+    \coordinate (A) at (\th:\a);
+    \coordinate (B) at (\th:\b);
+    \coordinate (P) at ({\a*cos(\th)},{\b*sin(\th)});
     \draw (0,0) -- (A);
     \draw[dashed] (A) -- (P);
     \draw[dashed] (B) -- (P);
-    \draw[dotted] (0,0) -- (P);
+    \draw[red, thick] (0,0) -- (P);
     \fill (A) circle (1.5pt) node[above right] {$A$};
     \fill (B) circle (1.5pt) node[above left] {$B$};
-    \fill[red] (P) circle (1.8pt) node[below right] {$P(a\cos\alpha,\, b\sin\alpha)$};
-    \draw (0.55,0) arc (0:\al:0.55);
-    \node at (25:0.8) {$\alpha$};
-    \draw (0.95,0) arc (0:{atan(\b/\a*tan(\al))}:0.95);
-    \node at (12:1.22) {$\theta$};
+    \fill[red] (P) circle (1.8pt) node[below right] {$P(a\cos\theta,\, b\sin\theta)$};
+    \draw (0.55,0) arc (0:\th:0.55);
+    \node at (28:0.8) {$\theta$};
+    \draw[red] (0.95,0) arc (0:{atan(\b/\a*tan(\th))}:0.95);
+    \node[red] at (12:1.22) {$\alpha$};
     \node[below] at (\a,0) {$a$};
     \node[below left] at (\b,0) {$b$};
 \end{tikzpicture}
-\caption{Dựng elip bằng hai đường tròn đồng tâm bán kính $a$ và $b$: $\alpha$ là góc của tia $OA$, còn $\theta$ là góc cực thật của điểm $P$}
+\caption{Dựng elip bằng hai đường tròn đồng tâm bán kính $a$ và $b$: $\theta$ là góc quét của đường tròn lớn (tia $OA$), $\alpha$ là góc quét của elip (tia $OP$)}
 \label{fig:w4_ellipse}
 \end{figure}
 
 \textbf{Ý nghĩa của góc $\alpha$.}
 \begin{itemize}
-    \item \textbf{$\alpha$ là tham số của elip, gọi là góc tâm sai (eccentric angle):} $\alpha$ là góc cực của điểm $A$ trên \emph{đường tròn phụ} bán kính $a$, không phải góc cực của chính điểm $P$ trên elip. Mỗi giá trị $\alpha$ xác định đúng một điểm $P(\alpha)$, nên $\alpha$ đóng vai trò biến chạy khi vẽ elip.
-    \item \textbf{Quan hệ với góc cực thật $\theta$ của $P$:} vì $\tan\theta = \dfrac{y}{x} = \dfrac{b\sin\alpha}{a\cos\alpha}$ nên
+    \item \textbf{$\alpha$ là góc quét của elip trong hệ tọa độ cực:} $\alpha$ là góc hợp bởi tia $OP$ (nối tâm với điểm $P$ đang vẽ trên elip) và trục $Ox$. Trong hệ tọa độ cực tâm $O$, mỗi điểm của elip được xác định bởi cặp $(r, \alpha)$ với $x = r\cos\alpha$, $y = r\sin\alpha$. Thay vào phương trình elip:
     \begin{equation}
-    \tan\theta = \frac{b}{a}\tan\alpha.
+    r^2\left(\frac{\cos^2\alpha}{a^2} + \frac{\sin^2\alpha}{b^2}\right) = 1 \;\Longrightarrow\; r(\alpha) = \frac{ab}{\sqrt{b^2\cos^2\alpha + a^2\sin^2\alpha}}.
     \end{equation}
-    Do đó $\theta = \alpha$ chỉ khi $\alpha$ là bội của $90^\circ$ (tại các đỉnh của elip) hoặc khi $a = b$. Với $a > b$, điểm $P$ luôn ``lệch'' về phía trục lớn so với tia $OA$ ($|\theta| \le |\alpha|$ trong góc phần tư thứ nhất).
-    \item \textbf{Elip là ảnh của đường tròn qua phép co giãn:} phép co theo trục $Oy$ với hệ số $b/a$, $(x, y) \mapsto \left(x, \frac{b}{a}y\right)$, biến điểm $A(a\cos\alpha, a\sin\alpha)$ của đường tròn lớn thành $P(a\cos\alpha, b\sin\alpha)$. Góc $\alpha$ chính là góc tham số của đường tròn gốc được giữ nguyên qua phép co giãn này. Khi $a = b$, elip trở thành đường tròn và $\alpha$ trùng với góc cực thông thường.
-    \item \textbf{Ý nghĩa khi vẽ:} cho $\alpha$ tăng đều với bước $\Delta\alpha$, độ dài cung giữa hai điểm liên tiếp xấp xỉ
+    Như vậy khi quét $\alpha$ từ $0$ đến $2\pi$, khoảng cách từ tâm đến điểm vẽ thay đổi theo $r(\alpha)$: lớn nhất bằng $a$ tại $\alpha = 0, \pi$ (hai đỉnh trục lớn) và nhỏ nhất bằng $b$ tại $\alpha = \pm\frac{\pi}{2}$ (hai đỉnh trục nhỏ). Đây là điểm khác với đường tròn, nơi $r$ không đổi.
+    \item \textbf{Quan hệ giữa góc quét của elip $\alpha$ và góc quét của đường tròn lớn $\theta$:} vì $\tan\alpha = \dfrac{y_P}{x_P} = \dfrac{b\sin\theta}{a\cos\theta}$ nên
     \begin{equation}
-    \Delta s \approx \sqrt{a^2\sin^2\alpha + b^2\cos^2\alpha}\;\Delta\alpha.
+    \tan\alpha = \frac{b}{a}\tan\theta.
     \end{equation}
-    Gần đỉnh trục lớn ($\alpha \approx 0$) ta có $\Delta s \approx b\,\Delta\alpha$, còn gần đỉnh trục nhỏ ($\alpha \approx 90^\circ$) ta có $\Delta s \approx a\,\Delta\alpha$. Vậy các điểm dày ở hai đầu trục lớn và thưa ở hai đầu trục nhỏ. Để các điểm liên tiếp không cách nhau quá một pixel (liên tục lân cận 8), cần chọn $\Delta\alpha \le 1/\max(a, b)$. Ngoài ra elip đối xứng qua $Ox$ và $Oy$, nên chỉ cần cho $\alpha$ chạy trong $[0, 90^\circ]$ rồi suy ra ba điểm $(\pm x, \pm y)$ còn lại.
+    Do đó $\alpha = \theta$ chỉ khi $\theta$ là bội của $90^\circ$ (tại các đỉnh của elip) hoặc khi $a = b$. Với $a > b$, trong góc phần tư thứ nhất luôn có $\alpha \le \theta$: điểm $P$ trên elip ``chậm'' hơn điểm $A$ trên đường tròn lớn và lệch về phía trục lớn.
+    \item \textbf{Elip là ảnh của đường tròn lớn qua phép co:} phép co theo trục $Oy$ với hệ số $b/a$, $(x, y) \mapsto \left(x, \frac{b}{a}y\right)$, biến điểm $A$ trên đường tròn lớn thành điểm $P$ trên elip. Phép co giữ nguyên hoành độ nhưng ép tung độ, nên góc quét $\theta$ của đường tròn biến thành góc quét $\alpha$ nhỏ hơn của elip. Khi $a = b$, elip trở thành đường tròn và hai góc trùng nhau.
+    \item \textbf{Ý nghĩa khi vẽ:} khi quét đều theo $\theta$ với bước $\Delta\theta$, độ dài cung giữa hai điểm liên tiếp xấp xỉ
+    \begin{equation}
+    \Delta s \approx \sqrt{a^2\sin^2\theta + b^2\cos^2\theta}\;\Delta\theta.
+    \end{equation}
+    Gần đỉnh trục lớn ($\theta \approx 0$) có $\Delta s \approx b\,\Delta\theta$, gần đỉnh trục nhỏ ($\theta \approx 90^\circ$) có $\Delta s \approx a\,\Delta\theta$: các điểm dày ở hai đầu trục lớn và thưa ở hai đầu trục nhỏ. Để các điểm liên tiếp không cách nhau quá một pixel (liên tục lân cận 8), cần chọn $\Delta\theta \le 1/\max(a, b)$. Ngoài ra elip đối xứng qua $Ox$ và $Oy$, nên chỉ cần quét trong góc phần tư thứ nhất ($0 \le \alpha, \theta \le 90^\circ$) rồi suy ra ba điểm $(\pm x, \pm y)$ còn lại.
 \end{itemize}
-
