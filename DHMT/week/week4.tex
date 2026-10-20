@@ -1,14 +1,615 @@
-\section{Tuần 4: Phân đoạn Ảnh và Biến đổi Hough}
+\section{Tuần 4: Hệ tọa độ, Thuật toán Vẽ Đường thẳng, Đường tròn và Đường Elip}
 \label{sec:week4}
 
-\subsection{Tổng quan nội dung Tuần 4}
-Phần này dành cho các kỹ thuật phân đoạn hình ảnh cổ điển và nhận dạng hình học cơ bản.
+% =====================================================================
+\subsection{Phân biệt ba hệ tọa độ WCS, UCS và DCS}
+\label{subsec:w4_coord}
 
+\textit{Câu hỏi: Phân biệt ba hệ trục tọa độ WCS, UCS và DCS.}
+
+Trong đồ họa máy tính, một đối tượng đi từ mô hình toán học đến điểm ảnh trên màn hình phải đi qua nhiều hệ tọa độ, mỗi hệ phục vụ một mục đích riêng:
+
+\textbf{Hệ tọa độ thế giới thực (World Coordinate System, WCS):} Là hệ tọa độ toàn cục, duy nhất cho toàn bộ cảnh. Mọi đối tượng trong cảnh đều được đặt vào WCS để xác định vị trí tương đối giữa chúng. Tọa độ trong WCS là \textbf{số thực}, có đơn vị tùy ý do ứng dụng quy ước (mét, ki-lô-mét, micromet, năm ánh sáng\ldots) và về mặt lý thuyết \textbf{không bị chặn} $(x, y, z) \in \mathbb{R}^3$.
+
+\textbf{Hệ tọa độ người dùng (User Coordinate System, UCS):} Là hệ tọa độ cục bộ do người dùng (người thiết kế, lập trình viên) tự định nghĩa sao cho việc mô tả một đối tượng là thuận tiện nhất, ví dụ đặt gốc tọa độ tại tâm bánh xe, trục $Ox$ dọc theo thân xe. UCS còn được gọi là hệ tọa độ mô hình (Modeling Coordinates) hay hệ tọa độ cục bộ (Local Coordinates). Tọa độ trong UCS cũng là số thực; một UCS liên hệ với WCS thông qua một phép biến đổi affine (tịnh tiến, quay, tỉ lệ):
+\begin{equation}
+\mathbf{P}_{\text{WCS}} = \mathbf{M}_{\text{UCS}\rightarrow\text{WCS}} \cdot \mathbf{P}_{\text{UCS}}
+\end{equation}
+Nhờ đó một mô hình chỉ cần mô tả một lần trong UCS rồi có thể đặt vào WCS nhiều lần ở các vị trí, hướng, kích thước khác nhau (instancing).
+
+\textbf{Hệ tọa độ thiết bị (Device Coordinate System, DCS):} Là hệ tọa độ của thiết bị hiển thị (màn hình, máy in, cửa sổ ứng dụng). Tọa độ là \textbf{số nguyên} (chỉ số hàng, cột của điểm ảnh), \textbf{bị chặn} bởi độ phân giải $0 \le x_d \le W-1$, $0 \le y_d \le H-1$; gốc tọa độ thường nằm ở góc trên bên trái và trục $y$ hướng xuống dưới. DCS phụ thuộc vào từng thiết bị cụ thể. Để chương trình độc lập với thiết bị, người ta thường dùng thêm hệ tọa độ thiết bị chuẩn hóa (Normalized Device Coordinates, NDCS) với $x, y \in [0, 1]$ làm trung gian.
+
+Bảng~\ref{tab:w4_coord} tổng hợp sự khác biệt giữa ba hệ tọa độ.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh ba hệ tọa độ WCS, UCS và DCS}
+\label{tab:w4_coord}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|X|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{WCS (Thế giới thực)} & \textbf{UCS (Người dùng)} & \textbf{DCS (Thiết bị)} \\
+\hline
+\textbf{1. Phạm vi} & Toàn cục, một hệ duy nhất cho cả cảnh. & Cục bộ, mỗi đối tượng/người dùng có thể có hệ riêng. & Gắn với một thiết bị hiển thị cụ thể. \\
+\hline
+\textbf{2. Kiểu giá trị} & Số thực. & Số thực. & Số nguyên (chỉ số pixel). \\
+\hline
+\textbf{3. Miền giá trị} & Không bị chặn, $\mathbb{R}^2$ hoặc $\mathbb{R}^3$. & Không bị chặn. & Bị chặn bởi độ phân giải $W \times H$. \\
+\hline
+\textbf{4. Đơn vị} & Đơn vị vật lý do ứng dụng quy ước. & Đơn vị thuận tiện cho việc mô tả đối tượng. & Pixel (điểm ảnh, điểm in). \\
+\hline
+\textbf{5. Vai trò} & Sắp đặt các đối tượng trong cảnh, xác định quan hệ không gian giữa chúng. & Mô hình hóa từng đối tượng một cách đơn giản, tái sử dụng được. & Hiển thị kết quả cuối cùng lên thiết bị. \\
+\hline
+\textbf{6. Chuyển đổi} & \multicolumn{3}{p{0.72\textwidth}|}{UCS $\rightarrow$ WCS (biến đổi mô hình) $\rightarrow$ NDCS (cắt xén, chiếu, chuẩn hóa) $\rightarrow$ DCS (ánh xạ cửa sổ -- khung nhìn) $\rightarrow$ pixel (rời rạc hóa: vẽ đường thẳng, đường tròn\ldots)} \\
+\hline
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\subsection{Vì sao mô phỏng được thế giới thực bằng các vector có kích thước nhỏ}
+\label{subsec:w4_simulate}
+
+\textit{Câu hỏi: Tại sao lại nói chúng ta mô phỏng được thế giới trong khi kích thước vector rất nhỏ so với đời thực rất lớn?}
+
+Đồ họa máy tính không sao chép thế giới theo đúng kích thước vật lý của nó, mà xây dựng một \textbf{mô hình toán học} của thế giới: tập các đối tượng hình học được mô tả bằng tọa độ trong các hệ quy chiếu và liên kết với nhau bằng các phép biến đổi~\citep{hearn2011computer,hughes2014computer}. Điều cần giữ đúng là \textbf{hình dạng} và \textbf{quan hệ không gian} của các đối tượng, không phải độ lớn tuyệt đối của các con số. Có bốn lý do khiến điều này khả thi.
+
+\textbf{1. Tọa độ là số đo tương đối, đơn vị do người mô hình hóa quy ước.} Trong WCS, người lập trình được tự do chọn đơn vị phù hợp với ứng dụng: ki-lô-mét cho bản đồ, mét cho kiến trúc, micromet cho vi mạch~\citep{hearn2011computer}. Một vector $(x, y, z)$ chỉ là bộ ba số đo theo đơn vị đó; giá trị $1.0$ có thể là $1$ mm hay $1$ năm ánh sáng. Vì vậy kích thước ``nhỏ'' của các con số không giới hạn quy mô của thứ được mô tả, giống như tấm bản đồ tỉ lệ $1:1\,000\,000$ vẫn mô tả đúng cả một quốc gia.
+
+\textbf{2. Hình dạng bất biến qua phép đồng dạng.} Đổi đơn vị là phép tỉ lệ đều $S(\mathbf{P}) = s\,\mathbf{P}$, $s > 0$; trong tọa độ thuần nhất đó là ma trận $\mathrm{diag}(s, s, s, 1)$, cùng loại với các ma trận biến đổi khác trong đường ống đồ họa. Phép biến đổi này bảo toàn mọi thông tin hình học:
 \begin{itemize}
-    \item Phân đoạn dựa trên ngưỡng (Otsu Thresholding, Adaptive Thresholding).
-    \item Phân đoạn dựa trên vùng (Region Growing, Split and Merge, Watershed).
-    \item Biến đổi Hough phát hiện đường thẳng và đường tròn (Hough Line / Circle Transform).
+    \item \textbf{Tỉ số độ dài:} $\dfrac{\|S(P) - S(Q)\|}{\|S(R) - S(T)\|} = \dfrac{s\,\|P - Q\|}{s\,\|R - T\|} = \dfrac{\|P - Q\|}{\|R - T\|}$.
+    \item \textbf{Góc:} $\cos\angle\big(S(\mathbf{u}), S(\mathbf{v})\big) = \dfrac{s^2\,\mathbf{u}\cdot\mathbf{v}}{s^2\,\|\mathbf{u}\|\,\|\mathbf{v}\|} = \cos\angle(\mathbf{u}, \mathbf{v})$.
+    \item \textbf{Quan hệ liên thuộc:} đường thẳng biến thành đường thẳng, đường tròn bán kính $r$ thành đường tròn bán kính $sr$, điểm nằm trên một đối tượng vẫn nằm trên ảnh của đối tượng đó.
+\end{itemize}
+Như vậy mô hình thu nhỏ theo tỉ lệ $s$ chứa đầy đủ thông tin hình học của thế giới thật; muốn khôi phục kích thước thật chỉ cần nhân với $1/s$.
+
+\textbf{3. Số dấu chấm động có độ chính xác tương đối.} Máy tính lưu tọa độ dưới dạng số dấu chấm động theo chuẩn IEEE~754~\citep{ieee754_2019}: $x = (-1)^{\sigma} \cdot 1.f \cdot 2^{e}$. Với số $32$ bit (phần định trị $23$ bit), sai số làm tròn tương đối bị chặn bởi $u = 2^{-24} \approx 6 \times 10^{-8}$, và khoảng cách giữa hai số biểu diễn được liền kề là $\mathrm{ulp}(x) \approx |x| \cdot 2^{-23}$~\citep{goldberg1991what}. Nghĩa là độ chính xác \textbf{tỉ lệ thuận với độ lớn} của giá trị: cùng một cơ chế biểu diễn cho sai số tương đối như nhau ở thang nanomet hay thang thiên văn. Ví dụ, số $32$ bit tại $x = 10^4$ m có $\mathrm{ulp} = 2^{13-23} = 2^{-10} \approx 1$ mm; số $64$ bit (định trị $52$ bit) tại khoảng cách Trái Đất -- Mặt Trời $1.5 \times 10^{11}$ m vẫn phân giải được khoảng $3 \times 10^{-5}$ m.
+
+\textbf{4. Độ chính xác cần thiết bị chặn bởi độ phân giải hiển thị.} Kết quả cuối cùng chỉ là $W$ điểm ảnh. Giả sử cửa sổ quan sát rộng $L_w$ đơn vị thế giới được ánh xạ vào $W$ pixel (mục~\ref{subsec:w4_display}). Một sai số $\delta$ trong WCS trở thành $\delta \cdot W / L_w$ pixel trên màn hình, và không thể nhận thấy nếu nhỏ hơn nửa pixel:
+\begin{equation}
+\delta \cdot \frac{W}{L_w} < \frac12 \iff \delta < \frac{L_w}{2W}.
+\end{equation}
+Khi xem toàn cảnh một thành phố rộng $20$ km trên màn hình $1920$ pixel, sai số dưới $20\,000 / 3840 \approx 5.2$ m là vô hình; khi phóng to vào vùng rộng $2$ m, ngưỡng này giảm còn khoảng $0.52$ mm. Độ chính xác cần có luôn \textbf{tương đối với vùng đang quan sát}, trùng khớp với tính chất độ chính xác tương đối của số dấu chấm động ở lý do 3.
+
+\textbf{Khi thế giới quá lớn.} Vì $\mathrm{ulp}(x)$ tăng theo $|x|$, các đối tượng ở rất xa gốc tọa độ bị mất độ chính xác và có thể ``rung'' khi hiển thị. Đồ họa máy tính xử lý bằng hai kỹ thuật bổ trợ:
+\begin{itemize}
+    \item \textbf{Hệ tọa độ phân cấp:} mỗi đối tượng được mô tả trong UCS riêng với gốc đặt gần chính nó (mục~\ref{subsec:w4_coord}), rồi ghép các phép biến đổi khi hiển thị; trong thực tế các hệ thống thường biểu diễn cảnh tương đối với vị trí camera để các tọa độ cần xử lý luôn nhỏ.
+    \item \textbf{Mô hình phân cấp và mức chi tiết (Level of Detail):} Clark~\citep{clark1976hierarchical} đề xuất tổ chức cảnh thành cây phân cấp, trong đó mỗi đối tượng có nhiều phiên bản với độ chi tiết khác nhau; đối tượng càng xa hoặc càng nhỏ trên màn hình thì càng dùng phiên bản thô. Nhờ đó khối lượng dữ liệu cần xử lý phụ thuộc vào những gì nhìn thấy được, không phụ thuộc vào kích thước của cả thế giới.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+Tóm lại, mô phỏng được thế giới không đòi hỏi các con số lớn như thế giới thật, mà đòi hỏi (i) bảo toàn hình dạng qua các phép biến đổi, (ii) độ chính xác tương đối đủ so với vùng quan sát và (iii) cơ chế tổ chức dữ liệu theo phân cấp. Cả ba đều được đáp ứng bởi mô hình tọa độ thực, số dấu chấm động và đường ống biến đổi của đồ họa máy tính.
+
+% =====================================================================
+\subsection{Hiển thị thế giới thực rất lớn trên màn hình 2D hữu hạn}
+\label{subsec:w4_display}
+
+\textit{Câu hỏi: Thế giới thực rất lớn mà màn hình 2D thì nhỏ, vậy làm thế nào để hiển thị?}
+
+Màn hình chỉ có $W \times H$ điểm ảnh nguyên, trong khi WCS là không gian thực ba chiều không bị chặn. Khoảng cách này được giải quyết bằng \textbf{đường ống quan sát} (Viewing Pipeline): một chuỗi phép biến đổi và lựa chọn đưa tọa độ đi qua các hệ quy chiếu~\citep{hearn2011computer,hughes2014computer}:
+\begin{align*}
+&\text{MC (UCS)} \xrightarrow{\;\mathbf{M}_{\text{model}}\;} \text{WC} \xrightarrow{\;\mathbf{M}_{\text{view}}\;} \text{VC} \xrightarrow{\;\text{chiếu}\;} \text{PC} \\
+&\qquad \xrightarrow{\;\text{chuẩn hóa, cắt xén}\;} \text{NC} \xrightarrow{\;\text{cửa sổ -- khung nhìn}\;} \text{DC} \xrightarrow{\;\text{rời rạc hóa}\;} \text{pixel}
+\end{align*}
+Mỗi bước trả lời một phần của câu hỏi ``lớn thì làm sao vừa''.
+
+\textbf{1. Biến đổi mô hình (MC $\to$ WC).} Mỗi đối tượng được mô tả trong UCS của nó và được đặt vào WCS bằng ma trận $\mathbf{M}_{\text{model}}$ (tịnh tiến, quay, tỉ lệ). Kết quả là một cảnh thống nhất, nhưng chưa có khái niệm ``nhìn'' (mục~\ref{subsec:w4_coord}).
+
+\textbf{2. Biến đổi quan sát (WC $\to$ VC): chọn chỗ đứng và hướng nhìn.} Người xem được mô hình hóa bằng một camera có vị trí $P_0$, hướng nhìn và vector hướng lên. Ma trận $\mathbf{M}_{\text{view}} = \mathbf{R} \cdot \mathbf{T}(-P_0)$ tịnh tiến $P_0$ về gốc rồi quay sao cho hướng nhìn trùng với một trục tọa độ~\citep{hearn2011computer}. Từ đây, mọi tọa độ được đo \emph{tương đối với người xem}: phần thế giới ở xa camera có tọa độ lớn nhưng sẽ bị thu nhỏ hoặc loại bỏ ở các bước sau.
+
+\textbf{3. Phép chiếu (VC $\to$ PC): từ 3D xuống 2D.} Với phép chiếu phối cảnh lên mặt phẳng cách camera một khoảng $d$, từ hai tam giác đồng dạng ta có
+\begin{equation}
+x_p = d \cdot \frac{x_v}{z_v}, \qquad y_p = d \cdot \frac{y_v}{z_v}.
+\end{equation}
+Một vật có kích thước $h$ ở độ sâu $z$ có ảnh kích thước $d \cdot h / z$: kích thước hiển thị \textbf{tỉ lệ nghịch với khoảng cách}. Đây chính là cơ chế giúp mắt người nhìn được cả dãy núi lẫn bầu trời: vật càng lớn thì thường càng ở xa, và phép chiếu thu chúng vào một mặt phẳng ảnh hữu hạn. Phép chiếu song song ($x_p = x_v$, $y_p = y_v$) giữ nguyên kích thước, phù hợp với bản vẽ kỹ thuật; khi đó việc thu nhỏ do bước 5 đảm nhận.
+
+\textbf{4. Thể tích quan sát và cắt xén (Clipping).} Chỉ một vùng hữu hạn của thế giới được hiển thị: cửa sổ (Window) $[x_{w\min}, x_{w\max}] \times [y_{w\min}, y_{w\max}]$ trong 2D, hay hình chóp cụt quan sát (View Frustum) giới hạn bởi mặt gần và mặt xa trong 3D. Mọi phần nằm ngoài bị loại bỏ, ví dụ thuật toán Cohen--Sutherland gán cho mỗi đầu mút đoạn thẳng một mã vùng 4 bit (trái, phải, dưới, trên) để chấp nhận hoặc loại bỏ nhanh cả đoạn bằng phép AND/OR trên mã~\citep{hearn2011computer}. Nhờ cắt xén, khối lượng tính toán chỉ phụ thuộc vào phần nằm trong vùng quan sát, không phụ thuộc vào kích thước toàn bộ thế giới. Sau bước này tọa độ được chuẩn hóa về hệ NDCS ($[0,1]$ hoặc $[-1,1]$), độc lập với thiết bị.
+
+\textbf{5. Ánh xạ cửa sổ -- khung nhìn (Window-to-Viewport).} Cửa sổ được ánh xạ vào khung nhìn (Viewport) $[x_{v\min}, x_{v\max}] \times [y_{v\min}, y_{v\max}]$ trên thiết bị sao cho \textbf{vị trí tương đối} của mỗi điểm được giữ nguyên:
+\begin{equation}
+\frac{x_v - x_{v\min}}{x_{v\max} - x_{v\min}} = \frac{x_w - x_{w\min}}{x_{w\max} - x_{w\min}}, \qquad
+\frac{y_v - y_{v\min}}{y_{v\max} - y_{v\min}} = \frac{y_w - y_{w\min}}{y_{w\max} - y_{w\min}}.
+\end{equation}
+Giải ra $x_v = x_{v\min} + s_x\,(x_w - x_{w\min})$ và $y_v = y_{v\min} + s_y\,(y_w - y_{w\min})$ với
+\begin{equation}
+s_x = \frac{x_{v\max} - x_{v\min}}{x_{w\max} - x_{w\min}}, \qquad s_y = \frac{y_{v\max} - y_{v\min}}{y_{w\max} - y_{w\min}}.
+\end{equation}
+Dưới dạng ma trận, đây là hợp của ba phép biến đổi cơ sở~\citep{hearn2011computer}:
+\begin{equation}
+\mathbf{M}_{\text{WV}} = \mathbf{T}(x_{v\min}, y_{v\min}) \cdot \mathbf{S}(s_x, s_y) \cdot \mathbf{T}(-x_{w\min}, -y_{w\min}),
+\end{equation}
+tức là đưa góc cửa sổ về gốc, co giãn theo tỉ lệ khung nhìn/cửa sổ, rồi đặt vào vị trí khung nhìn. Một cửa sổ rộng hàng nghìn ki-lô-mét có $s_x$ rất nhỏ nên vẫn vừa khít vài trăm pixel. Một số lưu ý khi cài đặt:
+\begin{itemize}
+    \item \textbf{Giữ tỉ lệ khung hình:} nếu $s_x \ne s_y$ hình bị méo (đường tròn thành elip). Để giữ hình dạng (mục~\ref{subsec:w4_simulate}) ta dùng chung $s = \min(s_x, s_y)$ và căn giữa phần dư.
+    \item \textbf{Phóng to, thu nhỏ và di chuyển:} thu hẹp cửa sổ $k$ lần làm $s$ tăng $k$ lần (zoom in); tịnh tiến cửa sổ là di chuyển góc nhìn (pan). Người dùng ``đi lại'' trong một thế giới rộng lớn chỉ bằng cách thay đổi bốn tham số của cửa sổ.
+    \item \textbf{Đảo trục $y$:} DCS thường có gốc ở góc trên trái và trục $y$ hướng xuống, nên cần thêm $y_d = (H - 1) - y_v$.
+\end{itemize}
+
+\textbf{6. Rời rạc hóa (Scan Conversion).} Tọa độ $(x_v, y_v)$ vẫn là số thực, còn pixel có tọa độ nguyên. Các thuật toán vẽ đường thẳng (mục~\ref{subsec:w4_dda}--\ref{subsec:w4_bres_int}) và đường tròn (mục~\ref{subsec:w4_circle_apply}--\ref{subsec:w4_circle_sym}) xác định tập điểm nguyên xấp xỉ tốt nhất hình học liên tục, liên tục trong lân cận 8 và có độ phức tạp tính toán thấp \citep[slide~3]{dhmt_lec3}.
+
+Tóm lại, thế giới lớn được hiển thị trên màn hình nhỏ nhờ ba cơ chế: \textbf{chọn lọc} (chỉ hiển thị phần nằm trong cửa sổ/thể tích quan sát), \textbf{thu nhỏ có kiểm soát} (phép chiếu phối cảnh và phép tỉ lệ cửa sổ -- khung nhìn bảo toàn vị trí tương đối) và \textbf{rời rạc hóa} (chuyển hình học liên tục thành pixel).
+
+% =====================================================================
+\subsection{Giải thuật vẽ đoạn thẳng theo phương pháp trên bảng (tổng quát cho mọi hệ số góc)}
+\label{subsec:w4_dda}
+
+\textit{Câu hỏi: Viết giải thuật để vẽ đoạn thẳng theo phương pháp trên bảng (viết chương trình cho tổng quát).}
+
+\textbf{Bài toán.} Cho tọa độ hai đầu mút của đoạn thẳng, cần xác định tập điểm trên lưới nguyên sao cho: các điểm xấp xỉ tốt nhất đoạn thẳng, liên tục trong lân cận 8 và được tính với độ phức tạp thấp \citep[slide~3]{dhmt_lec3}.
+
+\textbf{Cách 1 -- tính trực tiếp.} Với mỗi giá trị nguyên của $x$, tính $y = mx + b$ rồi vẽ điểm $\big(x, \mathrm{Round}(y)\big)$. Mỗi điểm tốn một phép nhân số thực, một phép cộng số thực và một phép làm tròn.
+
+\textbf{Cách 2 -- phương pháp gia số (phương pháp trên bảng).} Xét hai điểm liên tiếp $(x_k, y_k)$ và $(x_{k+1}, y_{k+1})$ của đường thẳng $y = mx + b$. Lấy hiệu hai phương trình:
+\begin{equation}
+y_{k+1} - y_k = m\,(x_{k+1} - x_k) \iff \Delta y = m\,\Delta x \;\Longrightarrow\; |\Delta y| = |m|\,|\Delta x|.
+\end{equation}
+Ta cho tọa độ trên trục biến thiên nhanh hơn (trục chính) tăng đúng một đơn vị sau mỗi bước, khi đó tọa độ còn lại thay đổi không quá một đơn vị:
+\begin{itemize}
+    \item \textbf{$|m| \le 1$:} chọn $|\Delta x| = 1$ thì $|\Delta y| = |m| \le 1$. Với $x_a < x_b$:
+    \begin{equation}
+    x_{k+1} = x_k + 1, \qquad y_{k+1} = y_k + m.
+    \end{equation}
+    \item \textbf{$|m| > 1$:} chọn $|\Delta y| = 1$ thì $|\Delta x| = \dfrac{|\Delta y|}{|m|} = \dfrac{1}{|m|} < 1$. Với $y_a < y_b$:
+    \begin{equation}
+    y_{k+1} = y_k + 1, \qquad x_{k+1} = x_k + \frac{1}{m}.
+    \end{equation}
+\end{itemize}
+Điểm được vẽ ở mỗi bước là $\big(\mathrm{Round}(x_k), \mathrm{Round}(y_k)\big)$. So với Cách 1, phép nhân trong vòng lặp đã được thay bằng phép cộng dồn; phương pháp này còn được gọi là DDA (Digital Differential Analyzer).
+
+\textbf{Gộp các trường hợp.} Đặt $\Delta x = x_b - x_a$, $\Delta y = y_b - y_a$ và số bước $n = \max(|\Delta x|, |\Delta y|)$. Gia số sau mỗi bước là
+\begin{equation}
+\delta_x = \frac{\Delta x}{n}, \qquad \delta_y = \frac{\Delta y}{n}.
+\end{equation}
+Khi $|\Delta x| \ge |\Delta y|$ ta có $\delta_x = \pm 1$ và $|\delta_y| = |m|$; khi $|\Delta x| < |\Delta y|$ ta có $\delta_y = \pm 1$ và $|\delta_x| = 1/|m|$. Như vậy một công thức duy nhất bao quát cả hai trường hợp trên. Dấu của $\Delta x$, $\Delta y$ quyết định hướng vẽ nên không cần hoán đổi hai đầu mút, và đoạn thẳng đứng ($\Delta x = 0$, $m$ không xác định) cũng được xử lý vì giải thuật không cần tính $m$.
+
+\textbf{Tính liên tục lân cận 8.} Sau mỗi bước, tọa độ trên trục chính thay đổi đúng $1$, còn tọa độ trên trục phụ thay đổi một lượng thực $\delta$ với $|\delta| \le 1$. Với $\mathrm{Round}(t) = \lfloor t + 0.5 \rfloor$ và $u = t + 0.5$:
+\begin{itemize}
+    \item nếu $0 \le \delta \le 1$ thì $\lfloor u \rfloor \le \lfloor u + \delta \rfloor \le \lfloor u + 1 \rfloor = \lfloor u \rfloor + 1$;
+    \item nếu $-1 \le \delta < 0$ thì $\lfloor u \rfloor - 1 \le \lfloor u + \delta \rfloor \le \lfloor u \rfloor$.
+\end{itemize}
+Do đó $\big|\mathrm{Round}(t + \delta) - \mathrm{Round}(t)\big| \le 1$: hai điểm vẽ liên tiếp lệch nhau đúng $1$ trên trục chính và không quá $1$ trên trục phụ, tức là kề nhau trong lân cận 8. Mỗi giá trị nguyên trên trục chính có đúng một điểm được vẽ, nên nét vẽ không bị đứt và cũng không bị dày.
+
+\textbf{Mã giả.} Giải thuật~\ref{alg:w4_dda} trình bày phương pháp gia số tổng quát cho mọi hệ số góc và mọi hướng vẽ.
+
+\begin{algorithm}[ht]
+\caption{Vẽ đoạn thẳng tổng quát theo phương pháp gia số (Cách 2 -- DDA)}
+\label{alg:w4_dda}
+\begin{algorithmic}[1]
+\Require Hai đầu mút nguyên $A(x_a, y_a)$, $B(x_b, y_b)$
+\Ensure Các điểm ảnh xấp xỉ đoạn thẳng $AB$
+\State $\Delta x \gets x_b - x_a$; \quad $\Delta y \gets y_b - y_a$
+\State $n \gets \max(|\Delta x|, |\Delta y|)$ \Comment{số bước, bằng độ dài theo trục chính}
+\If{$n = 0$}
+    \State \Call{SetPixel}{$x_a, y_a$} \Comment{hai đầu mút trùng nhau}
+    \State \Return
+\EndIf
+\State $\delta_x \gets \Delta x / n$; \quad $\delta_y \gets \Delta y / n$ \Comment{một trong hai gia số bằng $\pm 1$}
+\State $x \gets x_a$; \quad $y \gets y_a$ \Comment{$x, y$ là biến số thực}
+\For{$k \gets 0$ \textbf{to} $n$}
+    \State \Call{SetPixel}{$\mathrm{Round}(x), \mathrm{Round}(y)$}
+    \State $x \gets x + \delta_x$; \quad $y \gets y + \delta_y$ \Comment{chỉ còn phép cộng số thực}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Mỗi vòng lặp chỉ còn hai phép cộng và hai phép làm tròn số thực. Tuy vậy, số học số thực vẫn chậm hơn số học nguyên, và sai số dấu chấm động có thể tích lũy qua nhiều bước cộng. Thuật toán Bresenham (mục~\ref{subsec:w4_bres_vs_dda}) loại bỏ hoàn toàn hai nhược điểm này.
+
+% =====================================================================
+\subsection{Vì sao giới hạn bài toán trong giả thiết $0 < m < 1$, $x_a < x_b$ và cách suy diễn các trường hợp còn lại}
+\label{subsec:w4_assumption}
+
+\textit{Câu hỏi: Giải thích vì sao chúng ta giới hạn bài toán chỉ nằm trong giả thiết (assumption), các trường hợp còn lại được suy diễn từ giới hạn đó như thế nào?}
+
+Bài giảng giả thiết đường thẳng $y = mx + b$ đi qua $A(x_a, y_a)$, $B(x_b, y_b)$ với $0 < m < 1$ và $x_a < x_b$; các trường hợp còn lại được suy ra dễ dàng từ trường hợp này \citep[slide~4]{dhmt_lec3}.
+
+\textbf{Lý do giới hạn bài toán.}
+\begin{itemize}
+    \item \textbf{$x_a < x_b$:} cho phép duyệt $x$ theo một chiều tăng dần, $x_{k+1} = x_k + 1$.
+    \item \textbf{$|m| < 1$:} $x$ là trục biến thiên nhanh hơn, nên khi $x$ tăng $1$ thì $y$ tăng ít hơn $1$; mỗi cột chỉ cần đúng một điểm vẽ và điểm kế tiếp luôn thuộc lân cận 8 của điểm hiện tại.
+    \item \textbf{$m > 0$:} $y$ chỉ giữ nguyên hoặc tăng $1$, nên mỗi bước chỉ còn chọn \textbf{một trong hai} ứng viên $(x_k + 1, y_k)$ và $(x_k + 1, y_k + 1)$ \citep[slide~5]{dhmt_lec3}, quyết định bằng dấu của một biến $p_k$ duy nhất.
+\end{itemize}
+Giả thiết biến bài toán chọn một trong tám lân cận thành bài toán chọn một trong hai. Ta chỉ cần xây dựng thuật toán một lần, rồi đưa mọi trường hợp khác về trường hợp này bằng phép đối xứng hình học.
+
+\textbf{Suy diễn qua từng phép đối xứng.}
+\begin{enumerate}
+    \item \textbf{$x_a > x_b$ -- hoán đổi hai đầu mút.} Đoạn $BA$ trùng với đoạn $AB$ nên chỉ cần vẽ từ $B$ đến $A$.
+    \item \textbf{$-1 < m < 0$ -- đối xứng qua trục $Ox$}, $(x, y) \mapsto (x, -y)$. Đường thẳng $y = mx + b$ biến thành $y = -mx - b$, có hệ số góc $-m \in (0, 1)$. Vẽ đường mới bằng thuật toán gốc rồi đổi dấu $y$ của từng điểm; trên thực tế chỉ cần thay bước $y_k + 1$ bằng $y_k - 1$.
+    \item \textbf{$m > 1$ -- đối xứng qua đường $y = x$}, $(x, y) \mapsto (y, x)$. Đường thẳng $y = mx + b$ biến thành $x = my + b$, tức $y = \frac{1}{m}x - \frac{b}{m}$, có hệ số góc $\frac{1}{m} \in (0, 1)$. Vẽ đường mới rồi đổi chỗ hai tọa độ; trên thực tế chỉ cần đổi vai trò: $y$ là trục chính tăng $1$ mỗi bước, $x$ giữ nguyên hoặc tăng $1$.
+    \item \textbf{$m < -1$ -- kết hợp hai phép trên:} đối xứng qua $Ox$ để có hệ số góc $-m > 1$, sau đó đối xứng qua $y = x$.
+    \item \textbf{Các trường hợp đặc biệt:} $m = 0$ (nằm ngang), $|m| = 1$ (đường chéo) và $\Delta x = 0$ (thẳng đứng) vẽ trực tiếp được. Công thức Bresenham vẫn đúng với $m = 0$ (luôn có $p_k = -\Delta x < 0$, $y$ không đổi) và $m = 1$ (luôn có $p_k = \Delta x > 0$, luôn đi chéo).
+\end{enumerate}
+
+\textbf{Vì sao kết quả vẫn đúng.} Các phép đối xứng trên chỉ đổi dấu hoặc đổi chỗ tọa độ, nên chúng biến điểm nguyên thành điểm nguyên và giữ nguyên khoảng cách. Vì vậy pixel gần đường thẳng nhất sau biến đổi vẫn là pixel gần đường thẳng nhất trước biến đổi, và hai pixel kề nhau trong lân cận 8 vẫn kề nhau. Ba yêu cầu xấp xỉ tốt nhất, liên tục lân cận 8 và độ phức tạp thấp đều được giữ nguyên.
+
+Ghép các trường hợp lại ta có thuật toán Bresenham tổng quát (theo bài ghi), với $s_x = \operatorname{sign}(x_b - x_a)$, $s_y = \operatorname{sign}(y_b - y_a)$:
+\begin{itemize}
+    \item \textbf{Trục chính là $x$} ($|\Delta x| \ge |\Delta y|$): $p_0 = 2|\Delta y| - |\Delta x|$; nếu $p_k < 0$ thì $p_{k+1} = p_k + 2|\Delta y|$, vẽ $(x_k + s_x, y_k)$; nếu $p_k \ge 0$ thì $p_{k+1} = p_k + 2|\Delta y| - 2|\Delta x|$, vẽ $(x_k + s_x, y_k + s_y)$.
+    \item \textbf{Trục chính là $y$} ($|\Delta x| < |\Delta y|$): $p_0 = 2|\Delta x| - |\Delta y|$; nếu $p_k < 0$ thì $p_{k+1} = p_k + 2|\Delta x|$, vẽ $(x_k, y_k + s_y)$; nếu $p_k \ge 0$ thì $p_{k+1} = p_k + 2|\Delta x| - 2|\Delta y|$, vẽ $(x_k + s_x, y_k + s_y)$.
+\end{itemize}
+\textit{Lưu ý:} khi trục chính là $y$, giá trị khởi tạo là $p_0 = 2|\Delta x| - |\Delta y|$ (đổi vai trò $x \leftrightarrow y$ trong công thức $p_0 = 2\Delta y - \Delta x$), không phải $2|\Delta y| - |\Delta x|$.
+
+% =====================================================================
+\subsection{So sánh Bresenham với Cách 2: vì sao Bresenham khử được phép cộng số thực}
+\label{subsec:w4_bres_vs_dda}
+
+\textit{Câu hỏi: Giải thích vì sao làm theo Bresenham khử được các số thực mà phương pháp 2 trước đó không khử được phép cộng với số thực.}
+
+\textbf{Bản chất số thực của Cách 2.} Trong Cách 2 (mục~\ref{subsec:w4_dda}), đại lượng được lưu và cập nhật là \textbf{chính tung độ thực} của đường thẳng:
+\begin{equation}
+y_{k+1} = y_k + m, \qquad m = \frac{\Delta y}{\Delta x}.
+\end{equation}
+Vì $m$ nói chung là số thực (phân số), $y_k$ là số thực và phải làm tròn ở mỗi bước. Cách 2 chỉ khử được \textbf{phép nhân} (thay $mx_k$ bằng phép cộng dồn), còn \textbf{phép cộng số thực} và \textbf{phép làm tròn} thì vẫn còn, vì thông tin vị trí đường thẳng nằm ngay trong phần lẻ của $y_k$.
+
+\textbf{Ý tưởng của Bresenham~\citep{bresenham1965algorithm}.} Để chọn pixel ta không cần biết giá trị $y$ chính xác, mà chỉ cần biết đường thẳng gần ứng viên nào hơn, tức là \textbf{dấu} của $d_1 - d_2$. Với $d_1 = y - y_k$ và $d_2 = (y_k + 1) - y$ tại $x_k + 1$ \citep[slide~6]{dhmt_lec3}:
+\begin{equation}
+d_1 - d_2 = 2m(x_k + 1) + 2b - 1 - 2y_k. \label{eq:w4_d1d2}
+\end{equation}
+Do $\Delta x > 0$, nhân hai vế với $\Delta x$ \textbf{không làm đổi dấu}; đồng thời phân số $m = \Delta y / \Delta x$ bị triệt tiêu mẫu số \citep[slide~7]{dhmt_lec3}:
+\begin{equation}
+p_k = \Delta x\,(d_1 - d_2) = 2\Delta y\,x_k - 2\Delta x\,y_k + C, \qquad C = 2\Delta y + \Delta x(2b - 1). \label{eq:w4_pk}
+\end{equation}
+
+\textbf{Chứng minh $p_k$ luôn là số nguyên.} Hằng số $C$ chứa $b$ là số thực, nhưng vì $(x_0, y_0)$ nằm trên đường thẳng nên $b = y_0 - \frac{\Delta y}{\Delta x}\,x_0$, suy ra $\Delta x \cdot b = \Delta x\,y_0 - \Delta y\,x_0 \in \mathbb{Z}$. Do đó $C = 2\Delta y + 2(\Delta x\,b) - \Delta x \in \mathbb{Z}$. Với $x_k, y_k, \Delta x, \Delta y$ đều nguyên, $p_k \in \mathbb{Z}$ với mọi $k$. Công thức truy hồi \citep[slide~8, 10]{dhmt_lec3}
+\begin{equation}
+p_{k+1} = p_k + 2\Delta y - 2\Delta x\,(y_{k+1} - y_k) =
+\begin{cases}
+p_k + 2\Delta y, & p_k < 0,\\
+p_k + 2\Delta y - 2\Delta x, & p_k \ge 0,
+\end{cases}
+\end{equation}
+chỉ cộng các hằng số nguyên nên mọi phép tính trong vòng lặp là phép cộng, trừ số nguyên.
+
+\textbf{Mối liên hệ giữa hai phương pháp: Bresenham chính là Cách 2 được ``phóng to'' để khử phần lẻ.} Gọi $y^* = m(x_k + 1) + b$ là tung độ thực tại $x_k + 1$. Từ~(\ref{eq:w4_d1d2}), $d_1 - d_2 = 2(y^* - y_k) - 1$, nên
+\begin{equation}
+p_k = 2\Delta x\left(y^* - y_k - \tfrac{1}{2}\right).
+\end{equation}
+Cách 2 chọn $y_{k+1} = \mathrm{Round}(y^*) = y_k + 1$ khi và chỉ khi $y^* - y_k \ge \tfrac{1}{2}$, tức khi và chỉ khi $p_k \ge 0$. Vậy \textbf{hai phương pháp chọn cùng một tập pixel}; điểm khác biệt duy nhất là Cách 2 lưu sai lệch $y^* - y_k$ dưới dạng số thực trong khoảng $[0, 1)$, còn Bresenham lưu cùng đại lượng đó sau khi nhân với $2\Delta x$ và trừ $\Delta x$. Hệ số $2\Delta x$ đúng bằng mẫu số chung nhỏ nhất làm cho cả $m = \Delta y / \Delta x$ lẫn ngưỡng $\tfrac{1}{2}$ trở thành số nguyên.
+
+Bảng~\ref{tab:w4_line_cmp} so sánh chi phí tính toán của ba cách.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh chi phí mỗi bước lặp giữa Cách 1, Cách 2 và Bresenham}
+\label{tab:w4_line_cmp}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|X|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Cách 1: $y = mx + b$} & \textbf{Cách 2: gia số (DDA)} & \textbf{Bresenham} \\
+\hline
+\textbf{Đại lượng lưu} & Không lưu, tính lại từ đầu. & Tung độ thực $y_k$. & Biến quyết định nguyên $p_k$. \\
+\hline
+\textbf{Phép nhân} & 1 phép nhân số thực. & Không. & Không. \\
+\hline
+\textbf{Phép cộng} & 1 phép cộng số thực. & 1 phép cộng số thực. & 1 phép cộng số nguyên. \\
+\hline
+\textbf{Làm tròn} & Có. & Có. & Không. \\
+\hline
+\textbf{Sai số tích lũy} & Không tích lũy. & Có (sai số dấu chấm động cộng dồn). & Không (số học nguyên chính xác). \\
+\hline
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\subsection{Tính giá trị khởi tạo $p_0$}
+\label{subsec:w4_p0}
+
+\textit{Câu hỏi: Tính $p_0$ xem bằng bao nhiêu.}
+
+Để công thức truy hồi được trọn vẹn, cần tính $p_0$ \citep[slide~9]{dhmt_lec3}. Thay $k = 0$ vào~(\ref{eq:w4_pk}):
+\begin{equation}
+p_0 = 2\Delta y\,x_0 - 2\Delta x\,y_0 + 2\Delta y + \Delta x\,(2b - 1).
+\end{equation}
+Vì điểm đầu $(x_0, y_0)$ nằm trên đường thẳng, $y_0 = mx_0 + b \iff b = y_0 - \dfrac{\Delta y}{\Delta x}x_0$, nên $2\Delta x\, b = 2\Delta x\,y_0 - 2\Delta y\,x_0$. Thay vào:
+\begin{align}
+p_0 &= 2\Delta y\,x_0 - 2\Delta x\,y_0 + 2\Delta y + 2\Delta x\,y_0 - 2\Delta y\,x_0 - \Delta x \nonumber\\
+    &= 2\Delta y - \Delta x. \label{eq:w4_p0}
+\end{align}
+Vì $\Delta x, \Delta y$ nguyên nên $p_0$ nguyên \citep[slide~10]{dhmt_lec3}.
+
+% =====================================================================
+\subsection{Vì sao phương pháp Bresenham loại được phép nhân và số thực}
+\label{subsec:w4_bres_int}
+
+\textit{Câu hỏi: Giải thích vì sao phương pháp Bresenham loại được phép nhân và số thực.}
+
+\textbf{Loại phép nhân: nhờ công thức truy hồi.} Biểu thức trực tiếp~(\ref{eq:w4_pk}) chứa các phép nhân $2\Delta y \cdot x_k$ và $2\Delta x \cdot y_k$. Bresenham không tính trực tiếp mà tính hiệu hai bước liên tiếp \citep[slide~8]{dhmt_lec3}:
+\begin{equation}
+p_{k+1} - p_k = 2\Delta y\,(x_{k+1} - x_k) - 2\Delta x\,(y_{k+1} - y_k).
+\end{equation}
+Theo giả thiết, $x_{k+1} - x_k = 1$ và $y_{k+1} - y_k \in \{0, 1\}$. Do đó hiệu này chỉ nhận đúng \textbf{hai giá trị hằng số}: $2\Delta y$ hoặc $2\Delta y - 2\Delta x$. Hai hằng số này được tính \textbf{một lần duy nhất} trước vòng lặp (bước B3 \citep[slide~11]{dhmt_lec3}); phép nhân với $2$ cũng chỉ là phép dịch bit. Trong vòng lặp chỉ còn một phép so sánh dấu và một phép cộng.
+
+\textbf{Loại số thực: nhờ chỉ quan tâm đến dấu.} Như đã chứng minh ở mục~\ref{subsec:w4_bres_vs_dda}, quyết định chọn pixel chỉ phụ thuộc vào dấu của $d_1 - d_2$. Nhân với $\Delta x > 0$ không đổi dấu nhưng triệt tiêu mẫu số của $m$, đưa mọi đại lượng về số nguyên.
+
+\textbf{Chứng minh quy nạp: $p_k \in \mathbb{Z}$ với mọi $k$.}
+\begin{itemize}
+    \item \textit{Cơ sở:} $p_0 = 2\Delta y - \Delta x \in \mathbb{Z}$ theo~(\ref{eq:w4_p0}).
+    \item \textit{Bước quy nạp:} giả sử $p_k \in \mathbb{Z}$. Khi đó $p_{k+1} = p_k + 2\Delta y$ hoặc $p_{k+1} = p_k + 2\Delta y - 2\Delta x$, là tổng của các số nguyên, nên $p_{k+1} \in \mathbb{Z}$.
+\end{itemize}
+Đồng thời $x_{k+1} = x_k + 1$ và $y_{k+1} \in \{y_k, y_k + 1\}$ đều nguyên. Vậy toàn bộ thuật toán chỉ dùng phép cộng, trừ số nguyên với hai hằng số \citep[slide~10]{dhmt_lec3}.
+
+% =====================================================================
+\subsection{Thuật toán vẽ đường tròn cho kết quả ``nham nhở'' thì có được áp dụng hay không}
+\label{subsec:w4_circle_apply}
+
+\textit{Câu hỏi: Thuật toán vẽ đường tròn cho ra hình nham nhở như vậy thì có được áp dụng hay không?}
+
+\textbf{Có, vẫn được áp dụng}, vì hiện tượng răng cưa (aliasing, staircase effect) không phải là lỗi của thuật toán mà là giới hạn tất yếu của việc rời rạc hóa: đường tròn là đường cong liên tục, còn màn hình chỉ có các điểm ảnh tại tọa độ nguyên. \textbf{Mọi} thuật toán vẽ trên lưới nguyên đều cho kết quả bậc thang. Câu hỏi đúng là thuật toán có đáp ứng ba yêu cầu của bài toán \citep[slide~3]{dhmt_lec4} hay không:
+\begin{enumerate}
+    \item \textbf{Xấp xỉ tốt nhất:} tại mỗi cột $x_k + 1$, đường tròn cắt cột tại $y^* = \sqrt{r^2 - (x_k + 1)^2}$. Vì $y_k - \tfrac12 > 0$, ta có
+    \begin{equation}
+    p_k < 0 \iff (x_k + 1)^2 + \left(y_k - \tfrac12\right)^2 < r^2 \iff y_k - \tfrac12 < y^*,
+    \end{equation}
+    tức là thuật toán chọn $y_k$ khi và chỉ khi $y^*$ gần $y_k$ hơn $y_k - 1$. Vậy pixel được chọn luôn là ứng viên gần đường tròn thật nhất theo phương thẳng đứng, và sai lệch không quá nửa pixel (chứng minh chi tiết ở mục~\ref{subsec:w4_midpoint}). Không thuật toán nào trên cùng lưới làm tốt hơn.
+    \item \textbf{Liên tục lân cận 8:} được chứng minh ở mục~\ref{subsec:w4_circle_8conn}.
+    \item \textbf{Độ phức tạp thấp:} chỉ dùng cộng, trừ số nguyên (mục~\ref{subsec:w4_circle_p0}); chỉ tính $1/8$ đường tròn, phần còn lại suy ra bằng đối xứng (mục~\ref{subsec:w4_circle_sym}).
+\end{enumerate}
+Độ ``nham nhở'' giảm khi độ phân giải tăng: sai lệch tuyệt đối luôn $\le 0.5$ pixel, nên khi pixel càng nhỏ so với bán kính thì mắt người càng khó nhận ra bậc thang. Nếu cần mịn hơn nữa, người ta bổ sung các kỹ thuật khử răng cưa (anti-aliasing) như lấy mẫu dày (supersampling) hoặc tô cường độ pixel theo khoảng cách đến đường cong (thuật toán Xiaolin Wu). Các kỹ thuật này được đặt \emph{bên trên} thuật toán midpoint chứ không thay thế nó.
+
+% =====================================================================
+\subsection{Chọn pixel để đảm bảo liên tục trong lân cận 8 khi vẽ đường tròn}
+\label{subsec:w4_circle_8conn}
+
+\textit{Câu hỏi: Chọn pixel như thế nào để liên tục trong lân cận 8 trong phép vẽ đường tròn?}
+
+Trong lân cận 8 của pixel hiện tại $(x_k, y_k)$ có tám ứng viên. Bài giảng chỉ xét cung $1/8$ từ $90^\circ$ đến $45^\circ$, tâm $O(0,0)$ \citep[slide~4]{dhmt_lec4}, và tại bước $k+1$ chỉ chọn giữa hai pixel $(x_k + 1, y_k)$ và $(x_k + 1, y_k - 1)$ \citep[slide~6]{dhmt_lec4}. Ta chứng minh lựa chọn này đủ để đảm bảo liên tục.
+
+\textbf{Bước 1: trong bát phân đang xét, $x$ là trục chính.} Trên cung $90^\circ \to 45^\circ$ ta có $0 \le x \le y$. Đạo hàm từ phương trình $x^2 + y^2 = r^2$:
+\begin{equation}
+2x + 2y\frac{dy}{dx} = 0 \;\Longrightarrow\; \frac{dy}{dx} = -\frac{x}{y} \in [-1, 0].
+\end{equation}
+Vậy khi đi theo chiều $x$ tăng, $y$ giảm (hoặc không đổi) và độ dốc có độ lớn không quá $1$. Theo định lý giá trị trung bình, khi $x$ tăng $1$ đơn vị thì $y$ giảm một lượng $|\Delta y| = |dy/dx|_{\xi} \le 1$.
+
+\textbf{Bước 2: hai ứng viên là đủ.} Vì $x$ tăng đúng $1$ và $y$ giảm trong $[0, 1]$, pixel kế tiếp chỉ có thể là $(x_k + 1, y_k)$ (hướng Đông) hoặc $(x_k + 1, y_k - 1)$ (hướng Đông Nam). Cả hai đều thuộc lân cận 8 của $(x_k, y_k)$, nên chọn pixel nào cũng đảm bảo liên tục. Sáu lân cận còn lại bị loại: đi lùi $x$ hoặc tăng $y$ trái với chiều của cung; đứng yên $x$ sẽ vẽ hai pixel trên một cột, làm nét dày lên.
+
+\textbf{Bước 3: điều kiện dừng.} Khi $x \ge y$ ta đã vượt qua đường $y = x$ (góc $45^\circ$), ở đó $|dy/dx| > 1$ và $y$ trở thành trục chính. Vì vậy thuật toán dừng tại $x \ge y$ \citep[slide~12]{dhmt_lec4}.
+
+\textbf{Bước 4: tính liên tục được bảo toàn qua phép đối xứng.} Bảy cung còn lại có được nhờ đối xứng qua $x = 0$, $y = 0$, $y = \pm x$ (mục~\ref{subsec:w4_circle_sym}). Các phép đối xứng này là đẳng cự biến $\mathbb{Z}^2$ vào chính nó nên hoán vị 8 lân cận (giống lập luận ở mục~\ref{subsec:w4_assumption}). Hai pixel kề nhau trong lân cận 8 vẫn kề nhau sau biến đổi, nên toàn bộ đường tròn liên tục.
+
+% =====================================================================
+\subsection{Vị trí midpoint quyết định pixel nào gần đường tròn hơn}
+\label{subsec:w4_midpoint}
+
+\textit{Câu hỏi: Chứng minh: nếu midpoint của đoạn đang xét nằm bên trong đường tròn thì một trong hai pixel ứng viên gần đường tròn hơn, và ngược lại khi midpoint nằm bên ngoài.}
+
+\textbf{Thiết lập.} Hàm đường tròn $f_{\text{circle}}(x, y) = x^2 + y^2 - r^2$ âm bên trong, bằng $0$ trên biên và dương bên ngoài đường tròn \citep[slide~8]{dhmt_lec4}. Midpoint giữa hai ứng viên là $M = (x_k + 1, y_k - \tfrac12)$, và
+\begin{equation}
+p_k = f_{\text{circle}}\left(x_k + 1, y_k - \tfrac12\right) = (x_k + 1)^2 + \left(y_k - \tfrac12\right)^2 - r^2.
+\end{equation}
+Gọi $y^* = \sqrt{r^2 - (x_k + 1)^2}$ là tung độ giao điểm của đường tròn với cột $x = x_k + 1$, nằm giữa hai ứng viên: $y_k - 1 \le y^* \le y_k$ (theo mục~\ref{subsec:w4_circle_8conn}). Trên cột này, $f(x_k + 1, y) = y^2 - y^{*2}$ là hàm đồng biến theo $y$ với $y \ge 0$.
+
+\textbf{Trường hợp 1: $M$ nằm bên trong đường tròn ($p_k < 0$).}
+\begin{equation}
+p_k < 0 \iff \left(y_k - \tfrac12\right)^2 < y^{*2} \iff y_k - \tfrac12 < y^* \qquad (\text{vì } y_k - \tfrac12 > 0,\; y^* \ge 0).
+\end{equation}
+Khi đó khoảng cách đến ứng viên trên là $d_{\text{trên}} = y_k - y^* < \tfrac12$, còn khoảng cách đến ứng viên dưới là $d_{\text{dưới}} = y^* - (y_k - 1) > \tfrac12$. Vậy $d_{\text{trên}} < d_{\text{dưới}}$: \textbf{pixel trên $(x_k + 1, y_k)$ gần đường tròn hơn} và được chọn \citep[slide~9]{dhmt_lec4}.
+
+\textbf{Trường hợp 2: $M$ nằm bên ngoài hoặc trên đường tròn ($p_k \ge 0$).} Tương tự, $p_k \ge 0 \iff y^* \le y_k - \tfrac12$, suy ra $d_{\text{dưới}} = y^* - y_k + 1 \le \tfrac12 \le d_{\text{trên}}$: \textbf{pixel dưới $(x_k + 1, y_k - 1)$ gần hơn hoặc cách đều}, và được chọn.
+
+\textbf{Giải thích hình học.} Midpoint nằm trong đường tròn nghĩa là đường tròn đi qua cột $x_k + 1$ \emph{phía trên} $M$, tức ở nửa trên của đoạn nối hai ứng viên, nên gần pixel trên hơn. Midpoint nằm ngoài nghĩa là đường tròn đi qua \emph{phía dưới} $M$, nên gần pixel dưới hơn. Đây chính là lý do điểm giữa được dùng làm điểm thử \citep[slide~8]{dhmt_lec4}.
+
+% =====================================================================
+\subsection{Khử phân số $5/4$ trong $p_0$ của thuật toán vẽ đường tròn}
+\label{subsec:w4_circle_p0}
+
+\textit{Câu hỏi: Với $p_0$ trong thuật toán vẽ đường tròn vướng phân số $5/4$, có cách nào đưa nó về hoàn toàn số nguyên không? Chứng minh điều này không ảnh hưởng đến kết quả (thay $p_0$ bằng $p_0'$).}
+
+\textbf{Công thức gốc.} Từ (1), (2) của bài giảng \citep[slide~8, 9]{dhmt_lec4}, với $x_{k+1} = x_k + 1$:
+\begin{align}
+p_{k+1} - p_k &= \left[(x_k + 2)^2 + \left(y_{k+1} - \tfrac12\right)^2\right] - \left[(x_k + 1)^2 + \left(y_k - \tfrac12\right)^2\right] \nonumber\\
+&= (2x_k + 3) + (y_{k+1}^2 - y_k^2) - (y_{k+1} - y_k) \nonumber\\
+\Longrightarrow\; p_{k+1} &= p_k + 2(x_k + 1) + (y_{k+1}^2 - y_k^2) - (y_{k+1} - y_k) + 1. \label{eq:w4_circ_rec}
+\end{align}
+Thay $y_{k+1} = y_k$ hoặc $y_{k+1} = y_k - 1$ \citep[slide~10]{dhmt_lec4}:
+\begin{equation}
+p_{k+1} =
+\begin{cases}
+p_k + 2x_{k+1} + 1, & p_k < 0,\\
+p_k + 2x_{k+1} - 2y_{k+1} + 1, & p_k \ge 0,
+\end{cases}
+\label{eq:w4_circ_cases}
+\end{equation}
+và giá trị khởi tạo tại midpoint đầu tiên giữa $(1, r)$ và $(1, r - 1)$:
+\begin{equation}
+p_0 = f_{\text{circle}}\left(1, r - \tfrac12\right) = 1 + \left(r - \tfrac12\right)^2 - r^2 = \frac54 - r.
+\end{equation}
+Bài giảng đề xuất làm tròn thành $p_0' = 1 - r$ khi $r$ nguyên \citep[slide~11]{dhmt_lec4}.
+
+\textbf{Định lý.} Với $r$ nguyên, dãy $p_k$ (khởi tạo $\frac54 - r$) và dãy $p_k'$ (khởi tạo $1 - r$), cùng cập nhật theo~(\ref{eq:w4_circ_cases}) với cùng điểm xuất phát $(0, r)$, sinh ra \textbf{cùng một dãy pixel}.
+
+\textbf{Chứng minh (quy nạp).} Ta chứng minh với mọi $k$: (i) hai thuật toán đã chọn cùng các pixel $(x_0, y_0), \ldots, (x_k, y_k)$; (ii) $p_k' \in \mathbb{Z}$; (iii) $p_k = p_k' + \frac14$.
+\begin{itemize}
+    \item \textit{Cơ sở $k = 0$:} cùng điểm $(0, r)$; $p_0' = 1 - r \in \mathbb{Z}$; $p_0 - p_0' = \frac54 - 1 = \frac14$.
+    \item \textit{Hai thuật toán đưa ra cùng quyết định ở bước $k$.} Vì $p_k' \in \mathbb{Z}$:
+    \begin{equation}
+    p_k < 0 \iff p_k' + \tfrac14 < 0 \iff p_k' < -\tfrac14 \iff p_k' \le -1 \iff p_k' < 0.
+    \end{equation}
+    Không có số nguyên nào nằm trong khoảng $[-\frac14, 0)$, nên $p_k$ và $p_k'$ luôn cùng dấu theo nghĩa của phép thử. Hai thuật toán chọn cùng pixel $(x_{k+1}, y_{k+1})$.
+    \item \textit{Bước quy nạp:} vì cùng quyết định và cùng $(x_{k+1}, y_{k+1})$, số gia ở~(\ref{eq:w4_circ_cases}) của hai dãy bằng nhau và là số nguyên ($2x_{k+1} + 1$ hoặc $2x_{k+1} - 2y_{k+1} + 1$). Do đó $p_{k+1}' = p_k' + (\text{số nguyên}) \in \mathbb{Z}$ và $p_{k+1} - p_{k+1}' = p_k - p_k' = \frac14$.
+\end{itemize}
+Theo nguyên lý quy nạp, hai thuật toán cho cùng kết quả ở mọi bước. $\blacksquare$
+
+\textbf{Nhận xét.} Chứng minh cho thấy $p_k$ gốc luôn có dạng ``số nguyên $+ \frac14$'', nên không bao giờ bằng $0$ và phần $\frac14$ không bao giờ làm thay đổi kết quả phép thử dấu. Đó chính là lý do có thể bỏ đi \citep[slide~11]{dhmt_lec4}.
+
+\textbf{Cách khác (chính xác tuyệt đối):} nhân toàn bộ biến quyết định với $4$, đặt $P_k = 4p_k$. Khi đó $P_0 = 5 - 4r$, các số gia trở thành $8x_{k+1} + 4$ và $8x_{k+1} - 8y_{k+1} + 4$, tất cả đều nguyên. Vì nhân với $4 > 0$ không đổi dấu, kết quả không đổi. Cách này giống hệt ý tưởng nhân với $\Delta x$ của Bresenham vẽ đoạn thẳng (mục~\ref{subsec:w4_bres_vs_dda}), nhưng tốn thêm phép dịch bit nên cách $p_0' = 1 - r$ gọn hơn.
+
+% =====================================================================
+\subsection{Tọa độ 7 điểm đối xứng còn lại trong thuật toán vẽ đường tròn}
+\label{subsec:w4_circle_sym}
+
+\textit{Câu hỏi: Tọa độ 7 điểm còn lại trong thuật toán vẽ đường tròn được tính như thế nào?}
+
+Thuật toán chỉ tính các điểm $(x, y)$ trên cung từ $90^\circ$ đến $45^\circ$ của đường tròn tâm $O(0, 0)$, nhờ tính đối xứng của đường tròn qua các trục $x = 0$, $y = 0$, $y = \pm x$ \citep[slide~4, 5]{dhmt_lec4}. Bước B8 xác định 7 điểm đối xứng, bước B9 tịnh tiến theo tâm \citep[slide~12]{dhmt_lec4}.
+
+\textbf{Chứng minh.} Điểm $(x, y)$ thuộc đường tròn khi và chỉ khi $x^2 + y^2 = r^2$. Vì $(-x)^2 = x^2$, $(-y)^2 = y^2$ và $x^2 + y^2 = y^2 + x^2$, nên khi đổi dấu một tọa độ hoặc đổi chỗ hai tọa độ, đẳng thức vẫn đúng. Do đó cả tám điểm $(\pm x, \pm y)$ và $(\pm y, \pm x)$ đều thuộc đường tròn. Về mặt hình học, đổi dấu $x$ là đối xứng qua trục $Oy$, đổi dấu $y$ là đối xứng qua trục $Ox$, đổi chỗ $x, y$ là đối xứng qua đường $y = x$. Hình~\ref{fig:w4_octant} và Bảng~\ref{tab:w4_octant} cho vị trí của tám điểm.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=1.6]
+    \draw[->] (-2.1,0) -- (2.2,0) node[right] {$x$};
+    \draw[->] (0,-2.1) -- (0,2.2) node[above] {$y$};
+    \draw[dashed, gray] (-1.9,-1.9) -- (1.9,1.9) node[above right, black] {$y = x$};
+    \draw[dashed, gray] (-1.9,1.9) -- (1.9,-1.9) node[below right, black] {$y = -x$};
+    \draw[thick] (0,0) circle (1.8);
+    \draw[very thick, blue] (90:1.8) arc (90:45:1.8);
+    \foreach \a/\lab/\pos in {70/{(x,y)}/above right, 20/{(y,x)}/right, -20/{(y,-x)}/right, -70/{(x,-y)}/below right, -110/{(-x,-y)}/below left, -160/{(-y,-x)}/left, 160/{(-y,x)}/left, 110/{(-x,y)}/above left}
+        \fill (\a:1.8) circle (1.3pt) node[\pos, font=\scriptsize] {$\lab$};
+    \node[font=\scriptsize] at (0.12,-0.15) {$O$};
+\end{tikzpicture}
+\caption{Tám điểm đối xứng của đường tròn; cung tô đậm ($90^\circ \to 45^\circ$) là cung được tính bởi thuật toán}
+\label{fig:w4_octant}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Tọa độ 8 điểm đối xứng (tâm $O$) và sau khi tịnh tiến theo tâm $C(x_c, y_c)$}
+\label{tab:w4_octant}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Cung} & \textbf{Phép đối xứng từ $(x, y)$} & \textbf{Tâm $O$} & \textbf{Tâm $C(x_c, y_c)$} \\
+\hline
+$90^\circ \to 45^\circ$ & Gốc (được tính) & $(x, y)$ & $(x_c + x, y_c + y)$ \\
+$45^\circ \to 0^\circ$ & Qua $y = x$ & $(y, x)$ & $(x_c + y, y_c + x)$ \\
+$0^\circ \to -45^\circ$ & Qua $y = x$ rồi qua $Ox$ & $(y, -x)$ & $(x_c + y, y_c - x)$ \\
+$-45^\circ \to -90^\circ$ & Qua $Ox$ & $(x, -y)$ & $(x_c + x, y_c - y)$ \\
+$-90^\circ \to -135^\circ$ & Qua $O$ & $(-x, -y)$ & $(x_c - x, y_c - y)$ \\
+$-135^\circ \to -180^\circ$ & Qua $y = -x$ & $(-y, -x)$ & $(x_c - y, y_c - x)$ \\
+$180^\circ \to 135^\circ$ & Qua $y = x$ rồi qua $Oy$ & $(-y, x)$ & $(x_c - y, y_c + x)$ \\
+$135^\circ \to 90^\circ$ & Qua $Oy$ & $(-x, y)$ & $(x_c - x, y_c + y)$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Tịnh tiến theo tâm.} Đường tròn tâm $C(x_c, y_c)$ là ảnh của đường tròn tâm $O$ qua phép tịnh tiến theo vector $(x_c, y_c)$, nên mỗi điểm tính được chỉ cần cộng thêm $(x_c, y_c)$. Đây là phép cộng số nguyên nên không làm tăng độ phức tạp.
+
+\textbf{Lưu ý:} khi $x = 0$ (điểm đầu $(0, r)$) hoặc $x = y$ (điểm trên đường $45^\circ$), một số điểm trong tám điểm trùng nhau và có thể bỏ bớt để không vẽ một pixel hai lần.
+
+% =====================================================================
+\subsection{Mô tả quá trình Text-to-Vector (theo bài đăng text2vector)}
+\label{subsec:w4_text2vector}
+
+\textit{Câu hỏi: Xem bài đăng text2vector rồi mô tả quá trình.}
+
+\textbf{Bài toán.} Text-to-Vector Graphics Generation (Text-to-SVG) là bài toán chuyển một câu mô tả bằng ngôn ngữ tự nhiên thành hình đồ họa vector, thường ở định dạng SVG (Scalable Vector Graphics)~\citep{w3c2018svg2}. Ví dụ, với đầu vào \textit{``Một con chim màu đỏ đang đậu trên cành cây, nền trắng, phong cách hoạt hình đơn giản''}, đầu ra là một tệp SVG gồm các đối tượng hình học như thân, đầu, cánh, mắt, mỏ chim và cành cây; mỗi đối tượng được biểu diễn bằng đường cong Bézier, màu tô và các thuộc tính hình học. Khác với ảnh raster lưu giá trị từng pixel, SVG lưu các đối tượng và tham số hình học để dựng hình, nên phóng to tùy ý mà không vỡ hạt và chỉnh sửa được từng thành phần.
+
+\textbf{Cấu trúc của một tệp SVG.} SVG là định dạng dựa trên XML, có cấu trúc cây tương tự DOM của HTML~\citep{w3c2018svg2}:
+\begin{itemize}
+    \item Phần tử gốc \texttt{<svg>} khai báo không gian tọa độ và kích thước canvas (\texttt{width}, \texttt{height}, \texttt{viewBox}).
+    \item \texttt{<defs>} chứa các định nghĩa dùng lại được: gradient, vùng cắt (\texttt{clipPath}), bộ lọc.
+    \item \texttt{<g>} gom nhóm các đối tượng và có thể lồng nhau, biểu diễn quan hệ bộ phận -- toàn thể (ví dụ nhóm \texttt{bird} chứa \texttt{body}, \texttt{head}, \texttt{wing}, \texttt{eye}).
+    \item Các phần tử hình học cơ sở: \texttt{<rect>}, \texttt{<circle>}, \texttt{<ellipse>}, \texttt{<line>}, \texttt{<polyline>}, \texttt{<polygon>} và quan trọng nhất là \texttt{<path>}. Thuộc tính \texttt{d} của \texttt{<path>} là chuỗi lệnh: \texttt{M} (di chuyển), \texttt{L}/\texttt{H}/\texttt{V} (đoạn thẳng), \texttt{C}/\texttt{S} (Bézier bậc ba), \texttt{Q}/\texttt{T} (Bézier bậc hai), \texttt{A} (cung elip), \texttt{Z} (đóng đường); chữ hoa dùng tọa độ tuyệt đối, chữ thường dùng tọa độ tương đối.
+    \item Mỗi phần tử mang thuộc tính kiểu dáng (\texttt{fill}, \texttt{stroke}, \texttt{opacity}) và phép biến đổi (\texttt{transform}: tịnh tiến, quay, co giãn).
+\end{itemize}
+Dưới góc nhìn mô hình học máy, một hình vector có thể được mô hình hóa thành tập đối tượng $V = \{O_1, \ldots, O_N\}$ với $O_i = (G_i, \theta_i, S_i, T_i, Z_i)$: loại primitive và cấu trúc path, tham số hình học (tọa độ điểm điều khiển), kiểu dáng, phép biến đổi và thứ tự chồng lớp.
+
+\textbf{Quy trình tổng quát gồm năm công đoạn.}
+\begin{enumerate}
+    \item \textbf{Hiểu câu mô tả (Text Understanding).} Câu mô tả $T$ được đưa qua bộ mã hóa văn bản (CLIP~\citep{radford2021learning}, T5, BERT) hoặc một mô hình ngôn ngữ lớn để trích xuất các đối tượng (chim, cành cây), thuộc tính (chim màu đỏ), quan hệ không gian (chim đậu trên cành), nền và phong cách. Kết quả là một biểu diễn ngữ nghĩa hoặc vector nhúng $z_{\text{text}} = E_\theta(T)$.
+    \item \textbf{Lập bố cục (Scene \& Layout Planning).} Xác định vị trí, kích thước của từng đối tượng trên canvas và thứ tự lớp trước -- sau, có thể biểu diễn bằng đồ thị cảnh (Scene Graph) hoặc các hộp bao.
+    \item \textbf{Sinh hình học vector (Vector Generation).} Mỗi đối tượng được chuyển thành các primitive vector: đường cong Bézier, hình tròn, elip, hình chữ nhật, kèm màu tô, nét viền và phép biến đổi. Đường cong Bézier bậc ba có dạng
+    \begin{equation}
+    B(t) = (1 - t)^3 P_0 + 3(1 - t)^2 t\, P_1 + 3(1 - t) t^2 P_2 + t^3 P_3, \qquad 0 \le t \le 1,
+    \end{equation}
+    trong đó các điểm điều khiển $P_0, \ldots, P_3$ quyết định hình dạng đường cong. Hệ thống có thể sinh trực tiếp mã SVG hoặc dự đoán các tham số hình học rồi chuyển thành mã SVG.
+    \item \textbf{Kết xuất và tối ưu (Rendering \& Optimization).} Tập vector $V$ được kết xuất thành ảnh raster $I = R(V)$ để so sánh với câu mô tả bằng mô hình thị giác -- ngôn ngữ. Các tham số vector được điều chỉnh để giảm hàm mất mát, ví dụ
+    \begin{equation}
+    \mathcal{L} = \lambda_1 \mathcal{L}_{\text{semantic}} + \lambda_2 \mathcal{L}_{\text{geometry}} + \lambda_3 \mathcal{L}_{\text{regularization}}.
+    \end{equation}
+    Bước này đòi hỏi bộ kết xuất khả vi như DiffVG~\citep{li2020diffvg} để lan truyền gradient từ ảnh về tọa độ điểm điều khiển. Bước tối ưu thường gặp trong VectorFusion~\citep{jain2023vectorfusion} và SVGDreamer~\citep{xing2024svgdreamer}, nhưng không bắt buộc ở mọi kiến trúc.
+    \item \textbf{Kiểm tra và xuất SVG.} Kiểm tra mã SVG có hợp lệ, hình có đúng mô tả và các đối tượng có chỉnh sửa độc lập được hay không, rồi xuất tệp \texttt{.svg} để mở bằng trình duyệt hoặc chỉnh sửa bằng Inkscape, Adobe Illustrator.
+\end{enumerate}
+Không phải mô hình nào cũng triển khai đủ năm công đoạn; chẳng hạn mô hình tự hồi quy có thể sinh thẳng mã SVG từ câu mô tả mà không cần đồ thị cảnh tường minh.
+
+\textbf{Hai kiến trúc triển khai chính.}
+\begin{itemize}
+    \item \textbf{Kiến trúc A -- sinh trực tiếp mã SVG:} câu mô tả $\to$ mô hình ngôn ngữ (đa phương thức) $\to$ mã SVG. Mã SVG được coi là chuỗi token và sinh theo cơ chế dự đoán token kế tiếp:
+    \begin{equation}
+    P(V \mid T) = \prod_{k=1}^{m} P(v_k \mid v_{<k}, T),
+    \end{equation}
+    tiêu biểu là StarVector~\citep{rodriguez2025starvector}.
+    \item \textbf{Kiến trúc B -- tối ưu tham số vector:} mô hình khuếch tán văn bản -- ảnh cung cấp tín hiệu hướng dẫn, gradient được lan truyền qua bộ kết xuất khả vi để cập nhật trực tiếp các tham số vector, tiêu biểu là VectorFusion~\citep{jain2023vectorfusion}.
+\end{itemize}
+
+\textbf{Liên kết giữa token của câu mô tả và hình vector.} Để biết cụm từ nào điều khiển đối tượng, thuộc tính hay đường vector nào, có thể mã hóa câu thành $H_T \in \mathbb{R}^{N \times d}$, mã hóa các primitive SVG thành $H_V \in \mathbb{R}^{M \times d}$ rồi tính ma trận chú ý chéo
+\begin{equation}
+A = \mathrm{softmax}\!\left(\frac{Q K^\top}{\sqrt{d_k}}\right) \in \mathbb{R}^{M \times N}, \qquad Q = H_V W_Q,\; K = H_T W_K,
+\end{equation}
+trong đó $A_{ji}$ là mức liên quan giữa primitive $j$ và token $i$. Liên kết cần xét ở nhiều cấp: đối tượng (\textit{bird} $\leftrightarrow$ nhóm \texttt{<g id="bird">}), thuộc tính (\textit{red} $\leftrightarrow$ \texttt{fill}), primitive (\textit{bird} $\leftrightarrow$ các \texttt{<path>}, \texttt{<circle>} tạo thành con chim) và quan hệ (\textit{sitting on} $\leftrightarrow$ vị trí tương đối giữa chim và cành). SVGDreamer~\citep{xing2024svgdreamer} là ví dụ dùng bản đồ chú ý chéo của mô hình khuếch tán để phân bố các điểm điều khiển Bézier theo vùng ngữ nghĩa của từng token đối tượng.
+
+\textbf{Liên hệ với nội dung tuần này.} Hình vector chỉ là mô tả toán học; để hiển thị lên màn hình, bộ kết xuất $R(V)$ phải rời rạc hóa từng \texttt{<line>}, \texttt{<circle>}, \texttt{<ellipse>} và đường cong thành pixel. Đó chính là bài toán mà các thuật toán vẽ đường thẳng và đường tròn ở tuần này giải quyết.
+
+% =====================================================================
+\subsection{Ý nghĩa của góc $\alpha$ trong hệ tọa độ cực khi vẽ đường elip}
+\label{subsec:w4_ellipse_alpha}
+
+\textit{Câu hỏi: Góc $\alpha$ trong hệ tọa độ cực đối với hình elip có ý nghĩa gì? (gợi ý: slide trang 5 bài vẽ elip)}
+
+\textbf{Dựng elip bằng phương pháp hai đường tròn đồng tâm (Concentric Circles Method).} Xét elip tâm $O(0, 0)$ với bán trục lớn $a$ (theo $Ox$) và bán trục nhỏ $b$ (theo $Oy$):
+\begin{equation}
+\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1.
+\end{equation}
+Cách dựng như sau (Hình~\ref{fig:w4_ellipse}):
+\begin{enumerate}
+    \item Vẽ hai đường tròn đồng tâm $O$: đường tròn lớn bán kính $a$ và đường tròn nhỏ bán kính $b$.
+    \item Từ tâm $O$ kẻ một tia hợp với trục $Ox$ góc $\alpha$. Tia cắt đường tròn lớn tại $A(a\cos\alpha,\, a\sin\alpha)$ và đường tròn nhỏ tại $B(b\cos\alpha,\, b\sin\alpha)$.
+    \item Từ $A$ kẻ đường thẳng song song với $Oy$, từ $B$ kẻ đường thẳng song song với $Ox$. Giao điểm $P$ của hai đường này lấy hoành độ của $A$ và tung độ của $B$:
+    \begin{equation}
+    P(\alpha) = (a\cos\alpha,\; b\sin\alpha).
+    \end{equation}
+    \item Cho $\alpha$ chạy từ $0$ đến $2\pi$, điểm $P(\alpha)$ vạch nên toàn bộ elip.
+\end{enumerate}
+
+\textbf{Chứng minh $P$ nằm trên elip.}
+\begin{equation}
+\frac{(a\cos\alpha)^2}{a^2} + \frac{(b\sin\alpha)^2}{b^2} = \cos^2\alpha + \sin^2\alpha = 1.
+\end{equation}
+Ngược lại, với mọi điểm $(x, y)$ trên elip, $\left(\frac{x}{a}\right)^2 + \left(\frac{y}{b}\right)^2 = 1$ nên tồn tại duy nhất $\alpha \in [0, 2\pi)$ với $\cos\alpha = x/a$, $\sin\alpha = y/b$. Vậy phép dựng cho đúng và đủ các điểm của elip.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=1.15]
+    \def\a{2.4} \def\b{1.4} \def\al{50}
+    \draw[->] (-2.8,0) -- (2.9,0) node[right] {$x$};
+    \draw[->] (0,-2.7) -- (0,2.8) node[above] {$y$};
+    \draw[gray] (0,0) circle (\a);
+    \draw[gray] (0,0) circle (\b);
+    \draw[very thick, blue] (0,0) ellipse ({\a} and {\b});
+    \coordinate (A) at (\al:\a);
+    \coordinate (B) at (\al:\b);
+    \coordinate (P) at ({\a*cos(\al)},{\b*sin(\al)});
+    \draw (0,0) -- (A);
+    \draw[dashed] (A) -- (P);
+    \draw[dashed] (B) -- (P);
+    \draw[dotted] (0,0) -- (P);
+    \fill (A) circle (1.5pt) node[above right] {$A$};
+    \fill (B) circle (1.5pt) node[above left] {$B$};
+    \fill[red] (P) circle (1.8pt) node[below right] {$P(a\cos\alpha,\, b\sin\alpha)$};
+    \draw (0.55,0) arc (0:\al:0.55);
+    \node at (25:0.8) {$\alpha$};
+    \draw (0.95,0) arc (0:{atan(\b/\a*tan(\al))}:0.95);
+    \node at (12:1.22) {$\theta$};
+    \node[below] at (\a,0) {$a$};
+    \node[below left] at (\b,0) {$b$};
+\end{tikzpicture}
+\caption{Dựng elip bằng hai đường tròn đồng tâm bán kính $a$ và $b$: $\alpha$ là góc của tia $OA$, còn $\theta$ là góc cực thật của điểm $P$}
+\label{fig:w4_ellipse}
+\end{figure}
+
+\textbf{Ý nghĩa của góc $\alpha$.}
+\begin{itemize}
+    \item \textbf{$\alpha$ là tham số của elip, gọi là góc tâm sai (eccentric angle):} $\alpha$ là góc cực của điểm $A$ trên \emph{đường tròn phụ} bán kính $a$, không phải góc cực của chính điểm $P$ trên elip. Mỗi giá trị $\alpha$ xác định đúng một điểm $P(\alpha)$, nên $\alpha$ đóng vai trò biến chạy khi vẽ elip.
+    \item \textbf{Quan hệ với góc cực thật $\theta$ của $P$:} vì $\tan\theta = \dfrac{y}{x} = \dfrac{b\sin\alpha}{a\cos\alpha}$ nên
+    \begin{equation}
+    \tan\theta = \frac{b}{a}\tan\alpha.
+    \end{equation}
+    Do đó $\theta = \alpha$ chỉ khi $\alpha$ là bội của $90^\circ$ (tại các đỉnh của elip) hoặc khi $a = b$. Với $a > b$, điểm $P$ luôn ``lệch'' về phía trục lớn so với tia $OA$ ($|\theta| \le |\alpha|$ trong góc phần tư thứ nhất).
+    \item \textbf{Elip là ảnh của đường tròn qua phép co giãn:} phép co theo trục $Oy$ với hệ số $b/a$, $(x, y) \mapsto \left(x, \frac{b}{a}y\right)$, biến điểm $A(a\cos\alpha, a\sin\alpha)$ của đường tròn lớn thành $P(a\cos\alpha, b\sin\alpha)$. Góc $\alpha$ chính là góc tham số của đường tròn gốc được giữ nguyên qua phép co giãn này. Khi $a = b$, elip trở thành đường tròn và $\alpha$ trùng với góc cực thông thường.
+    \item \textbf{Ý nghĩa khi vẽ:} cho $\alpha$ tăng đều với bước $\Delta\alpha$, độ dài cung giữa hai điểm liên tiếp xấp xỉ
+    \begin{equation}
+    \Delta s \approx \sqrt{a^2\sin^2\alpha + b^2\cos^2\alpha}\;\Delta\alpha.
+    \end{equation}
+    Gần đỉnh trục lớn ($\alpha \approx 0$) ta có $\Delta s \approx b\,\Delta\alpha$, còn gần đỉnh trục nhỏ ($\alpha \approx 90^\circ$) ta có $\Delta s \approx a\,\Delta\alpha$. Vậy các điểm dày ở hai đầu trục lớn và thưa ở hai đầu trục nhỏ. Để các điểm liên tiếp không cách nhau quá một pixel (liên tục lân cận 8), cần chọn $\Delta\alpha \le 1/\max(a, b)$. Ngoài ra elip đối xứng qua $Ox$ và $Oy$, nên chỉ cần cho $\alpha$ chạy trong $[0, 90^\circ]$ rồi suy ra ba điểm $(\pm x, \pm y)$ còn lại.
+\end{itemize}
+
