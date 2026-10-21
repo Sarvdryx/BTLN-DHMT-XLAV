@@ -1,14 +1,423 @@
-\section{Tuần 4: Phân đoạn Ảnh và Biến đổi Hough}
+\section{Tuần 4: Hệ Tọa độ, Cơ chế Chiếu và Giải thuật Vẽ Đoạn thẳng, Đường tròn}
 \label{sec:week4}
 
-\subsection{Tổng quan nội dung Tuần 4}
-Phần này dành cho các kỹ thuật phân đoạn hình ảnh cổ điển và nhận dạng hình học cơ bản.
+\subsection{Bản chất và Phân định Ba Hệ Tọa độ trong Đồ họa Máy tính (WCS, UCS, DCS)}
 
+Trong quy trình kết xuất và xử lý đồ họa máy tính, việc quản lý không gian hình học được phân định thông qua ba hệ tọa độ nền tảng, phản ánh các giai đoạn chuyển hóa dữ liệu từ mô hình trừu tượng sang màn hình hiển thị vật lý:
+
+\textbf{1. Hệ Tọa độ Thế giới Thực (World Coordinate System, WCS):}
+WCS là hệ tọa độ Decartes tuyệt đối toàn cục được dùng làm chuẩn tham chiếu chung cho toàn bộ không gian cảnh đồ họa. Trong hệ tọa độ này, mọi đối tượng, nguồn sáng, góc nhìn camera và các điều kiện biên môi trường đều được xác định vị trí tương đối với nhau. Đơn vị đo trong WCS mang ý nghĩa vật lý thực tế (như mét, milimét, kilômét hoặc inch), cho phép mô hình hóa các vật thể theo đúng tỉ lệ kích thước tự nhiên.
+
+\textbf{2. Hệ Tọa độ Người dùng / Mô hình hóa (User Coordinate System, UCS / Modeling Coordinate System, MCS):}
+UCS là hệ tọa độ cục bộ độc lập do người thiết kế hoặc lập trình viên tự định nghĩa cho từng đối tượng hình học riêng lẻ. Việc sử dụng UCS giúp quá trình tạo dựng mô hình trở nên thuận tiện và trực quan, bởi gốc tọa độ thường được đặt tại tâm đối xứng hoặc một đỉnh đặc trưng của vật thể. Người dùng có thể tự do tịnh tiến, xoay hoặc thay đổi hướng của các trục tọa độ cục bộ này trong quá trình thiết kế. Để đưa một vật thể từ không gian mô hình hóa UCS vào không gian chung WCS, hệ thống đồ họa áp dụng phép biến đổi mô hình (Modeling Transformation) thông qua ma trận biến đổi affine:
+\begin{equation}
+\mathbf{P}_{\text{WCS}} = \mathbf{M}_{\text{model}} \cdot \mathbf{P}_{\text{UCS}}
+\end{equation}
+
+\textbf{3. Hệ Tọa độ Thiết bị / Màn hình Hiển thị (Device Coordinate System, DCS / Screen Coordinate System):}
+DCS là hệ tọa độ 2D rời rạc tương ứng trực tiếp với lưới điểm ảnh vật lý của thiết bị xuất (màn hình hiển thị hoặc máy in). Trục tọa độ trong DCS được định nghĩa bằng các giá trị số nguyên:
+\begin{equation}
+x_{\text{DCS}} \in \{0, 1, \dots, X_{\max}\}, \quad y_{\text{DCS}} \in \{0, 1, \dots, Y_{\max}\}
+\end{equation}
+Gốc tọa độ $(0, 0)$ của DCS thường được quy ước đặt tại góc trên bên trái (phổ biến trong hệ thống cửa sổ đồ họa máy tính) hoặc góc dưới bên trái của màn hình. 
+
+Để chuyển đổi một vùng quan sát trong thế giới thực sang một khung nhìn trên màn hình, đồ họa máy tính thực thi phép biến đổi Cửa sổ sang Khung nhìn (Window-to-Viewport Transformation, WinToView). Nếu cửa sổ quan sát trong thế giới thực được giới hạn bởi $[x_{w\min}, x_{w\max}] \times [y_{w\min}, y_{w\max}]$ và khung nhìn màn hình được giới hạn bởi $[x_{v\min}, x_{v\max}] \times [y_{v\min}, y_{v\max}]$, tọa độ hiển thị $(x_v, y_v)$ được ánh xạ tuyến tính theo công thức:
+\begin{equation}
+x_v = x_{v\min} + (x_w - x_{w\min}) \frac{x_{v\max} - x_{v\min}}{x_{w\max} - x_{w\min}}, \quad y_v = y_{v\min} + (y_w - y_{w\min}) \frac{y_{v\max} - y_{v\min}}{y_{w\max} - y_{w\min}}
+\end{equation}
+
+\subsection{Cơ sở Lý thuyết: Mô phỏng Thế giới Thực thông qua Biểu diễn Vector Kích thước Nhỏ}
+
+Trong đồ họa máy tính, một nghịch lý thú vị thường được đặt ra: \textit{Tại sao máy tính có thể mô phỏng chính xác thế giới thực rộng lớn khi kích thước lưu trữ của các vector dữ liệu lại vô cùng nhỏ gọn?}
+
+Bản chất của vấn đề nằm ở hai nguyên lý khoa học nền tảng:
+
+\textbf{1. Trừu tượng hóa Toán học và Biểu diễn Tham số:}
+Đồ họa vector không lưu trữ hàng tỷ hạt vật chất hay hàng triệu điểm ảnh rời rạc của thế giới thực. Thay vào đó, nó trừu tượng hóa thế giới thành các quy luật toán học hình học tham số (Parametric Geometric Models). Ví dụ, một mặt cầu trong không gian thực có kích thước bán kính hàng nghìn kilômét chỉ cần được biểu diễn bằng một bộ 4 số thực: tọa độ tâm $(x_c, y_c, z_c)$ và bán kính $r$. Tương tự, một bề mặt khí động học phức tạp của cánh máy bay được mô tả chính xác tuyệt đối bằng một lưới tập hợp vài chục điểm điều khiển của mặt cong NURBS (Non-Uniform Rational B-Splines). Dung lượng của các tham số số học này chỉ chiếm vài chục đến vài trăm byte nhớ, nhưng mang đầy đủ thông tin hình học giải tích chuẩn xác.
+
+\textbf{2. Tính Bất biến về Thang đo và Ánh xạ Tỉ lệ Hình học (Scale Invariance):}
+Mô hình toán học hoàn toàn độc lập với kích thước vật lý của màn hình hiển thị. Nhờ phép biến đổi tỉ lệ (Scaling Transformation) thông qua ma trận đại số:
+\begin{equation}
+\mathbf{S}(s_x, s_y, s_z) = \begin{bmatrix} s_x & 0 & 0 & 0 \\ 0 & s_y & 0 & 0 \\ 0 & 0 & s_z & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+\end{equation}
+hệ thống đồ họa có thể co giãn thế giới mô phỏng về bất kỳ thang đo kích thước nào. Cùng một công thức vector, hệ thống có thể phóng to hàng triệu lần để quan sát cấu trúc tinh thể vi mô của phân tử nano, hoặc thu nhỏ hàng tỷ lần để mô phỏng quỹ đạo chuyển động của các thiên thể trong hệ ngân hà trên màn hình máy tính có kích thước chỉ vài chục inch.
+
+\subsection{Cơ chế Mô phỏng Đối tượng Thực 3 Chiều trên Màn hình Hiển thị 2 Chiều}
+
+Màn hình máy tính về bản chất vật lý là một bề mặt phẳng hai chiều. Để tái tạo chân thực cảm giác không gian ba chiều có chiều sâu cho mắt người, đồ họa máy tính triển khai một chuỗi kỹ thuật kết xuất liên hoàn (Viewing Pipeline)~\citep{hearn2004computer}:
+
+\textbf{1. Phép Chiếu Hình học (Geometric Projections):}
+Ánh xạ các điểm từ không gian 3 chiều $(x, y, z)$ xuống mặt phẳng quan sát 2 chiều $(x_p, y_p)$:
 \begin{itemize}
-    \item Phân đoạn dựa trên ngưỡng (Otsu Thresholding, Adaptive Thresholding).
-    \item Phân đoạn dựa trên vùng (Region Growing, Split and Merge, Watershed).
-    \item Biến đổi Hough phát hiện đường thẳng và đường tròn (Hough Line / Circle Transform).
+    \item \textit{Phép chiếu Song song (Parallel / Orthographic Projection):} Các tia chiếu song song với nhau. Phép chiếu này bảo toàn tính song song của các đường thẳng và giữ nguyên tỉ lệ kích thước thực của đối tượng, không phụ thuộc vào khoảng cách tới người quan sát. Phương pháp này là tiêu chuẩn bắt buộc trong các bản vẽ kỹ thuật cơ khí và kiến trúc xây dựng (CAD).
+    \item \textit{Phép chiếu Phối cảnh (Perspective Projection):} Các tia chiếu cùng hội tụ về một điểm gốc gọi là tâm chiếu (Center of Projection, tương đương vị trí mắt người quan sát hoặc ống kính máy ảnh). Phép chiếu phối cảnh tạo ra hiện tượng biến dạng xa gần tự nhiên (Foreshortening): vật thể càng ở xa tâm chiếu thì kích thước hình chiếu trên mặt phẳng chiếu càng nhỏ, và các đường thẳng song song trong không gian sẽ hội tụ tại một điểm tụ (Vanishing Point). Ma trận chiếu phối cảnh chuẩn hóa với khoảng cách tiêu cự $d$ có dạng:
+    \begin{equation}
+    x_p = \frac{x}{z / d}, \quad y_p = \frac{y}{z / d}
+    \end{equation}
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\textbf{2. Thuật toán Khử Mặt Khuất (Hidden Surface Removal, HSR):}
+Trong không gian thực, các vật thể phía trước sẽ che khuất các vật thể phía sau. Đồ họa máy tính sử dụng thuật toán Đệm độ sâu (Z-Buffer / Depth-Buffer Algorithm). Tại mỗi pixel $(x, y)$ trên màn hình, hệ thống duy trì giá trị độ sâu $z$ nhỏ nhất (gần người quan sát nhất). Khi một đa giác mới được raster hóa, giá trị $z_{\text{new}}$ của nó sẽ được so sánh với $z_{\text{buffer}}(x, y)$; nếu $z_{\text{new}} < z_{\text{buffer}}(x, y)$, điểm ảnh mới sẽ được cập nhật màu sắc và ghi đè giá trị độ sâu mới vào bộ đệm.
+
+\textbf{3. Mô hình Chiếu sáng và Tô bóng (Illumination and Shading):}
+Để bề mặt vật thể thể hiện được độ cong và chất liệu thực tế, hệ thống áp dụng các mô hình quang học mô phỏng tương tác giữa ánh sáng và bề mặt vật liệu, tiêu biểu là Mô hình Chiếu sáng Phong (Phong Illumination Model):
+\begin{equation}
+I = I_a k_a + I_d k_d (\mathbf{L} \cdot \mathbf{N}) + I_s k_s (\mathbf{R} \cdot \mathbf{V})^n
+\end{equation}
+trong đó $I_a k_a$ là thành phần ánh sáng môi trường (Ambient), $I_d k_d (\mathbf{L} \cdot \mathbf{N})$ là ánh sáng khuếch tán Lambertian (Diffuse), và $I_s k_s (\mathbf{R} \cdot \mathbf{V})^n$ là ánh sáng phản xạ gương tạo vệt sáng bóng (Specular Highlight). Sau đó, kỹ thuật tô bóng Gouraud Shading (nội suy màu sắc qua các đỉnh) hoặc Phong Shading (nội suy vector pháp tuyến $\mathbf{N}$ qua từng điểm ảnh) được áp dụng để loại bỏ cảm giác đa giác sắc cạnh thô ráp.
+
+\textbf{4. Ánh xạ Vân Bề mặt (Texture Mapping):}
+Dán các bức ảnh 2D (Textures) lên bề mặt các đa giác 3D kết hợp với kỹ thuật Bump Mapping hoặc Normal Mapping để mô phỏng độ nhám, nếp nhăn và kết cấu chi tiết của vật liệu (gỗ, đá, da, kim loại) mà không làm tăng số lượng đa giác hình học cần xử lý.
+
+\subsection{Phân tích Toàn diện Giải thuật Vẽ Đoạn thẳng và Khảo sát Độ dốc}
+
+Bài toán vẽ đoạn thẳng trên lưới điểm ảnh số yêu cầu xác định tập hợp các pixel nguyên $(x_k, y_k)$ sao cho đường gấp khúc nối các pixel này xấp xỉ tốt nhất đoạn thẳng giải tích nối hai điểm mút $A(x_a, y_a)$ và $B(x_b, y_b)$, đồng thời đảm bảo tính liên tục không gian trong lân cận 8 pixel.
+
+Phương trình tường minh của đoạn thẳng trong mặt phẳng 2D có dạng:
+\begin{equation}
+y = m \cdot x + b
+\end{equation}
+trong đó hệ số góc (độ dốc) $m$ và hằng số dịch chuyển $b$ được xác định bởi:
+\begin{equation}
+m = \frac{\Delta y}{\Delta x} = \frac{y_b - y_a}{x_b - x_a}, \quad b = y_a - m \cdot x_a
+\end{equation}
+
+Từ định nghĩa vi sai $\Delta y = m \cdot \Delta x$, ta có mối quan hệ độ lớn biến thiên:
+\begin{equation}
+|\Delta y| = |m| \cdot |\Delta x|
+\end{equation}
+
+Biểu thức này dẫn đến hai trường hợp cơ bản quyết định giải thuật tạo điểm ảnh:
+
+\textbf{Trường hợp 1: Độ dốc tuyệt đối nhỏ hơn hoặc bằng 1 ($|m| \le 1 \iff |\Delta y| \le |\Delta x|$):}
+Trong trường hợp này, chiều dài biến thiên theo trục hoành $x$ lớn hơn hoặc bằng chiều dài biến thiên theo trục tung $y$. Nếu ta chọn bước nhảy đơn vị theo trục hoành là $\Delta x = \pm 1$, khi đó bước nhảy tương ứng của tung độ thỏa mãn:
+\begin{equation}
+|\Delta y| = |m| \cdot 1 \le 1
+\end{equation}
+Điều này có nghĩa là mỗi khi $x$ tăng đúng 1 pixel, giá trị thực của $y$ biến thiên một khoảng không vượt quá 1 pixel. Nhờ đó, tại mỗi bước, pixel kế tiếp chỉ dịch chuyển sang cột bên cạnh và tung độ chỉ thay đổi tối đa 1 đơn vị, đảm bảo đoạn thẳng vẽ ra liên tục, không bao giờ xuất hiện hiện tượng gián đoạn hay thủng lỗ theo phương ngang. Do đó, $x$ được chọn làm biến độc lập tăng đều, và tung độ tại bước kế tiếp được tính theo công thức:
+\begin{equation}
+x_{k+1} = x_k + 1, \quad y_{k+1} = y_k + m
+\end{equation}
+
+\textbf{Trường hợp 2: Độ dốc tuyệt đối lớn hơn 1 ($|m| > 1 \iff |\Delta y| > |\Delta x|$):}
+Nếu trong trường hợp này ta vẫn tiếp tục chọn $\Delta x = \pm 1$, bước nhảy tung độ sẽ là $|\Delta y| = |m| > 1$. Khi đó, giá trị $y$ sẽ nhảy cóc qua nhiều pixel, tạo thành các khoảng trống gián đoạn nghiêm trọng trên màn hình theo phương thẳng đứng. Để khắc phục triệt để, ta phải hoán đổi vai trò của hai trục: chọn trục tung $y$ làm biến độc lập tăng đều với $\Delta y = \pm 1$. Khi đó, bước nhảy tương ứng theo trục hoành thỏa mãn:
+\begin{equation}
+|\Delta x| = \frac{1}{|m|} \cdot |\Delta y| = \frac{1}{|m|} < 1
+\end{equation}
+Lúc này, mỗi khi $y$ tăng đúng 1 pixel, $x$ chỉ biến thiên một khoảng nhỏ hơn 1 pixel, đảm bảo tính liên tục tuyệt đối trong lân cận 8 pixel theo phương thẳng đứng:
+\begin{equation}
+y_{k+1} = y_k + 1, \quad x_{k+1} = x_k + \frac{1}{m}
+\end{equation}
+
+Phương pháp này chính là nền tảng của giải thuật DDA (Digital Differential Analyzer). Tuy nhiên, DDA đòi hỏi các phép tính số thực dấu phẩy động và hàm làm tròn \texttt{round()} tại mọi bước lặp, gây suy giảm tốc độ kết xuất đồ họa.
+
+\subsection{Cơ sở Giới hạn Bài toán \texorpdfstring{$0 < m < 1, x_a < x_b$}{0 < m < 1, xa < xb} và Cơ chế Suy diễn Toàn diện}
+
+Trong nghiên cứu thuật toán vẽ đoạn thẳng, các nhà khoa học luôn giới hạn bài toán khảo sát ban đầu về trường hợp chuẩn tắc:
+\begin{equation}
+0 < m < 1 \quad \text{và} \quad x_a < x_b
+\end{equation}
+tương ứng với góc nghiêng $\theta \in (0^\circ, 45^\circ)$ trong Bát phân thứ nhất (Octant 1).
+
+\textbf{Lý do Giới hạn Bài toán:}
+Việc giới hạn vào khoảng này giúp tối giản hóa công thức toán học và cấu trúc rẽ nhánh của giải thuật. Khi $x_a < x_b$, quá trình quét luôn tiến từ trái sang phải ($\Delta x = x_b - x_a > 0$). Khi $0 < m < 1$, tại mỗi bước hoành độ luôn tăng đúng 1 đơn vị ($x_{k+1} = x_k + 1$), và hệ thống chỉ cần đưa ra quyết định nhị phân duy nhất giữa hai pixel lân cận: pixel nằm ngang $(x_k + 1, y_k)$ hoặc pixel nằm chéo lên $(x_k + 1, y_k + 1)$.
+
+\textbf{Cơ chế Suy diễn cho Toàn bộ các Trường hợp còn lại:}
+Mọi đoạn thẳng bất kỳ trong không gian 2D đều có thể quy về trường hợp chuẩn tắc thông qua các phép biến đổi đối xứng hình học và xử lý điều kiện biên:
+
+\begin{enumerate}
+    \item \textbf{Đảm bảo chiều quét từ trái sang phải ($x_a < x_b$):} Nếu $x_a > x_b$, ta chỉ việc hoán đổi hai điểm mút: gán $A \leftrightarrow B$. Khi đó đoạn thẳng được vẽ từ $B$ sang $A$ với cùng tập hợp các pixel nhưng đảm bảo $\Delta x > 0$.
+    \item \textbf{Các trường hợp suy biến đặc biệt:}
+    \begin{itemize}
+        \item Đoạn thẳng nằm ngang ($m = 0 \iff y_a = y_b$): Giữ nguyên $y = y_a$, tăng dần $x$ từ $x_a$ đến $x_b$ và vẽ pixel $(x, y_a)$.
+        \item Đoạn thẳng đứng ($m \to \infty \iff x_a = x_b$): Giữ nguyên $x = x_a$, tăng dần $y$ từ $\min(y_a, y_b)$ đến $\max(y_a, y_b)$ và vẽ pixel $(x_a, y)$.
+        \item Đoạn thẳng nghiêng đúng $45^\circ$ ($|m| = 1$): Cả $x$ và $y$ cùng tăng hoặc giảm đồng thời 1 đơn vị ở mỗi bước lặp ($x_{k+1} = x_k + 1, y_{k+1} = y_k \pm 1$).
+    \end{itemize}
+    \item \textbf{Suy diễn cho 8 Bát phân tổng quát (Octants):}
+    Dựa vào dấu của $\Delta x, \Delta y$ và so sánh độ lớn giữa $|\Delta x|$ và $|\Delta y|$:
+    \begin{itemize}
+        \item Nếu $|\Delta y| \le |\Delta x|$: Trục $x$ tăng đều từng bước $1$ ($s_x = \text{sign}(\Delta x) = 1$). Nếu $m > 0$, $y$ tăng về phía dương ($s_y = 1$); nếu $m < 0$, $y$ biến thiên về phía âm ($s_y = -1$).
+        \item Nếu $|\Delta y| > |\Delta x|$: Hoán đổi vai trò hai trục tọa độ ($x \leftrightarrow y$). Trục $y$ tăng đều từng bước $1$ ($s_y = \text{sign}(\Delta y) = 1$), và trục $x$ được cập nhật dựa trên hàm quyết định tương ứng.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Cơ chế Khử Phép tính Số thực của Thuật toán Bresenham Đoạn thẳng}
+
+Năm 1965, Jack E. Bresenham đã đề xuất giải thuật kinh điển mang tên ông~\citep{bresenham1965algorithm}, loại bỏ hoàn toàn các phép toán số thực và hàm làm tròn của thuật toán DDA, chuyển toàn bộ quá trình tính toán về các phép cộng và trừ số nguyên thuần túy.
+
+Xét đoạn thẳng trong bát phân thứ nhất với $0 < m < 1$ và $x_a < x_b$. Giả sử tại bước thứ $k$, thuật toán đã xác định pixel cần vẽ là $(x_k, y_k)$. Ở bước kế tiếp $k+1$, hoành độ chắc chắn là $x_{k+1} = x_k + 1$. Ta cần lựa chọn giữa hai pixel ứng viên:
+\begin{equation}
+\text{Pixel dưới: } (x_k + 1, y_k) \quad \text{hoặc} \quad \text{Pixel trên: } (x_k + 1, y_k + 1)
+\end{equation}
+
+Tung độ thực tế của điểm nằm trên đoạn thẳng tại hoành độ $x_k + 1$ là:
+\begin{equation}
+y = m(x_k + 1) + b
+\end{equation}
+
+Khoảng cách thẳng đứng từ tung độ thực tế $y$ đến pixel dưới và pixel trên lần lượt là:
+\begin{align}
+d_1 &= y - y_k = m(x_k + 1) + b - y_k \\
+d_2 &= (y_k + 1) - y = y_k + 1 - [m(x_k + 1) + b]
+\end{align}
+
+Hiệu số giữa hai khoảng cách này phản ánh pixel nào nằm gần đoạn thẳng thực tế hơn:
+\begin{align}
+d_1 - d_2 &= [m(x_k + 1) + b - y_k] - [y_k + 1 - m(x_k + 1) - b] \nonumber \\
+&= 2m(x_k + 1) - 2y_k + 2b - 1
+\end{align}
+Thay $m = \frac{\Delta y}{\Delta x}$ vào biểu thức:
+\begin{equation}
+d_1 - d_2 = 2 \frac{\Delta y}{\Delta x}(x_k + 1) - 2y_k + 2b - 1
+\end{equation}
+
+Đại lượng này vẫn chứa phép chia số thực $\frac{\Delta y}{\Delta x}$. Nhận thấy rằng $\Delta x > 0$, Bresenham đã nhân toàn bộ biểu thức trên với $\Delta x$ để định nghĩa hàm tham số quyết định (Decision Parameter) $p_k$:
+\begin{equation}
+p_k = \Delta x (d_1 - d_2) = 2\Delta y \cdot x_k - 2\Delta x \cdot y_k + C
+\end{equation}
+trong đó hằng số $C = 2\Delta y + \Delta x(2b - 1)$.
+
+Quy tắc chọn pixel dựa trên dấu của $p_k$:
+\begin{itemize}
+    \item Nếu $p_k < 0 \iff d_1 < d_2$: Đoạn thẳng nằm gần pixel dưới hơn, do đó ta chọn pixel $(x_k + 1, y_k)$.
+    \item Nếu $p_k \ge 0 \iff d_1 \ge d_2$: Đoạn thẳng nằm gần pixel trên hơn (hoặc cách đều), ta chọn pixel $(x_k + 1, y_k + 1)$.
+\end{itemize}
+
+Để thiết lập công thức tính truy hồi, ta xét giá trị $p_{k+1}$ tại bước kế tiếp:
+\begin{equation}
+p_{k+1} = 2\Delta y \cdot x_{k+1} - 2\Delta x \cdot y_{k+1} + C
+\end{equation}
+Lấy hiệu số giữa $p_{k+1}$ và $p_k$:
+\begin{align}
+p_{k+1} - p_k &= 2\Delta y (x_{k+1} - x_k) - 2\Delta x (y_{k+1} - y_k) \nonumber \\
+&= 2\Delta y (1) - 2\Delta x (y_{k+1} - y_k)
+\end{align}
+Do đó, công thức truy hồi cập nhật tham số quyết định có dạng:
+\begin{equation}
+p_{k+1} = p_k + 2\Delta y - 2\Delta x (y_{k+1} - y_k)
+\end{equation}
+
+Từ đây, ta có hai trường hợp cập nhật cụ thể:
+\begin{itemize}
+    \item Nếu $p_k < 0$: Chọn $y_{k+1} = y_k \implies y_{k+1} - y_k = 0$, ta cập nhật:
+    \begin{equation}
+    p_{k+1} = p_k + 2\Delta y
+    \end{equation}
+    \item Nếu $p_k \ge 0$: Chọn $y_{k+1} = y_k + 1 \implies y_{k+1} - y_k = 1$, ta cập nhật:
+    \begin{equation}
+    p_{k+1} = p_k + 2\Delta y - 2\Delta x
+    \end{equation}
+\end{itemize}
+
+Vì các điểm mút ban đầu có tọa độ nguyên, nên $\Delta x, \Delta y, 2\Delta y$ và $2\Delta y - 2\Delta x$ đều là các hằng số nguyên. Toàn bộ thuật toán hoàn toàn không sử dụng bất kỳ phép tính số thực hay phép chia nào, mà chỉ gồm phép cộng, trừ số nguyên và phép nhân 2 (có thể tối ưu bằng phép dịch bit sang trái \texttt{<< 1}), mang lại hiệu năng tính toán cực cao trên phần cứng.
+
+\subsection{Chứng minh Công thức Khởi tạo Giá trị \texorpdfstring{$p_0$}{p0}}
+
+Để hoàn thiện giải thuật truy hồi Bresenham, ta cần tính giá trị ban đầu $p_0$ tại bước $k = 0$:
+
+Điểm mút đầu tiên $(x_0, y_0) = (x_a, y_a)$ nằm chính xác trên đường thẳng giải tích, do đó thỏa mãn:
+\begin{equation}
+y_0 = m \cdot x_0 + b \implies b = y_0 - m \cdot x_0 = y_0 - \frac{\Delta y}{\Delta x} x_0
+\end{equation}
+
+Tại bước đầu tiên, ta cần quyết định pixel cho cột $x_1 = x_0 + 1$. Áp dụng công thức tổng quát của tham số quyết định:
+\begin{equation}
+p_0 = \Delta x [2m(x_0 + 1) - 2y_0 + 2b - 1]
+\end{equation}
+Thay $m = \frac{\Delta y}{\Delta x}$ và $b = y_0 - \frac{\Delta y}{\Delta x} x_0$ vào biểu thức:
+\begin{align}
+p_0 &= \Delta x \left[ 2 \frac{\Delta y}{\Delta x}(x_0 + 1) - 2y_0 + 2\left(y_0 - \frac{\Delta y}{\Delta x} x_0\right) - 1 \right] \nonumber \\
+&= \Delta x \left[ 2 \frac{\Delta y}{\Delta x} x_0 + 2 \frac{\Delta y}{\Delta x} - 2y_0 + 2y_0 - 2 \frac{\Delta y}{\Delta x} x_0 - 1 \right] \nonumber \\
+&= \Delta x \left[ 2 \frac{\Delta y}{\Delta x} - 1 \right]
+\end{align}
+Nhân phân phối $\Delta x$ vào bên trong dấu ngoặc vuông:
+\begin{equation}
+p_0 = 2\Delta y - \Delta x
+\end{equation}
+
+Đây là công thức khởi tạo chuẩn xác của thuật toán vẽ đoạn thẳng Bresenham, chứng minh rằng $p_0$ luôn luôn là một giá trị nguyên.
+
+\subsection{Cơ sở Vẽ Hình tròn trên Lưới Tọa độ Nguyên và Tính Đối xứng 8 Phần}
+
+Phương trình đại số của đường tròn tâm tại gốc tọa độ $O(0, 0)$ với bán kính $r$ có dạng:
+\begin{equation}
+x^2 + y^2 = r^2
+\end{equation}
+Hàm đường tròn được định nghĩa tổng quát bằng:
+\begin{equation}
+f_{\text{circle}}(x, y) = x^2 + y^2 - r^2
+\end{equation}
+Vị trí tương đối của một điểm tọa độ bất kỳ $(x, y)$ so với đường biên đường tròn được phân loại chặt chẽ qua dấu của hàm:
+\begin{equation}
+f_{\text{circle}}(x, y) = \begin{cases}
+< 0, & \text{nếu } (x, y) \text{ nằm phía trong đường tròn} \\
+= 0, & \text{nếu } (x, y) \text{ nằm chính xác trên đường biên đường tròn} \\
+> 0, & \text{nếu } (x, y) \text{ nằm phía ngoài đường tròn}
+\end{cases}
+\end{equation}
+
+\textbf{Nguyên lý Đối xứng 8 Phần (8-Way Symmetry):}
+Đường tròn tâm $O(0, 0)$ sở hữu tính đối xứng hoàn hảo qua trục hoành $y = 0$, trục tung $x = 0$ và hai đường phân giác $y = x$, $y = -x$. Do đó, toàn bộ chu vi đường tròn được chia thành 8 cung bát phân bằng nhau. 
+
+Nếu thuật toán tính toán được tập hợp các pixel trên cung bát phân thứ hai (từ điểm đỉnh $(0, r)$ ở góc $90^\circ$ xuống giao điểm với đường phân giác tại góc $45^\circ$, nơi $x = y$), ta có thể tự động suy ra 7 điểm còn lại trên các cung khác chỉ bằng phép đổi dấu và hoán vị tọa độ:
+\begin{equation}
+(x, y), \quad (y, x), \quad (-x, y), \quad (-y, x), \quad (-x, -y), \quad (-y, -x), \quad (x, -y), \quad (y, -x)
+\end{equation}
+Sau đó, nếu đường tròn có tâm thực tế tại $C(x_c, y_c)$, ta chỉ cần thực hiện phép tịnh tiến bằng cách cộng thêm $(x_c, y_c)$ vào từng tọa độ đã tính.
+
+\subsection{Phân tích Tính Liên tục 8-Lân cận: Vì sao \texorpdfstring{$x$}{x} phải Tăng đều trong Cung \texorpdfstring{$[90^\circ, 45^\circ]$}{[90, 45] độ}}
+
+Trong cung bát phân khảo sát (từ điểm đỉnh $(0, r)$ đến điểm giao $x = y$), câu hỏi đặt ra là: \textit{Để đảm bảo đường cong liên tục không bị thủng lỗ trong lân cận 8 pixel, ta phải chọn biến $x$ hay $y$ tăng đều?}
+
+Lấy đạo hàm hai vế phương trình đường tròn $x^2 + y^2 = r^2$ theo biến $x$:
+\begin{equation}
+2x + 2y \frac{dy}{dx} = 0 \implies \frac{dy}{dx} = -\frac{x}{y}
+\end{equation}
+Độ dốc tiếp tuyến của cung tròn có độ lớn là:
+\begin{equation}
+|m| = \left|\frac{dy}{dx}\right| = \frac{x}{y}
+\end{equation}
+
+Trên cung bát phân khảo sát, hoành độ $x$ bắt đầu từ $0$ và tăng dần đến khi $x = y$, do đó ta luôn có bất đẳng thức:
+\begin{equation}
+0 \le x \le y \implies 0 \le \frac{x}{y} \le 1 \implies |m| \le 1
+\end{equation}
+
+Vì độ lớn độ dốc $|m| \le 1$, tốc độ biến thiên của tung độ $y$ luôn chậm hơn hoặc bằng tốc độ biến thiên của hoành độ $x$. Nếu ta chọn $y$ làm biến tăng đều, bước nhảy của $x$ sẽ lớn hơn 1 pixel ($\Delta x > 1$), khiến các pixel trên đường tròn bị ngắt quãng, tạo ra các lỗ hổng thị giác.
+
+Do đó, \textbf{bắt buộc $x$ phải là biến tăng đều từng bước nguyên đơn vị}:
+\begin{equation}
+x_{k+1} = x_k + 1
+\end{equation}
+Khi $x$ tăng đúng 1 pixel, tung độ thực tế $y$ giảm một khoảng nhỏ hơn hoặc bằng 1 pixel ($0 \le -\Delta y \le 1$). Vì vậy, pixel kế tiếp chỉ có đúng hai khả năng lựa chọn: giữ nguyên tung độ ($y_{k+1} = y_k$) hoặc giảm đúng 1 đơn vị ($y_{k+1} = y_k - 1$). Điều này đảm bảo đường cong tròn hoàn toàn liên tục và kết dính trong lân cận 8 pixel.
+
+\subsection{Chứng minh Hình học và Đại số của Thuật toán Điểm Giữa (Midpoint Circle Algorithm)}
+
+Thuật toán Điểm Giữa (Midpoint Circle Algorithm) do Jack E. Bresenham phát triển~\citep{bresenham1977linear} giải quyết bài toán chọn pixel tối ưu bằng cách đánh giá vị trí hình học của điểm chính giữa hai pixel ứng viên:
+
+Giả sử tại bước $k$, thuật toán đã chọn pixel $(x_k, y_k)$. Tại bước $k+1$, hoành độ là $x_{k+1} = x_k + 1$. Hai pixel ứng viên là:
+\begin{align}
+\text{Pixel trên (hướng Đông, East):} &\quad E(x_k + 1, y_k) \\
+\text{Pixel dưới (hướng Đông Nam, SouthEast):} &\quad SE(x_k + 1, y_k - 1)
+\end{align}
+
+Điểm chính giữa (Midpoint) $M$ nằm giữa hai pixel ứng viên $E$ và $SE$ có tọa độ:
+\begin{equation}
+M = \left( x_k + 1, y_k - \frac{1}{2} \right)
+\end{equation}
+
+Tham số quyết định tại bước $k$ chính là giá trị của hàm đường tròn tính tại điểm giữa $M$:
+\begin{equation}
+p_k = f_{\text{circle}}(M) = f_{\text{circle}}\left( x_k + 1, y_k - \frac{1}{2} \right) = (x_k + 1)^2 + \left( y_k - \frac{1}{2} \right)^2 - r^2
+\end{equation}
+
+Khoảng cách từ gốc tọa độ $O(0, 0)$ đến điểm giữa $M$ là $d_M = \sqrt{(x_k + 1)^2 + (y_k - 1/2)^2}$, do đó:
+\begin{equation}
+p_k = d_M^2 - r^2
+\end{equation}
+
+\textbf{Chứng minh hai trường hợp quyết định:}
+\begin{itemize}
+    \item \textbf{Trường hợp 1: $p_k < 0 \iff d_M^2 < r^2 \iff d_M < r$:}
+    Điểm giữa $M$ nằm ở phía trong đường tròn thực tế. Điều này đồng nghĩa với việc đường tròn thực tế đi qua phía trên điểm giữa $M$. Khoảng cách từ tâm đến pixel trên $E$ là $d_E > d_M$, trong khi khoảng cách đến pixel dưới là $d_{SE} < d_M$. Vì bán kính đường tròn $r$ thỏa mãn $d_M < r < d_E$, nên cung tròn nằm kẹp giữa $M$ và $E$. Do đó, khoảng cách từ cung tròn đến pixel trên $E$ nhỏ hơn khoảng cách đến pixel dưới $SE$:
+    \begin{equation}
+    |d_E - r| < |d_{SE} - r|
+    \end{equation}
+    Như vậy, pixel trên $E(x_k + 1, y_k)$ nằm gần đường tròn hơn, và ta chọn $y_{k+1} = y_k$.
+    
+    \item \textbf{Trường hợp 2: $p_k \ge 0 \iff d_M^2 \ge r^2 \iff d_M \ge r$:}
+    Điểm giữa $M$ nằm ở phía ngoài hoặc nằm chính xác trên đường biên đường tròn. Điều này đồng nghĩa với việc đường tròn thực tế đi qua phía dưới điểm giữa $M$. Khi đó, bán kính đường tròn $r$ thỏa mãn $d_{SE} < r \le d_M$, tức là cung tròn nằm kẹp giữa $SE$ và $M$. Do đó, khoảng cách từ cung tròn đến pixel dưới $SE$ nhỏ hơn hoặc bằng khoảng cách đến pixel trên $E$:
+    \begin{equation}
+    |d_{SE} - r| \le |d_E - r|
+    \end{equation}
+    Như vậy, pixel dưới $SE(x_k + 1, y_k - 1)$ nằm gần đường tròn hơn (hoặc cách đều), và ta chọn $y_{k+1} = y_k - 1$.
+\end{itemize}
+
+\textbf{Công thức truy hồi cập nhật $p_{k+1}$:}
+Tại bước kế tiếp $k+1$, tham số quyết định được tính tại $x_{k+1} + 1$:
+\begin{equation}
+p_{k+1} = f_{\text{circle}}\left( x_{k+1} + 1, y_{k+1} - \frac{1}{2} \right) = (x_{k+1} + 1)^2 + \left( y_{k+1} - \frac{1}{2} \right)^2 - r^2
+\end{equation}
+Lấy hiệu số $p_{k+1} - p_k$:
+\begin{align}
+p_{k+1} - p_k &= \left[ (x_{k+1} + 1)^2 - (x_k + 1)^2 \right] + \left[ \left( y_{k+1} - \frac{1}{2} \right)^2 - \left( y_k - \frac{1}{2} \right)^2 \right] \nonumber \\
+&= (x_{k+1} + 1)^2 - x_{k+1}^2 + (y_{k+1}^2 - y_k^2) - (y_{k+1} - y_k) \nonumber \\
+&= 2x_{k+1} + 1 + (y_{k+1}^2 - y_k^2) - (y_{k+1} - y_k)
+\end{align}
+
+Từ đây, ta thu được hai công thức cập nhật tương ứng:
+\begin{itemize}
+    \item Nếu $p_k < 0$: Chọn $y_{k+1} = y_k$, biểu thức trở thành:
+    \begin{equation}
+    p_{k+1} = p_k + 2x_{k+1} + 1
+    \end{equation}
+    \item Nếu $p_k \ge 0$: Chọn $y_{k+1} = y_k - 1$, biểu thức trở thành:
+    \begin{equation}
+    p_{k+1} = p_k + 2x_{k+1} + 1 - 2y_{k+1}
+    \end{equation}
+\end{itemize}
+
+\subsection{Chứng minh Thay thế Khử Số thực: \texorpdfstring{$p_0 = \frac{5}{4} - r$}{p0 = 5/4 - r} bằng \texorpdfstring{$p_0' = 1 - r$}{p0' = 1 - r} khi \texorpdfstring{$r$}{r} Nguyên}
+
+Tại bước khởi tạo ban đầu, thuật toán bắt đầu từ đỉnh trên cùng của đường tròn:
+\begin{equation}
+(x_0, y_0) = (0, r)
+\end{equation}
+Giá trị tham số quyết định ban đầu $p_0$ được tính tại điểm giữa đầu tiên $M_0 = (1, r - 1/2)$:
+\begin{equation}
+p_0 = f_{\text{circle}}\left(1, r - \frac{1}{2}\right) = 1^2 + \left(r - \frac{1}{2}\right)^2 - r^2 = 1 + r^2 - r + \frac{1}{4} - r^2 = \frac{5}{4} - r
+\end{equation}
+
+Biểu thức này chứa phân số $\frac{1}{4}$, khiến phép tính khởi tạo ban đầu đòi hỏi số thực:
+\begin{equation}
+p_0 = 1 - r + \frac{1}{4}
+\end{equation}
+
+Để chuyển toàn bộ thuật toán về số học nguyên, ta đặt biến phụ:
+\begin{equation}
+p_k' = p_k - \frac{1}{4}
+\end{equation}
+Khi đó, tại bước khởi tạo $k = 0$:
+\begin{equation}
+p_0' = p_0 - \frac{1}{4} = \left( \frac{5}{4} - r \right) - \frac{1}{4} = 1 - r
+\end{equation}
+Vì bán kính $r$ là một số nguyên dương ($r \in \mathbb{Z}^+$), nên $p_0' = 1 - r$ chắc chắn là một số nguyên thuần túy.
+
+Hơn thế nữa, xét độ biến thiên giữa hai bước lặp liên tiếp $\Delta p = p_{k+1} - p_k$:
+\begin{equation}
+p_{k+1}' - p_k' = \left( p_{k+1} - \frac{1}{4} \right) - \left( p_k - \frac{1}{4} \right) = p_{k+1} - p_k
+\end{equation}
+Độ biến thiên này tại mọi bước đều là số nguyên ($2x_{k+1} + 1$ hoặc $2x_{k+1} + 1 - 2y_{k+1}$). Do đó, $p_k'$ luôn luôn là số nguyên với mọi bước lặp $k \ge 0$.
+
+Bây giờ ta tiến hành chứng minh rằng việc thay thế $p_k$ bằng $p_k'$ không làm thay đổi bất kỳ quyết định rẽ nhánh nào:
+
+Ta có quan hệ:
+\begin{equation}
+p_k = p_k' + \frac{1}{4} \quad \text{với } p_k' \in \mathbb{Z}
+\end{equation}
+
+\textbf{1. Chứng minh chiều điều kiện $p_k \ge 0 \iff p_k' \ge 0$:}
+\begin{itemize}
+    \item Giả sử $p_k' \ge 0$. Vì $p_k'$ là số nguyên, các giá trị khả dĩ của $p_k'$ là $\{0, 1, 2, 3, \dots\}$. Khi đó:
+    \begin{equation}
+    p_k = p_k' + \frac{1}{4} \ge 0 + \frac{1}{4} = \frac{1}{4} > 0 \implies p_k \ge 0
+    \end{equation}
+    \item Ngược lại, giả sử $p_k' < 0$. Vì $p_k'$ là số nguyên, giá trị lớn nhất mà $p_k'$ có thể đạt được là $-1$. Khi đó:
+    \begin{equation}
+    p_k = p_k' + \frac{1}{4} \le -1 + \frac{1}{4} = -\frac{3}{4} < 0 \implies p_k < 0
+    \end{equation}
+    Theo nguyên lý phản chứng, nếu $p_k \ge 0$ thì bắt buộc $p_k'$ không thể nhỏ hơn $0$, tức là $p_k' \ge 0$.
+\end{itemize}
+
+\textbf{2. Chứng minh chiều điều kiện $p_k < 0 \iff p_k' < 0$:}
+Tương tự, từ chứng minh trên ta suy ra ngay lập tức:
+\begin{equation}
+p_k < 0 \iff p_k' < 0
+\end{equation}
+
+\textbf{Kết luận:}
+Dấu của $p_k$ và dấu của $p_k'$ hoàn toàn đồng nhất tại mọi bước lặp của thuật toán:
+\begin{equation}
+p_k \ge 0 \iff p_k' \ge 0 \quad \text{và} \quad p_k < 0 \iff p_k' < 0
+\end{equation}
+Do đó, ta hoàn toàn có thể thay thế khởi tạo $p_0 = \frac{5}{4} - r$ bằng $p_0' = 1 - r$. Toàn bộ thuật toán Midpoint Circle được thực thi $100\%$ bằng các phép toán số nguyên, khử sạch hoàn toàn sự hiện diện của số thực trên phần cứng.
