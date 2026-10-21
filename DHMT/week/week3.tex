@@ -1,14 +1,80 @@
-\section{Tuần 3: Trích xuất Đặc trưng Cục bộ và Phát hiện Biên}
+\section{Tuần 3: Ứng dụng Đồ họa Máy tính và Đề tài Nghiên cứu Sinh Đồ họa Vector (Text-to-Vector)}
 \label{sec:week3}
 
-\subsection{Tổng quan nội dung Tuần 3}
-Phần này dành cho việc tổng hợp lý thuyết và bài tập về phát hiện biên và các điểm đặc trưng cục bộ (Local Feature Detectors \& Descriptors).
+\subsection{Bản chất và Mục tiêu của Đồ họa Máy tính}
 
+Đồ họa Máy tính (Computer Graphics) là một phân ngành nền tảng của khoa học máy tính, nghiên cứu các giải pháp phần cứng và phần mềm nhằm mô phỏng, biểu diễn và tổng hợp thế giới thực hoặc các thế giới trừu tượng dưới dạng thông tin thị giác và âm thanh kỹ thuật số~\citep{hearn2004computer,foley1996computer}.
+
+Về mặt lịch sử và lý thuyết mô hình hóa, quá trình phát triển của đồ họa máy tính phản ánh tiến trình nâng bậc không gian biểu diễn toán học từ thấp lên cao:
+\begin{equation}
+\text{2D } (x, y) \longrightarrow \text{3D } (x, y, z) \longrightarrow \text{4D } (x, y, z, t) \longrightarrow \text{5D } (x, y, z, t, s)
+\end{equation}
+Trong chuỗi tiến trình này:
 \begin{itemize}
-    \item Phát hiện biên: Gradient Sobel, Prewitt, Laplacian, Canny Edge Detector.
-    \item Các điểm góc và điểm đặc trưng: Harris Corner, FAST.
-    \item Bộ mô tả đặc trưng cục bộ bất biến: SIFT, SURF, ORB.
+    \item \textbf{Không gian 2 chiều (2D):} Mô hình hóa các thực thể phẳng thông qua tọa độ $(x, y)$, đặt nền móng cho việc xử lý văn bản, sơ đồ kỹ thuật số, giao diện người dùng và nghệ thuật đồ họa phẳng.
+    \item \textbf{Không gian 3 chiều (3D):} Bổ sung trục độ sâu $z$, cho phép định nghĩa các khối hình học lập thể, bề mặt vật thể thực trong không gian Euclide thông qua lưới đa giác (Polygon Mesh) hoặc bề mặt tham số (Parametric Surfaces).
+    \item \textbf{Không gian 4 chiều (4D):} Tích hợp thêm chiều thời gian $t$, chuyển đổi từ mô hình hình học tĩnh sang hoạt họa chuyển động (Computer Animation) và mô phỏng các hiện tượng động học vật lý thời gian thực.
+    \item \textbf{Không gian 5 chiều (5D):} Bổ sung chiều ngữ cảnh, thang đo kích thước hoặc trạng thái cảm biến $s$ (State / Scale / Semantics), phục vụ các hệ thống mô phỏng đa tỉ lệ, đa phương thức trong thực tế ảo tương tác (VR/AR) và các bản sao số kỹ thuật số (Digital Twins).
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\subsection{Phân tích Ứng dụng của Đồ họa Máy tính trong 7 Lĩnh vực Trọng yếu}
+
+Đồ họa máy tính đóng vai trò công nghệ cốt lõi trong toàn bộ nền kinh tế số. Bảng~\ref{tab:cg_applications_detailed} phân tích chi tiết ứng dụng của đồ họa máy tính trên 7 lĩnh vực trọng yếu được giảng dạy trong học phần.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Tổng hợp và đối chiếu ứng dụng của Đồ họa Máy tính trong 7 lĩnh vực công nghiệp cốt lõi}
+\label{tab:cg_applications_detailed}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{3.2cm}|X|X|}
+\hline
+\textbf{Lĩnh vực ứng dụng} & \textbf{Đặc trưng kỹ thuật đồ họa cốt lõi} & \textbf{Hệ thống sản phẩm thực tế tiêu biểu} \\
+\hline
+\textbf{1. Tự động hóa văn phòng (Office Automation)} & Trực quan hóa dữ liệu thống kê (Bar, Pie, Line charts); giao diện người dùng đồ họa (GUI); biểu diễn biểu đồ luồng nghiệp vụ. & Bộ ứng dụng Microsoft Office, Google Workspace; phần mềm xây dựng Dashboard thông minh như Tableau, Microsoft PowerBI. \\
+\hline
+\textbf{2. Xuất bản để bàn (Desktop Publishing - DTP)} & Xử lý typography vector tham số hóa (TrueType, OpenType); phân tách màu CMYK; quản lý dàn trang độ phân giải cao; chuẩn PostScript/PDF. & Adobe InDesign, QuarkXPress, Scribus; hệ thống biên soạn tài liệu khoa học chất lượng cao \LaTeX. \\
+\hline
+\textbf{3. Thiết kế \& Chế tạo trợ giúp máy tính (CAD-CAM)} & Mô hình hóa hình học chính xác (NURBS, CSG, B-rep); phân tích ứng suất phần tử hữu hạn (FEA); xuất mã G-code cho máy tiện/phay CNC. & AutoCAD, Dassault Systèmes SolidWorks, CATIA, PTC Creo; phần mềm thiết kế vi mạch Altium Designer. \\
+\hline
+\textbf{4. Nghệ thuật \& Quảng cáo (Art + Advertising)} & Chỉnh sửa ảnh raster đa lớp; thiết kế nhận diện thương hiệu vector; nghệ thuật minh họa số (Digital Painting); Typography 3D. & Adobe Photoshop, Adobe Illustrator, CorelDRAW; phần mềm vẽ kỹ thuật số Procreate, Clip Studio Paint. \\
+\hline
+\textbf{5. Điều khiển quy trình (Process Control / SCADA)} & Giao diện tương tác người máy (HMI) thời gian thực; sơ đồ động học hệ thống (Mimic Diagrams); hiển thị cảnh báo trực quan đa cấp độ. & Hệ thống SCADA giám sát nhà máy nhiệt điện, trạm biến áp, dây chuyền lắp ráp ô tô tự động, lọc dầu của Siemens, Schneider Electric. \\
+\hline
+\textbf{6. Giải trí (Entertainment: Phim \& Games)} & Kết xuất quang học (Ray Tracing, Global Illumination); mô phỏng vật lý hạt (khói, lửa, nước); tạo hình nhân vật và diễn hoạt 3D thời gian thực. & Unreal Engine 5, Unity; phần mềm 3D chuyên nghiệp Autodesk Maya, Blender; phim hoạt hình của Pixar, Walt Disney. \\
+\hline
+\textbf{7. Giáo dục \& Đào tạo (Education)} & Mô phỏng hình học không gian tương tác; phòng thí nghiệm ảo (Virtual Labs); buồng mô phỏng lái máy bay/tàu thủy (Flight Simulators). & Hệ thống mô phỏng bay CAE Flight Simulator; phần mềm toán học tương tác GeoGebra; phòng học ảo 3D mô phỏng giải phẫu học cơ thể người. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Đề tài Nghiên cứu Chuyên sâu: Sinh Đồ họa Vector từ Ngôn ngữ Tự nhiên (Text-to-Vector Graphics Generation)}
+
+Trong khuôn khổ môn học Đồ họa Máy tính, nhóm nghiên cứu lựa chọn đề tài \textbf{``Sinh Đồ họa Vector từ Ngôn ngữ Tự nhiên'' (Text-to-Vector Graphics Generation, đặc biệt hướng tới định dạng chuẩn Scalable Vector Graphics - SVG)}. Dưới đây là phân tích toàn diện về bản chất học thuật và giá trị ứng dụng thực tiễn của đề tài.
+
+\subsubsection{Bản chất Học thuật và Thách thức Nghiên cứu}
+
+Trong khi lĩnh vực AI tạo sinh đã đạt được những bước tiến vượt bậc với việc sinh ảnh điểm ảnh (Raster Image Generation) nhờ các mạng khuếch tán (Diffusion Models) như Stable Diffusion hay Midjourney, việc sinh đồ họa vector lại đặt ra một thách thức hoàn toàn khác biệt về mặt bản thể luận:
+
+\textbf{1. Sự lệch pha giữa Trí tuệ Thị giác Nhân tạo và Tư duy Thiết kế Con người:}
+Các mô hình học sâu truyền thống tư duy trên không gian lưới điểm ảnh cố định (Fixed Pixel Grids), nơi bức ảnh được biểu diễn bằng một ma trận tensor có kích thước xác định $I \in \mathbb{R}^{H \times W \times C}$. Ngược lại, đồ họa vector và tư duy của các nhà thiết kế đồ họa vận hành dựa trên các thực thể hình học tham số (Geometric Primitives) như đường cong Bézier bậc ba, hình tròn, đa giác và các lớp đối tượng phân cấp ngữ nghĩa (Hierarchical Layers). Sự chuyển dịch từ miền điểm ảnh rời rạc sang miền đường cong tham số liên tục là một bài toán khó do tính chất phi khả vi (Non-differentiable) của các trình raster hóa truyền thống.
+
+\textbf{2. Toàn cảnh 5 hướng tiếp cận nghiên cứu học thuật hiện đại:}
+Để giải quyết bài toán Text-to-Vector, cộng đồng khoa học quốc tế trong giai đoạn 2020 đến nay đã phát triển 5 nhánh tiếp cận chủ đạo:
+\begin{enumerate}
+    \item \textbf{Tối ưu hóa lặp qua Trình kết xuất khả vi (Optimization-based Synthesis via Differentiable Rendering):} Khởi đầu từ việc Li et al. công bố DiffVG~\citep{li2020diffvg}, cho phép truyền ngược đạo hàm từ pixel về tọa độ điểm điều khiển Bézier. CLIPDraw~\citep{frans2022clipdraw} sử dụng không gian nhúng CLIP để tối ưu nét vẽ. Tiếp đó, VectorFusion~\citep{jain2023vectorfusion} áp dụng Score Distillation Sampling (SDS) từ Stable Diffusion, và SVGDreamer~\citep{xing2024svgdreamer} nâng cấp lên Variational Particle Score Distillation (VPSD) kết hợp phân rã chú ý chéo (Cross-Attention) để cải thiện độ sắc nét của hình vẽ vector.
+    \item \textbf{Biểu diễn Ẩn Thần kinh và Không gian Tiềm ẩn Đường cong (Neural Implicit \& Latent Path Representations):} Nhằm khắc phục tình trạng đường cong bị răng cưa, tự cắt nhau và biến dạng khi tối ưu hóa điểm tự do, các phương pháp như T2V-NPR sử dụng VAE để học không gian tiềm ẩn của các đường cong chuẩn mực, trong khi NIVeL và NeuralSVG sử dụng mạng nơ-ron truyền thẳng (MLP) làm hàm biểu diễn ẩn, kết hợp kỹ thuật Nested Dropout để ép mạng học thứ tự lớp hình học từ lớn đến nhỏ.
+    \item \textbf{Mô hình Ngôn ngữ Lớn \& Đa phương thức Sinh mã Trực tiếp (Autoregressive Code Generation with LLMs \& MLLMs):} Coi tệp SVG như một ngôn ngữ hình thức dạng XML, các nghiên cứu mới nhất như StarVector~\citep{rodriguez2025starvector} (CVPR 2025) và LLM4SVG~\citep{xing2025llm4svg} (CVPR 2025) huấn luyện các mô hình đa phương thức trên hàng triệu tệp SVG thực tế, thiết kế các token ngữ nghĩa SVG chuyên biệt để sinh trực tiếp mã SVG sạch, giữ đúng các thẻ cơ sở như \texttt{<circle>}, \texttt{<rect>}, \texttt{<polygon>} chỉ trong vài chục giây suy luận.
+    \item \textbf{Lai ghép Ngôn ngữ và Thị giác (Hybrid LLM-Template + Image Diffusion Refinement):} Điển hình là Chat2SVG (CVPR 2025), giao nhiệm vụ kiến trúc sư phân rã bố cục ngữ nghĩa cho LLM (như Claude 3.5 Sonnet) để tạo khung mẫu, sau đó dùng mô hình khuếch tán ảnh và SAM để điêu khắc chi tiết vi mô cho từng thành phần.
+    \item \textbf{Mô phỏng Quy trình Tư duy Thiết kế Phân lớp bằng Diffusion Transformer (Process-Centric Layered Generation via DiT):} Nghiên cứu LayerTracer (ICCV 2025) học trực tiếp quy trình vẽ từng lớp của họa sĩ thông qua kiến trúc DiT (FLUX.1) trên bố cục hình rắn (Serpentine Layout), tạo ra bản thiết kế phân lớp hoàn toàn độc lập và khớp với tư duy con người.
+\end{enumerate}
+
+\subsubsection{Ý nghĩa và Giá trị Ứng dụng Thực tiễn}
+
+Định dạng đồ họa Scalable Vector Graphics (SVG) sở hữu những ưu thế kỹ thuật vượt trội không thể thay thế trong ngành công nghiệp đồ họa hiện đại:
+\begin{itemize}
+    \item \textbf{Độ phân giải độc lập (Resolution Independence):} Hình ảnh vector có thể phóng to đến kích thước vô hạn mà hoàn toàn không bị hiện tượng vỡ hạt (Pixelation), đảm bảo chất lượng hiển thị sắc nét tuyệt đối từ màn hình đồng hồ thông minh, điện thoại, máy tính màn hình Retina/4K đến các biển quảng cáo tấm lớn ngoài trời.
+    \item \textbf{Dung lượng siêu nhẹ và tối ưu hóa Web:} Tập tin SVG thực chất là văn bản mã nguồn XML có cấu trúc toán học gọn nhẹ (thường chỉ vài Kilobytes), nhẹ hơn hàng chục đến hàng trăm lần so với ảnh raster (PNG, JPEG), giúp giảm tải băng thông và tăng tốc độ tải trang web.
+    \item \textbf{Tính khả biên tập và tái cấu trúc (High Editability):} Khác với ảnh raster là một khối pixel hợp nhất không thể tách rời, đồ họa vector lưu trữ từng đối tượng độc lập. Người dùng có thể dễ dàng nhấp chọn từng hình khối, thay đổi màu sắc, dịch chuyển vị trí, chỉnh sửa độ cong hoặc gán chuyển động hoạt hình bằng CSS/JavaScript mà không cần vẽ lại từ đầu.
+    \item \textbf{Tự động hóa chu trình sản xuất công nghiệp và thiết kế UI/UX:} Ứng dụng mô hình Text-to-Vector cho phép các nhà thiết kế và lập trình viên tự động tạo lập hàng loạt biểu tượng (Icons), hình minh họa đồ họa (Illustrations), sơ đồ giao diện người dùng và tệp cắt kỹ thuật số (Laser cutting, CNC) chỉ từ các câu lệnh mô tả ngắn, rút ngắn thời gian thiết kế từ nhiều giờ xuống còn vài giây.
+\end{itemize}
