@@ -1,0 +1,348 @@
+\section{Tuần 2: Các Bài toán của Thị giác Máy tính và Trí tuệ Nhân tạo}
+\label{sec:week2}
+
+% =====================================================================
+\subsection{Phân biệt các tác vụ thị giác máy tính có khả năng ứng dụng cao}
+\label{subsec:w2_tasks}
+
+\textit{Câu hỏi: Phân biệt các tác vụ thị giác máy tính có khả năng ứng dụng cao được trình bày trong bài giảng: phát hiện, nhận dạng, phân lớp, theo vết, truy vấn, đếm, tạo sinh (đối với đối tượng, cảnh, sự kiện); tái tạo 3D; và Visual SLAM (định vị, xây dựng bản đồ, theo vết đối tượng chuyển động, phát hiện và tránh vật cản).}
+
+Bài giảng chia các tác vụ thành ba nhóm~\citep{xlav_ai4cv}: \textbf{hiểu dữ liệu thị giác} (7 tác vụ, mỗi tác vụ áp dụng được cho cả đối tượng, cảnh và sự kiện), \textbf{tái tạo 3D} và \textbf{Visual SLAM}. Bảng~\ref{tab:w2_tasks} phân biệt các tác vụ theo câu hỏi mà mỗi tác vụ trả lời, đầu vào và đầu ra.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption{Phân biệt các tác vụ thị giác máy tính có khả năng ứng dụng cao}
+\label{tab:w2_tasks}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.1cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{Tác vụ} & \textbf{Câu hỏi trả lời} & \textbf{Đầu ra} & \textbf{Ví dụ (đối tượng / cảnh / sự kiện)} \\
+\hline
+\multicolumn{4}{|l|}{\textbf{Nhóm 1: Hiểu dữ liệu thị giác (Visual Data Understanding)}} \\
+\hline
+\textbf{Phát hiện (Detection)} & Có gì và \emph{ở đâu}? & Danh sách hộp bao (hoặc mặt nạ) kèm nhãn lớp và độ tin cậy; với video là đoạn thời gian xảy ra. & Khoanh vùng mọi xe máy trong ảnh; xác định cảnh có chứa bãi biển; phát hiện thời điểm xảy ra va chạm trong video. \\
+\hline
+\textbf{Nhận dạng (Recognition)} & Đây \emph{chính xác là ai / cái gì}? & Danh tính cụ thể (cấp thực thể), thường so khớp với cơ sở dữ liệu đã đăng ký. & Nhận ra khuôn mặt ``Nguyễn Văn A'', biển số 59-X1 123.45; nhận ra địa danh cụ thể; nhận ra hành động ``ngã'' của một người cụ thể. \\
+\hline
+\textbf{Phân lớp (Classification)} & Thuộc \emph{loại} nào? & Một (hoặc vài) nhãn lớp cho toàn ảnh / toàn đoạn video, không cần vị trí. & Ảnh chứa chó hay mèo; cảnh trong nhà hay ngoài trời; video thể thao hay tin tức. \\
+\hline
+\textbf{Theo vết (Tracking)} & Nó \emph{đi đâu} theo thời gian? & Quỹ đạo: chuỗi vị trí của cùng một đối tượng qua các khung hình, giữ nguyên định danh. & Theo dõi một người qua nhiều camera; theo dõi sự thay đổi của cảnh; theo dõi diễn biến một đám đông. \\
+\hline
+\textbf{Truy vấn (Retrieval)} & Ảnh nào \emph{giống} ảnh này? & Danh sách ảnh/video trong kho, xếp hạng theo độ tương tự (Mục~\ref{subsec:w2_retrieval}). & Tìm sản phẩm bằng ảnh; tìm các ảnh cùng phong cảnh; tìm các đoạn video có sự kiện tương tự. \\
+\hline
+\textbf{Đếm (Counting)} & Có \emph{bao nhiêu}? & Một con số (hoặc bản đồ mật độ). & Đếm người trong đám đông, đếm xe trên làn, đếm số lần một sự kiện xảy ra (Mục~\ref{subsec:w2_counting}). \\
+\hline
+\textbf{Tạo sinh (Generating)} & Có thể \emph{tạo ra} dữ liệu mới như thế nào? & Ảnh / video / cảnh mới (Mục~\ref{subsec:w2_generative}). & Sinh khuôn mặt không có thật; sinh cảnh từ mô tả văn bản; sinh video mô phỏng sự kiện. \\
+\hline
+\multicolumn{4}{|l|}{\textbf{Nhóm 2: Tái tạo 3D (3D Reconstruction)}} \\
+\hline
+\textbf{Tái tạo đối tượng, cảnh, môi trường 3D} & Hình dạng 3D \emph{thật} là gì? & Đám mây điểm, lưới đa giác hoặc mô hình thể tích có kích thước. & Quét 3D tượng di sản; dựng mô hình 3D căn phòng từ chuỗi ảnh. \\
+\hline
+\multicolumn{4}{|l|}{\textbf{Nhóm 3: Visual SLAM}} \\
+\hline
+\textbf{Định vị, xây dựng bản đồ, theo vết vật chuyển động} & Tôi \emph{đang ở đâu}, xung quanh trông thế nào, cái gì đang di chuyển? & Vị trí, hướng của camera theo thời gian; bản đồ môi trường; quỹ đạo các vật thể chuyển động. & Robot hút bụi lập bản đồ căn nhà; kính AR đặt vật thể ảo đúng chỗ. \\
+\hline
+\textbf{Phát hiện và tránh vật cản} & Có gì cản đường và \emph{phải làm gì}? & Vị trí vật cản và lệnh điều khiển (đổi hướng, dừng). & Drone né cây; robot giao hàng tránh người đi bộ. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\textbf{Những cặp tác vụ dễ nhầm lẫn.}
+\begin{itemize}
+    \item \textbf{Phân lớp và nhận dạng:} phân lớp trả lời ở cấp \emph{lớp} (``đây là một khuôn mặt người''), nhận dạng trả lời ở cấp \emph{thực thể} (``đây là khuôn mặt của A''). Phân lớp có tập nhãn cố định; nhận dạng thường phải làm việc với danh sách thực thể thay đổi liên tục (nhân viên mới), nên thường được hiện thực bằng so khớp đặc trưng.
+    \item \textbf{Phân lớp và phát hiện:} phân lớp gán nhãn cho cả ảnh; phát hiện phải tìm \emph{vị trí} của từng đối tượng, và một ảnh có thể chứa nhiều đối tượng thuộc nhiều lớp.
+    \item \textbf{Phát hiện và theo vết:} phát hiện xử lý từng khung hình độc lập; theo vết liên kết các kết quả giữa các khung hình để biết đâu là \emph{cùng một} đối tượng.
+    \item \textbf{Phát hiện và đếm:} đếm có thể dựa trên phát hiện (đếm số hộp bao), nhưng khi đối tượng quá dày đặc thì đếm được giải trực tiếp bằng ước lượng mật độ mà không cần định vị từng đối tượng.
+    \item \textbf{Theo vết trong nhóm 1 và theo vết trong Visual SLAM:} theo vết ở nhóm 1 quan sát từ camera thường cố định; trong SLAM, chính camera cũng di chuyển, nên phải đồng thời ước lượng chuyển động của camera và của các vật thể.
+    \item \textbf{Tạo sinh và các tác vụ còn lại:} sáu tác vụ đầu của nhóm 1 đi theo chiều \emph{ảnh $\rightarrow$ thông tin}; tạo sinh đi theo chiều ngược lại \emph{thông tin $\rightarrow$ ảnh}, gần với đồ họa máy tính.
+\end{itemize}
+
+% =====================================================================
+\subsection{Đề xuất ứng dụng sử dụng các tác vụ trên}
+\label{subsec:w2_tasks_app}
+
+\textit{Câu hỏi: Đề xuất một ứng dụng trong đó cần thực hiện các tác vụ đã nêu ở câu hỏi trên.}
+
+\textbf{Ứng dụng: Robot giao hàng tự hành trong khuôn viên trường đại học.} Robot nhận đơn hàng từ căng tin hoặc phòng hành chính, tự di chuyển trên vỉa hè và hành lang để giao cho người nhận. Bảng~\ref{tab:w2_robot} cho thấy robot cần đến tất cả các tác vụ.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Các tác vụ thị giác trong robot giao hàng tự hành}
+\label{tab:w2_robot}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.2cm}|X|}
+\hline
+\textbf{Tác vụ} & \textbf{Vai trò trong ứng dụng} \\
+\hline
+Tái tạo 3D & Dựng trước bản đồ 3D của khuôn viên (tòa nhà, bậc thềm, dốc) để lập kế hoạch đường đi. \\
+\hline
+Visual SLAM: định vị và lập bản đồ & Xác định robot đang ở đâu trên bản đồ, cập nhật bản đồ khi có công trình mới. \\
+\hline
+Phát hiện và tránh vật cản & Phát hiện ghế, xe đạp, bậc thềm đột ngột; đổi hướng hoặc dừng lại. \\
+\hline
+Phát hiện & Phát hiện người đi bộ, xe máy, cửa ra vào, nút thang máy. \\
+\hline
+Theo vết & Theo dõi quỹ đạo người đi bộ để dự đoán hướng đi và nhường đường an toàn. \\
+\hline
+Phân lớp & Phân lớp cảnh (trong nhà / ngoài trời, trời mưa / khô ráo) để chọn tốc độ và chế độ lái phù hợp. \\
+\hline
+Đếm & Đếm số người ở các hành lang để chọn đường ít đông, tránh giờ tan học. \\
+\hline
+Truy vấn & So khớp khuôn mặt người đến nhận hàng với ảnh đã đăng ký trong cơ sở dữ liệu. \\
+\hline
+Nhận dạng & Xác nhận đúng người nhận (cấp thực thể) trước khi mở ngăn hàng; đọc số phòng, biển chỉ dẫn. \\
+\hline
+Tạo sinh & Sinh ảnh mô phỏng điều kiện hiếm (ban đêm, mưa lớn, đám đông) để bổ sung dữ liệu huấn luyện; làm mờ hoặc thay thế khuôn mặt người qua đường trong video lưu trữ để bảo vệ quyền riêng tư. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Ứng dụng này cũng minh họa mô hình ba chân trụ (Mục~\ref{subsec:w1_threepillars}): robot cần dữ liệu thị giác từ nhiều camera, các mô hình xử lý dữ liệu thị giác (hình học camera, SLAM, tái tạo 3D) và trí tuệ nhân tạo (phát hiện, nhận dạng, ra quyết định).
+
+% =====================================================================
+\subsection{So sánh bài toán truy vấn ảnh và bài toán nhận dạng}
+\label{subsec:w2_retrieval}
+
+\textit{Câu hỏi: So sánh bài toán truy vấn ảnh (Image Retrieval) và bài toán nhận dạng (Recognition).}
+
+\textbf{Nhận dạng} trả lời câu hỏi ``\emph{đây là cái gì?}'': cho ảnh truy vấn $q$ và tập lớp định trước $\mathcal{C} = \{c_1, \ldots, c_K\}$, tìm nhãn
+\begin{equation}
+\hat{c} = \arg\max_{c \in \mathcal{C}} P(c \mid q).
+\end{equation}
+\textbf{Truy vấn ảnh} trả lời câu hỏi ``\emph{những ảnh nào giống ảnh này?}'': cho ảnh truy vấn $q$ và cơ sở dữ liệu $\mathcal{D} = \{x_1, \ldots, x_N\}$, trả về danh sách $x_{(1)}, x_{(2)}, \ldots, x_{(k)}$ được sắp xếp tăng dần theo độ dị biệt $d\big(f(q), f(x_{(i)})\big)$ giữa các vector đặc trưng~\citep{smeulders2000content}. Đầu ra của nhận dạng là \emph{một nhãn}; đầu ra của truy vấn là \emph{một danh sách có thứ tự}.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh bài toán nhận dạng và truy vấn ảnh}
+\label{tab:w2_retrieval}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Nhận dạng (Recognition)} & \textbf{Truy vấn ảnh (Retrieval)} \\
+\hline
+\textbf{Câu hỏi} & Đối tượng trong ảnh thuộc lớp nào / là ai? & Trong kho, ảnh nào giống ảnh truy vấn nhất? \\
+\hline
+\textbf{Đầu ra} & Một nhãn (kèm độ tin cậy). & Danh sách $k$ ảnh xếp hạng theo độ tương tự. \\
+\hline
+\textbf{Tập lớp} & Đóng, định nghĩa trước khi huấn luyện. & Không cần định nghĩa lớp; kho ảnh có thể thay đổi liên tục. \\
+\hline
+\textbf{Thành phần chính} & Bộ phân lớp (classifier). & Đặc trưng + độ đo + cấu trúc chỉ mục (index). \\
+\hline
+\textbf{Độ đo đánh giá} & Accuracy, Precision/Recall cho từng lớp. & Precision@$k$, Recall@$k$, mAP trên danh sách xếp hạng. \\
+\hline
+\textbf{Thách thức} & Phân biệt các lớp gần nhau, lớp chưa từng thấy. & Tìm kiếm nhanh trên hàng triệu ảnh; định nghĩa thế nào là ``giống''. \\
+\hline
+\textbf{Ví dụ} & Nhận dạng biển báo, nhận dạng khuôn mặt nhân viên. & Tìm sản phẩm bằng hình ảnh, tìm ảnh trùng lặp, tìm ảnh y khoa ca bệnh tương tự. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Hai bài toán có liên hệ chặt chẽ: nhận dạng có thể được giải bằng truy vấn — tìm $k$ ảnh gần nhất trong kho đã gán nhãn rồi bỏ phiếu (phân lớp $k$ láng giềng gần nhất). Ngược lại, trong truy vấn ảnh, kết quả nhận dạng có thể dùng để lọc trước (chỉ tìm trong các ảnh cùng lớp với truy vấn) nhằm giảm thời gian tìm kiếm. Nhận dạng khuôn mặt trong các hệ thống lớn thực chất là một bài toán truy vấn: so khớp vector khuôn mặt với hàng triệu vector đã lưu, sử dụng các kỹ thuật chỉ mục như lượng tử hóa tích (product quantization)~\citep{jegou2011product}.
+
+% =====================================================================
+\subsection{Mục đích của việc xác định số lượng đối tượng trong ảnh}
+\label{subsec:w2_counting}
+
+\textit{Câu hỏi: Việc xác định số lượng đối tượng trong một bức ảnh nhằm mục đích gì?}
+
+Đếm đối tượng (object counting) chuyển nội dung ảnh thành một \textbf{đại lượng định lượng} — dạng thông tin mà các hệ thống quản lý có thể dùng trực tiếp để so sánh với ngưỡng, thống kê theo thời gian và ra quyết định. Các mục đích chính:
+
+\begin{itemize}
+    \item \textbf{An toàn và an ninh:} ước lượng mật độ đám đông tại lễ hội, sân vận động, nhà ga để cảnh báo sớm nguy cơ chen lấn, giẫm đạp~\citep{li2018csrnet}; kiểm soát số người trong không gian giới hạn (phòng sạch, thang máy, hầm mỏ).
+    \item \textbf{Điều phối giao thông và đô thị:} đếm phương tiện theo làn để điều chỉnh chu kỳ đèn tín hiệu, đếm hành khách để điều chỉnh tần suất xe buýt, tàu điện.
+    \item \textbf{Sản xuất và kho vận:} đếm sản phẩm trên băng chuyền, kiểm kê hàng trên kệ, đối chiếu số lượng khi giao nhận.
+    \item \textbf{Nông nghiệp và sinh thái:} đếm trái trên cây để dự báo năng suất, đếm gia súc, đếm cá thể động vật hoang dã từ ảnh flycam để theo dõi quần thể.
+    \item \textbf{Y sinh:} đếm tế bào, hồng cầu, khuẩn lạc trong ảnh hiển vi — chỉ số quan trọng trong xét nghiệm.
+    \item \textbf{Kinh doanh:} đếm khách vào cửa hàng, thời gian dừng ở từng khu vực để đánh giá hiệu quả bố trí, khuyến mãi.
+\end{itemize}
+
+Về kỹ thuật, khi đối tượng thưa và rõ ràng, có thể đếm bằng cách phát hiện từng đối tượng rồi đếm hộp bao; khi đối tượng dày đặc, che khuất lẫn nhau (đám đông, đàn chim), các phương pháp hiện đại ước lượng \emph{bản đồ mật độ} $D(x, y)$ rồi lấy tổng $\hat{N} = \sum_{x,y} D(x, y)$~\citep{li2018csrnet}. Điểm chung là con số đếm được chỉ có ý nghĩa khi gắn với một \emph{quyết định nghiệp vụ} — đếm để biết khi nào phải hành động.
+
+% =====================================================================
+\subsection{Ví dụ về các mô hình tạo sinh}
+\label{subsec:w2_generative}
+
+\textit{Câu hỏi: Cho một số ví dụ về mô hình tạo sinh (generative model) để làm rõ khái niệm.}
+
+Mô hình \textbf{phân biệt} (discriminative) học phân phối có điều kiện $P(y \mid x)$ để gán nhãn cho ảnh. Mô hình \textbf{tạo sinh} học phân phối của chính dữ liệu $P(x)$ (hoặc $P(x \mid c)$ với điều kiện $c$) để có thể \emph{lấy mẫu} ra ảnh mới chưa từng tồn tại nhưng trông giống dữ liệu thật. Các ví dụ:
+
+\begin{itemize}
+    \item \textbf{Sinh ảnh từ nhiễu:} GAN~\citep{goodfellow2014generative} huấn luyện bộ sinh và bộ phân biệt đối kháng nhau; StyleGAN~\citep{karras2019style} sinh khuôn mặt người không có thật với độ chân thực cao. VAE~\citep{kingma2014auto} học không gian ẩn liên tục, cho phép nội suy giữa hai khuôn mặt.
+    \item \textbf{Sinh ảnh từ văn bản:} các mô hình khuếch tán (diffusion) học cách khử nhiễu dần từ nhiễu Gauss thành ảnh~\citep{ho2020denoising}; Latent Diffusion~\citep{rombach2022high} (nền tảng của Stable Diffusion) sinh ảnh theo mô tả ``một con mèo đội mũ phi hành gia, phong cách tranh sơn dầu''.
+    \item \textbf{Chuyển đổi ảnh sang ảnh:} pix2pix~\citep{isola2017image} biến bản phác thảo thành ảnh chụp, bản đồ thành ảnh vệ tinh; CycleGAN~\citep{zhu2017unpaired} chuyển ảnh ngựa thành ngựa vằn, ảnh mùa hè thành mùa đông mà không cần cặp ảnh tương ứng.
+    \item \textbf{Khôi phục ảnh:} siêu phân giải tạo chi tiết cho ảnh độ phân giải thấp~\citep{ledig2017photo}; tô màu ảnh đen trắng; điền vùng bị mất (inpainting) để xóa vật thể khỏi ảnh.
+    \item \textbf{Sinh dữ liệu huấn luyện:} sinh ảnh tổn thương da hiếm gặp hoặc ảnh lỗi sản phẩm hiếm để bổ sung cho tập huấn luyện mất cân bằng.
+\end{itemize}
+
+Điểm mấu chốt để phân biệt: mô hình phân biệt nhận ảnh và trả về \emph{nhãn}; mô hình tạo sinh nhận nhiễu/điều kiện và trả về \emph{ảnh}. Nói cách khác, mô hình tạo sinh phải ``hiểu'' dữ liệu đủ sâu để \emph{tái tạo} được nó, chứ không chỉ để \emph{phân biệt} nó.
+
+% =====================================================================
+\subsection{Ứng dụng thị giác máy tính trong phân tích ảnh y khoa và chẩn đoán bệnh}
+\label{subsec:w2_medical}
+
+\textit{Câu hỏi: Trình bày một số ứng dụng của thị giác máy tính trong phân tích ảnh y khoa và chẩn đoán bệnh.}
+
+Ảnh y khoa (X-quang, CT, MRI, siêu âm, nội soi, ảnh đáy mắt, tiêu bản giải phẫu bệnh) là nguồn thông tin chính trong chẩn đoán. Thị giác máy tính hỗ trợ bác sĩ ở các tác vụ sau:
+
+\begin{itemize}
+    \item \textbf{Phân lớp (sàng lọc):} xác định ảnh có dấu hiệu bệnh hay không. Mạng học sâu phân loại ảnh tổn thương da với độ chính xác tương đương bác sĩ da liễu~\citep{esteva2017dermatologist}; phát hiện bệnh võng mạc do đái tháo đường từ ảnh đáy mắt~\citep{gulshan2016development}; sàng lọc ung thư vú trên ảnh nhũ ảnh~\citep{mckinney2020international}.
+    \item \textbf{Phát hiện:} định vị nốt phổi trên CT, polyp trong video nội soi đại tràng, vùng xuất huyết não.
+    \item \textbf{Phân đoạn:} khoanh vùng chính xác khối u, cơ quan, mạch máu để đo thể tích, lập kế hoạch xạ trị hoặc phẫu thuật. Kiến trúc U-Net~\citep{ronneberger2015unet} được đề xuất riêng cho phân đoạn ảnh y sinh và hiện được sử dụng rất rộng rãi.
+    \item \textbf{Đếm và đo lường:} đếm tế bào, đo chỉ số tim--ngực trên X-quang, đo độ dày lớp nội trung mạc.
+    \item \textbf{Đăng ký ảnh và theo dõi:} căn chỉnh ảnh chụp ở các thời điểm khác nhau để đánh giá khối u tăng hay giảm sau điều trị.
+    \item \textbf{Tái tạo 3D:} dựng mô hình 3D từ chuỗi lát cắt CT/MRI phục vụ mô phỏng phẫu thuật, in 3D.
+\end{itemize}
+
+Cần lưu ý rằng các hệ thống này đóng vai trò \textbf{hỗ trợ quyết định}: chúng giảm tải công việc, giảm bỏ sót và đưa ra ý kiến thứ hai, nhưng kết luận chẩn đoán và trách nhiệm điều trị vẫn thuộc về bác sĩ. Thách thức chính gồm: dữ liệu gán nhãn khan hiếm và tốn kém, sai lệch khi áp dụng sang bệnh viện có máy chụp khác, yêu cầu giải thích được và bảo mật dữ liệu bệnh nhân.
+
+% =====================================================================
+\subsection{Triết lý của xe tự hành}
+\label{subsec:w2_av_philosophy}
+
+\textit{Câu hỏi: Trình bày triết lý (các nguyên lý thiết kế cốt lõi) của xe tự hành.}
+
+Xe tự hành là một hệ thống \textbf{thay thế người lái} trong việc nhận biết môi trường, ra quyết định và điều khiển phương tiện. Triết lý thiết kế của nó có thể tóm gọn trong các nguyên lý sau:
+
+\textbf{1. Chu trình Cảm nhận -- Lập kế hoạch -- Hành động (Sense -- Plan -- Act).} Xe liên tục lặp lại ba bước: \emph{cảm nhận} (camera, radar, LiDAR, GPS, IMU thu thập dữ liệu; thị giác máy tính phát hiện làn đường, phương tiện, người đi bộ, biển báo, đèn tín hiệu), \emph{lập kế hoạch} (dự đoán hành vi của các đối tượng xung quanh, chọn quỹ đạo an toàn và hợp luật) và \emph{hành động} (điều khiển vô lăng, ga, phanh). Đây chính là vòng lặp ``nhận biết -- hiểu -- thích nghi'' của một hệ thống thông minh, được hiện thực hóa trên phương tiện. Có hai trường phái hiện thực: \emph{mô-đun} (mỗi bước là một khối riêng, dễ kiểm định) và \emph{đầu-cuối} (end-to-end, một mạng nơ-ron ánh xạ thẳng từ ảnh sang góc lái~\citep{bojarski2016end}).
+
+\textbf{2. An toàn là ưu tiên tuyệt đối.} Mọi quyết định phải ưu tiên tránh va chạm hơn tốc độ hay sự thoải mái. Hệ thống phải có trạng thái rủi ro tối thiểu (minimal risk condition): khi gặp tình huống vượt quá khả năng, xe phải tự giảm tốc, tấp vào lề hoặc chuyển quyền điều khiển cho người lái.
+
+\textbf{3. Dư thừa và đa dạng cảm biến.} Không tin vào một nguồn thông tin duy nhất. Mỗi loại cảm biến có điểm mù riêng, nên xe kết hợp nhiều loại để bù trừ cho nhau (Mục~\ref{subsec:w2_radar}); các khối tính toán quan trọng cũng được nhân đôi.
+
+\textbf{4. Tự động hóa theo cấp độ và phạm vi hoạt động.} Tiêu chuẩn SAE J3016~\citep{sae2021j3016} chia tự động hóa lái xe thành sáu cấp, từ Cấp 0 (không tự động) đến Cấp 5 (tự động hoàn toàn trong mọi điều kiện). Mỗi hệ thống chỉ được thiết kế cho một \emph{phạm vi hoạt động} (Operational Design Domain) cụ thể — ví dụ, đường cao tốc, ban ngày, thời tiết tốt — thay vì hứa hẹn hoạt động ở mọi nơi.
+
+\textbf{5. Dự đoán thay vì chỉ phản ứng.} Một người lái giỏi không chỉ thấy chiếc xe phía trước mà còn đoán được nó sắp chuyển làn. Xe tự hành cũng phải dự đoán quỹ đạo tương lai của người và xe xung quanh để hành động sớm.
+
+% =====================================================================
+\subsection{Vì sao camera là không đủ và cần thêm radar trong xe tự hành}
+\label{subsec:w2_radar}
+
+\textit{Câu hỏi: Tại sao chỉ dùng camera là không đủ cho xe tự hành, và vì sao cần thêm radar?}
+
+\textbf{Giới hạn của camera.} Camera cho ảnh giàu thông tin màu sắc và kết cấu, là cảm biến tốt nhất để đọc biển báo, đèn tín hiệu, vạch kẻ đường và phân loại đối tượng. Tuy nhiên:
+\begin{itemize}
+    \item \textbf{Không đo trực tiếp khoảng cách:} ảnh là phép chiếu 3D $\rightarrow$ 2D làm mất chiều sâu. Một vật nhỏ ở gần và một vật lớn ở xa có thể cho ảnh giống nhau; độ sâu chỉ được \emph{ước lượng} (qua camera kép hoặc mạng học sâu) và sai số tăng nhanh theo khoảng cách.
+    \item \textbf{Không đo trực tiếp vận tốc:} vận tốc phải suy ra từ chênh lệch vị trí qua nhiều khung hình, nên chậm và kém chính xác.
+    \item \textbf{Phụ thuộc ánh sáng:} camera thụ động, cần nguồn sáng bên ngoài; bị ảnh hưởng bởi ban đêm, ngược sáng, đèn pha xe đối diện, chuyển đột ngột khi ra khỏi hầm.
+    \item \textbf{Phụ thuộc thời tiết:} mưa lớn, sương mù, tuyết, bụi, giọt nước trên ống kính làm suy giảm nghiêm trọng chất lượng ảnh.
+\end{itemize}
+
+\textbf{Ưu điểm của radar.} Radar phát sóng vô tuyến (thường ở dải $77$ GHz trong ô tô) và thu sóng phản xạ:
+\begin{itemize}
+    \item Đo \textbf{khoảng cách} trực tiếp từ thời gian (hoặc tần số) của sóng phản xạ.
+    \item Đo \textbf{vận tốc tương đối} trực tiếp qua hiệu ứng Doppler, chỉ trong một lần đo.
+    \item Là cảm biến \textbf{chủ động}, hoạt động như nhau ngày và đêm.
+    \item Sóng radar có bước sóng milimét, \textbf{xuyên qua mưa, sương mù, bụi} tốt hơn nhiều so với ánh sáng khả kiến.
+    \item Chi phí thấp và độ bền cao so với LiDAR.
+\end{itemize}
+Bù lại, radar có độ phân giải không gian thấp, không phân biệt được màu sắc, chữ viết, khó phân loại đối tượng.
+
+\textbf{Kết luận: bổ trợ lẫn nhau.} Camera trả lời ``\emph{đó là cái gì?}'', radar trả lời ``\emph{nó cách bao xa và đang di chuyển nhanh thế nào?}''. Kết hợp (sensor fusion) hai nguồn này — thường kèm thêm LiDAR — giúp hệ thống vừa nhận dạng đúng, vừa đo chính xác, vừa hoạt động ổn định trong điều kiện xấu~\citep{feng2021deep}. Trong thời tiết xấu, các cảm biến bị suy giảm không đồng đều (ví dụ sương mù ảnh hưởng camera và LiDAR nặng hơn radar); Bijelic và cộng sự đề xuất mạng kết hợp có khả năng tự điều chỉnh mức tin cậy vào từng cảm biến để xử lý chính tình huống này~\citep{bijelic2020seeing}. Đây là biểu hiện cụ thể của nguyên lý ``dư thừa và đa dạng cảm biến'' ở Mục~\ref{subsec:w2_av_philosophy}.
+
+% =====================================================================
+\subsection{Phân biệt trí tuệ nhân tạo, trí tuệ tự nhiên và thông minh}
+\label{subsec:w2_ai_ni}
+
+\textit{Câu hỏi: Phân biệt trí tuệ nhân tạo, trí tuệ tự nhiên và thông minh. Trí tuệ nhân tạo có giúp trí tuệ tự nhiên phát triển (thăng hoa) hay không?}
+
+\textbf{Thông minh (Intelligence)} là một \emph{năng lực}: khả năng thu nhận thông tin, hiểu, học hỏi và thích nghi để đạt mục tiêu trong môi trường thay đổi. Sau khi tổng hợp khoảng 70 định nghĩa khác nhau, Legg và Hutter đề xuất một định nghĩa chung: thông minh đo khả năng của một tác tử trong việc đạt mục tiêu trong nhiều môi trường khác nhau~\citep{legg2007collection}. Thông minh là \emph{thuộc tính}, không phụ thuộc vào vật mang nó.
+
+\textbf{Trí tuệ tự nhiên (Natural Intelligence)} là thông minh được hiện thực trên \emph{nền tảng sinh học} — bộ não người và động vật — hình thành qua tiến hóa và phát triển qua trải nghiệm sống. Nó gắn liền với ý thức, cảm xúc, động cơ tự thân và khả năng học từ rất ít ví dụ.
+
+\textbf{Trí tuệ nhân tạo (Artificial Intelligence)} là thông minh được hiện thực trên \emph{nền tảng nhân tạo} — phần cứng và thuật toán do con người thiết kế. Nó có mục tiêu do con người đặt ra, học từ dữ liệu do con người cung cấp, và hiện nay vẫn là trí tuệ \emph{chuyên biệt}: rất giỏi ở tác vụ được huấn luyện nhưng khó chuyển sang tác vụ khác.
+
+Như vậy, quan hệ giữa ba khái niệm là: \emph{thông minh} là khái niệm chung; \emph{trí tuệ tự nhiên} và \emph{trí tuệ nhân tạo} là hai cách hiện thực khác nhau của nó.
+
+\textbf{AI có giúp trí tuệ tự nhiên thăng hoa không?} Nhóm cho rằng \textbf{có, nhưng không tự động} — kết quả phụ thuộc vào cách con người sử dụng:
+\begin{itemize}
+    \item \textbf{Khi AI là công cụ khuếch đại:} AI đảm nhận các việc lặp lại, tính toán nặng (tìm kiếm tài liệu, xử lý hàng nghìn ảnh), giải phóng thời gian cho con người tập trung vào việc đặt câu hỏi, sáng tạo và phán đoán. AI cũng mở ra tri thức mà con người không tự đạt được: AlphaFold dự đoán cấu trúc protein~\citep{week2_alphafold2021}, giúp các nhà sinh học tiến xa hơn trong nghiên cứu. Đây là trường hợp trí tuệ tự nhiên \emph{thăng hoa}.
+    \item \textbf{Khi AI là công cụ thay thế tư duy:} nếu người học dùng AI để làm hộ bài tập mà không hiểu, hay tin tuyệt đối vào kết quả của máy mà không kiểm chứng, năng lực tư duy độc lập sẽ suy giảm.
+\end{itemize}
+Giống như máy tính bỏ túi không làm con người kém toán đi nếu ta vẫn hiểu bản chất phép tính, AI giúp trí tuệ tự nhiên thăng hoa khi con người \emph{giữ vai trò người đặt mục tiêu, người kiểm chứng và người chịu trách nhiệm}.
+
+% =====================================================================
+\subsection{Trí tuệ nhân tạo trong việc thu nhận thông tin và nhận biết bản chất sự vật}
+\label{subsec:w2_ai_essence}
+
+\textit{Câu hỏi: Trí tuệ nhân tạo có giúp con người thu nhận thông tin và nhận biết bản chất của sự vật, hiện tượng hay không? Cho ví dụ.}
+
+\textbf{Về thu nhận thông tin: có, rất hiệu quả.} AI mở rộng giác quan của con người theo ba hướng:
+\begin{itemize}
+    \item \emph{Quy mô:} xử lý lượng dữ liệu con người không thể xem hết — phân tích ảnh vệ tinh toàn cầu mỗi ngày để phát hiện điểm phá rừng; theo dõi hàng nghìn camera giao thông cùng lúc.
+    \item \emph{Độ nhạy:} phát hiện chi tiết mắt thường bỏ sót — tổn thương rất nhỏ trên ảnh nhũ ảnh~\citep{mckinney2020international}, vết nứt vi mô trên bề mặt kim loại.
+    \item \emph{Chuyển đổi dạng thông tin:} đọc chữ trong ảnh, mô tả ảnh bằng lời cho người khiếm thị, dịch biển báo tiếng nước ngoài.
+\end{itemize}
+
+\textbf{Về nhận biết bản chất: có, nhưng ở mức hỗ trợ.} Bản chất của sự vật là các quy luật, cơ chế nhân quả bên trong, không trực tiếp hiện ra trên dữ liệu. AI có thể giúp con người \emph{tiếp cận} bản chất:
+\begin{itemize}
+    \item \emph{Phát hiện quy luật ẩn trong dữ liệu:} AlphaFold học mối liên hệ giữa chuỗi axit amin và cấu trúc không gian của protein~\citep{week2_alphafold2021}; kết quả này giúp các nhà khoa học hiểu cơ chế hoạt động của protein và thiết kế thuốc.
+    \item \emph{Gợi ý giả thuyết:} trong chẩn đoán hình ảnh, các bản đồ nhiệt chỉ ra vùng ảnh mà mô hình dựa vào, giúp bác sĩ chú ý đến những dấu hiệu có thể liên quan đến cơ chế bệnh.
+\end{itemize}
+Tuy nhiên, các mô hình học máy hiện nay chủ yếu học \emph{tương quan thống kê} trong dữ liệu chứ không phải \emph{quan hệ nhân quả}. Ví dụ, một mô hình nhận dạng có thể phân loại đúng ``bò'' một phần nhờ nền cỏ xanh thường đi kèm — tức là nắm được hiện tượng đi kèm chứ không phải bản chất ``con bò''. Thực nghiệm trên ảnh bẫy ảnh động vật hoang dã cho thấy các mô hình nhận dạng khái quát hóa kém khi chuyển sang địa điểm mới, nơi khung nền thay đổi~\citep{beery2018recognition}. Vì vậy, AI giúp con người \emph{nhìn thấy nhiều hơn và nhanh hơn}, còn việc \emph{kiểm chứng và lý giải bản chất} vẫn cần đến phương pháp khoa học và tư duy của con người.
+
+% =====================================================================
+\subsection{Giải thích câu nói của Stephen Hawking về thông minh}
+\label{subsec:w2_hawking}
+
+\textit{Câu hỏi: Giải thích câu nói của Stephen Hawking trong bài giảng. Phát biểu này gần với khái niệm ``thông tuệ'' hay ``thông minh'' hơn?}
+
+\begin{quote}
+\textit{``Intelligence is the ability to adapt to change.''} (Thông minh là khả năng thích nghi với sự thay đổi.)~\citep{xlav_ai4cv}
+\end{quote}
+
+\textbf{Ý nghĩa.} Câu nói đặt thước đo của thông minh vào \emph{sự thay đổi} chứ không phải vào lượng kiến thức đã có. Một hệ thống chỉ làm tốt trong điều kiện quen thuộc chưa chắc đã thông minh; thông minh thể hiện khi điều kiện thay đổi mà hệ thống vẫn điều chỉnh được hành vi để đạt mục tiêu. Điều này phù hợp với định nghĩa tổng quát của Legg và Hutter, vốn đặt trọng tâm vào khả năng đạt mục tiêu trong \emph{nhiều môi trường khác nhau}~\citep{legg2007collection}.
+
+\textbf{Liên hệ với thị giác máy tính.} Một mô hình nhận dạng đạt độ chính xác $99\%$ trên tập kiểm thử nhưng thất bại khi trời mưa, khi đổi camera hay khi ánh sáng thay đổi thì chưa thực sự ``thông minh'' theo nghĩa này — nó mới ghi nhớ được phân phối dữ liệu huấn luyện. Các hướng nghiên cứu như tổng quát hóa ngoài phân phối, thích ứng miền, học liên tục chính là nỗ lực làm cho mô hình ``thích nghi với sự thay đổi''.
+
+\textbf{Gần với thông minh hay thông tuệ?} Câu hỏi này xuất phát từ nhận xét rằng ``thích nghi'' là phẩm chất của người từng trải, nghe giống ``thông tuệ'' (wisdom) hơn ``thông minh''. Nhóm cho rằng câu nói vẫn thuộc về \textbf{thông minh}, nhưng là ở \emph{tầng cao} của thông minh:
+\begin{itemize}
+    \item \textbf{Thông minh} là năng lực \emph{tìm cách} đạt mục tiêu: giải quyết vấn đề, học, thích nghi. Thích nghi là thay đổi \emph{phương tiện} để đạt \emph{mục tiêu đã cho}.
+    \item \textbf{Thông tuệ} là năng lực \emph{chọn đúng mục tiêu}: cân nhắc lợi ích của bản thân, người khác và cộng đồng trong dài hạn, dựa trên giá trị đạo đức. Sternberg định nghĩa thông tuệ chính là việc dùng trí thông minh để hướng tới lợi ích chung, cân bằng giữa các lợi ích khác nhau~\citep{sternberg1998balance}.
+\end{itemize}
+Một tác tử có thể thích nghi rất giỏi với mọi thay đổi để đạt một mục tiêu sai trái — đó là thông minh nhưng không thông tuệ. Vì vậy, câu nói của Hawking có \emph{điểm giao} với thông tuệ (sự linh hoạt, không cứng nhắc), nhưng chưa bao hàm yếu tố cốt lõi của thông tuệ là \emph{giá trị và sự lựa chọn mục tiêu}. Có thể nói: thích nghi là điều kiện cần của thông tuệ, nhưng chưa phải là điều kiện đủ.
+
+% =====================================================================
+\subsection{Giải thích định nghĩa học máy của Arthur Samuel}
+\label{subsec:w2_samuel}
+
+\textit{Câu hỏi: Giải thích câu nói của Arthur Samuel trong bài giảng.}
+
+\begin{quote}
+\textit{``Machine Learning: Field of study that gives computers the ability to learn without being explicitly programmed.''} (Học máy là lĩnh vực nghiên cứu giúp máy tính có khả năng học mà không cần được lập trình một cách tường minh.)
+\end{quote}
+
+Định nghĩa này thường được gán cho Arthur Samuel, người xây dựng chương trình chơi cờ đam (checkers) tự cải thiện qua các ván đấu. Trong bài báo năm 1959, ông chỉ ra rằng có thể lập trình để máy tính học chơi cờ giỏi hơn chính người viết ra chương trình~\citep{samuel1959some}.
+
+\textbf{``Không cần được lập trình tường minh''} không có nghĩa là không lập trình gì cả, mà là \emph{không lập trình trực tiếp lời giải}:
+\begin{itemize}
+    \item \textbf{Lập trình truyền thống:} người lập trình phải hiểu rõ quy luật và viết thành luật: \emph{Dữ liệu} + \emph{Luật} $\rightarrow$ \emph{Kết quả}. Ví dụ: ``nếu điểm ảnh có màu đỏ và hình tròn thì là biển cấm''.
+    \item \textbf{Học máy:} người lập trình chỉ viết \emph{cách học} (mô hình $f_\theta$, hàm mất mát, thuật toán tối ưu); máy tự rút ra luật từ ví dụ: \emph{Dữ liệu} + \emph{Kết quả mong muốn} $\rightarrow$ \emph{Luật} (tham số $\theta^*$).
+\end{itemize}
+
+\textbf{Vì sao điều này quan trọng với xử lý ảnh và thị giác máy tính?} Rất nhiều bài toán thị giác mà con người giải dễ dàng nhưng \emph{không thể diễn đạt thành luật}: không ai viết được bộ luật đầy đủ để phân biệt mèo với chó trên mọi tư thế, ánh sáng, giống loài. Học máy cho phép giải những bài toán này bằng cách cung cấp đủ nhiều ví dụ có nhãn.
+
+\textbf{Hệ quả.} Khi máy học từ dữ liệu, chất lượng của mô hình phụ thuộc vào chất lượng dữ liệu: dữ liệu thiếu đa dạng hay có thiên lệch thì mô hình cũng thiên lệch. Vai trò của con người dịch chuyển từ ``viết luật'' sang ``thiết kế dữ liệu, mô hình và cách đánh giá''.
+
+% =====================================================================
+\subsection{Vì sao mạng học sâu cần nhiều lớp}
+\label{subsec:w2_depth}
+
+\textit{Câu hỏi: Vì sao mạng học sâu sử dụng rất nhiều lớp? Việc tăng số lớp có thực sự cần thiết hay chỉ nhằm thúc đẩy nhu cầu phần cứng (GPU)?}
+
+\textbf{1. Thế giới thị giác có cấu trúc phân cấp.} Một khuôn mặt gồm mắt, mũi, miệng; mắt gồm các đường cong và vùng tối sáng; đường cong gồm các điểm biên. Mạng nhiều lớp học đúng cấu trúc này: khi trực quan hóa mạng tích chập đã huấn luyện, các lớp đầu phản ứng với biên và màu, các lớp giữa phản ứng với kết cấu và bộ phận, các lớp cuối phản ứng với toàn bộ đối tượng~\citep{zeiler2014visualizing}. Mỗi lớp xây dựng khái niệm trừu tượng hơn từ khái niệm của lớp trước — giống cách phân lớp nội dung ảnh ở Mục~\ref{subsec:w1_layers}.
+
+\textbf{2. Độ sâu hiệu quả hơn độ rộng về mặt biểu diễn.} Với cùng số lượng tham số, mạng sâu có thể biểu diễn những hàm phức tạp hơn rất nhiều so với mạng nông. Mạng sâu có cấu trúc kết hợp các phép tính theo tầng, cho phép tái sử dụng các phần tính toán với số lần tăng theo hàm mũ của độ sâu, nhờ đó tạo ra số vùng tuyến tính lớn hơn nhiều so với mạng nông~\citep{montufar2014number}. Telgarsky chứng minh tồn tại những hàm mà mạng có $\Theta(k^3)$ lớp biểu diễn được, trong khi mạng chỉ có $O(k)$ lớp muốn xấp xỉ thì cần ít nhất $\Omega(2^k)$ nút~\citep{telgarsky2016benefits}. Nói cách khác, độ sâu giúp \emph{tái sử dụng} các đặc trưng trung gian thay vì phải học lại từ đầu.
+
+\textbf{3. Bằng chứng thực nghiệm.} Trên ImageNet, độ chính xác tăng rõ rệt từ AlexNet ($8$ lớp)~\citep{krizhevsky2012imagenet} đến VGG ($16$--$19$ lớp)~\citep{simonyan2015very} và ResNet ($152$ lớp)~\citep{he2016deep}. Đáng chú ý, ResNet ra đời chính vì việc \emph{chỉ chồng thêm lớp} lại làm mô hình kém đi; kết nối tắt (skip connection) mới giúp tận dụng được độ sâu.
+
+\textbf{Vậy có phải ``bày trò để bán GPU'' không?} Nhóm cho rằng \textbf{không} — độ sâu xuất phát từ nhu cầu biểu diễn có cơ sở lý thuyết và thực nghiệm. Tuy nhiên, câu hỏi có điểm đúng:
+\begin{itemize}
+    \item \textbf{Lợi ích giảm dần:} hiệu năng tăng theo quy luật lũy thừa của kích thước mô hình, dữ liệu và tính toán~\citep{kaplan2020scaling}, nghĩa là mỗi lần cải thiện thêm một chút đòi hỏi tài nguyên tăng gấp nhiều lần. Chi phí năng lượng và phần cứng là có thật.
+    \item \textbf{Không phải càng sâu càng tốt:} EfficientNet~\citep{tan2019efficientnet} cho thấy cân bằng hợp lý giữa độ sâu, độ rộng và độ phân giải đạt kết quả tốt hơn với ít tham số hơn nhiều; kỹ thuật chưng cất tri thức~\citep{hinton2015distilling} nén mô hình lớn thành mô hình nhỏ chạy được trên điện thoại.
+    \item \textbf{Bài toán đơn giản không cần mạng sâu:} đếm sản phẩm trên băng chuyền với nền cố định có thể giải bằng xử lý ảnh truyền thống (ngưỡng hóa, tìm thành phần liên thông) mà không cần GPU.
+\end{itemize}
+Kết luận: số lớp nên được chọn theo \emph{độ phức tạp của bài toán và dữ liệu}. Độ sâu là cần thiết cho các bài toán thị giác phức tạp, nhưng xu hướng hiện nay cũng đặc biệt chú trọng đến hiệu quả tính toán.

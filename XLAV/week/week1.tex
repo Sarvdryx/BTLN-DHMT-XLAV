@@ -1,0 +1,308 @@
+\section{Tuần 1: Tổng quan về Dữ liệu Thị giác và Thị giác Máy tính}
+\label{sec:week1}
+
+% =====================================================================
+\subsection{Tác động của dữ liệu thị giác đến quy trình sản xuất và quản lý xã hội}
+\label{subsec:w1_impact}
+
+\textit{Câu hỏi: Dữ liệu thị giác tác động như thế nào đến các quy trình sản xuất và quản lý xã hội? Cho ví dụ minh họa.}
+
+Dữ liệu thị giác (ảnh, video, ảnh độ sâu, ảnh đa phổ, ảnh y khoa\ldots) có ba đặc điểm khiến nó trở thành nguồn dữ liệu đầu vào quan trọng của các quy trình hiện đại: (i) \textbf{giàu thông tin} — một khung hình Full HD chứa khoảng $2 \times 10^6$ điểm ảnh, mỗi điểm mang thông tin màu và vị trí, trong khi một cảm biến nhiệt độ chỉ cho một con số; (ii) \textbf{không tiếp xúc} — thu nhận từ xa, không làm hỏng hay làm chậm đối tượng quan sát; (iii) \textbf{gần với cách con người làm việc} — phần lớn quy trình thủ công vốn dựa vào việc ``nhìn'' (kiểm hàng, đọc biển số, quan sát bệnh nhân), nên số hóa thị giác cho phép tự động hóa đúng những khâu đó. Tác động của dữ liệu thị giác thể hiện ở bốn cấp độ:
+
+\textbf{1. Tự động hóa các khâu vốn phải dùng mắt người.} Trong sản xuất, hệ thống kiểm tra quang học tự động (AOI) chụp và so sánh bảng mạch in với mẫu chuẩn để phát hiện mối hàn thiếu, linh kiện lệch; dây chuyền chiết rót dùng camera kiểm tra mức chất lỏng, nắp chai và nhãn với tốc độ hàng trăm sản phẩm mỗi phút — tốc độ mà mắt người không thể duy trì liên tục. Trong quản lý xã hội, camera nhận dạng biển số thay thế việc ghi chép thủ công tại trạm thu phí, bãi giữ xe.
+
+\textbf{2. Nâng cao độ chính xác và tính nhất quán.} Phép đo bằng ảnh cho kết quả định lượng, lặp lại được và không phụ thuộc vào sự mệt mỏi của người kiểm tra. Ví dụ: robot gắp--đặt dùng camera xác định tọa độ và hướng của linh kiện trên băng chuyền; phân loại nông sản theo kích thước, màu, vết thâm.
+
+\textbf{3. Giám sát và ra quyết định theo thời gian thực.} Luồng video cho phép phát hiện sự kiện ngay khi nó xảy ra: ùn tắc giao thông, vi phạm làn đường, người không đội mũ bảo hộ trong công trường, khói lửa trong nhà kho. Ảnh vệ tinh và ảnh từ máy bay không người lái cung cấp thông tin diện rộng cho quản lý đất đai, theo dõi lũ lụt, cháy rừng.
+
+\textbf{4. Truy vết, lưu trữ và khai thác tri thức.} Ảnh chụp từng sản phẩm, từng lô hàng tạo thành hồ sơ có thể truy xuất khi có khiếu nại; kho ảnh y khoa (X-quang, CT, MRI) là cơ sở để huấn luyện các mô hình hỗ trợ chẩn đoán (Mục~\ref{subsec:w2_medical}).
+
+Bảng~\ref{tab:w1_impact} tóm tắt một số ví dụ tiêu biểu.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Một số ví dụ về tác động của dữ liệu thị giác}
+\label{tab:w1_impact}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|X|X|}
+\hline
+\textbf{Lĩnh vực} & \textbf{Quy trình trước khi có dữ liệu thị giác} & \textbf{Quy trình khi khai thác dữ liệu thị giác} \\
+\hline
+\textbf{Điện tử} & Công nhân soi bảng mạch bằng kính lúp, lấy mẫu ngẫu nhiên. & AOI kiểm tra 100\% sản phẩm, lưu ảnh lỗi để truy nguyên nguyên nhân. \\
+\hline
+\textbf{Nông nghiệp} & Phân loại trái cây bằng tay; phun thuốc đồng loạt cả cánh đồng. & Máy phân loại theo màu/kích thước; drone chụp ảnh đa phổ để phun thuốc theo vùng bị bệnh. \\
+\hline
+\textbf{Giao thông} & Cảnh sát trực tiếp quan sát, lập biên bản tại chỗ. & Camera nhận dạng biển số, phát hiện vi phạm và điều chỉnh đèn tín hiệu theo mật độ xe. \\
+\hline
+\textbf{Y tế} & Bác sĩ đọc phim thủ công, phụ thuộc kinh nghiệm cá nhân. & Phần mềm khoanh vùng tổn thương, đưa ra ý kiến thứ hai cho bác sĩ. \\
+\hline
+\textbf{Bán lẻ} & Kiểm kê hàng hóa thủ công, thu ngân quét từng mã vạch. & Camera theo dõi kệ hàng trống, cửa hàng tự động tính tiền theo hành vi lấy hàng. \\
+\hline
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\subsection{Giải thích nhận định về thông minh hóa trên nền tảng chuyển đổi số}
+\label{subsec:w1_smart}
+
+\textit{Câu hỏi: Giải thích nhận định: ``Thông minh hóa quy trình sản xuất và quản lý xã hội trên thế giới ở diện rộng với nền tảng chuyển đổi số, trong đó trí tuệ nhân tạo giữ vai trò cốt lõi''.}
+
+Nhận định trên mô tả mục tiêu của cuộc Cách mạng Công nghiệp lần thứ tư~\citep{schwab2016fourth}. Có thể phân tích theo từng vế:
+
+\textbf{``Thông minh hóa quy trình sản xuất và quản lý xã hội''} — là đích đến. Một quy trình được gọi là thông minh khi nó có khả năng tự \emph{nhận biết} trạng thái (thu thập dữ liệu), tự \emph{phân tích} (hiểu dữ liệu) và tự \emph{điều chỉnh} (ra quyết định, hành động) mà không cần con người can thiệp ở từng bước. Ví dụ, một dây chuyền thông minh phát hiện tỉ lệ lỗi tăng, tự tìm ra máy gây lỗi và điều chỉnh thông số máy đó; một hệ thống giao thông thông minh tự kéo dài đèn xanh ở hướng đang ùn tắc.
+
+\textbf{``Ở diện rộng''} — nhấn mạnh quy mô. Điểm mới không nằm ở một nhà máy hay một thành phố đơn lẻ, mà ở việc toàn bộ chuỗi giá trị (nhà cung cấp -- sản xuất -- phân phối -- người tiêu dùng) và toàn bộ bộ máy quản lý (giao thông, y tế, giáo dục, hành chính) được kết nối và tối ưu đồng thời.
+
+\textbf{``Với nền tảng chuyển đổi số''} — là điều kiện cần. Muốn máy móc tự nhận biết và điều chỉnh, thế giới vật lý phải được biểu diễn dưới dạng số. Quá trình này đi qua ba bậc: \emph{số hóa dữ liệu} (giấy tờ, hình ảnh, tín hiệu được chuyển sang dạng số), \emph{số hóa quy trình} (nghiệp vụ được thực hiện trên hệ thống phần mềm) và \emph{chuyển đổi số} (mô hình vận hành được thiết kế lại dựa trên dữ liệu). Không có dữ liệu số thì không có gì để ``thông minh hóa''.
+
+\textbf{``Trí tuệ nhân tạo giữ vai trò cốt lõi''} — là động cơ. Chuyển đổi số tạo ra lượng dữ liệu khổng lồ, phần lớn là phi cấu trúc (ảnh, video, văn bản, âm thanh). Các hệ thống lập trình theo luật cố định không thể xử lý hết sự đa dạng của loại dữ liệu này; chỉ có các mô hình học từ dữ liệu mới trích xuất được tri thức và đưa ra quyết định trong môi trường luôn thay đổi. Nếu dữ liệu là ``nhiên liệu'' và hạ tầng số (IoT, điện toán đám mây, mạng 5G) là ``hệ thống truyền dẫn'', thì AI là ``bộ não'' biến dữ liệu thành hành động.
+
+Tóm lại, nhận định nêu ra một chuỗi nhân quả: \emph{chuyển đổi số tạo ra dữ liệu} $\rightarrow$ \emph{AI biến dữ liệu thành tri thức và quyết định} $\rightarrow$ \emph{quy trình sản xuất và quản lý xã hội trở nên thông minh} — và chuỗi này được triển khai đồng loạt trên quy mô toàn cầu. Dữ liệu thị giác là một trong những nguồn dữ liệu lớn nhất trong chuỗi này (Mục~\ref{subsec:w1_impact}).
+
+% =====================================================================
+\subsection{Các quy trình sản xuất không cần đến dữ liệu thị giác}
+\label{subsec:w1_novisual}
+
+\textit{Câu hỏi: Tìm hiểu và chỉ ra những quy trình sản xuất không cần sử dụng dữ liệu thị giác.}
+
+Một quy trình không cần dữ liệu thị giác khi đại lượng cần kiểm soát \textbf{không biểu hiện ra bề ngoài} (nằm bên trong vật chất, đường ống, thiết bị kín), hoặc đã có \textbf{cảm biến chuyên dụng đo trực tiếp} chính xác và rẻ hơn camera. Một số ví dụ:
+
+\begin{itemize}
+    \item \textbf{Điều khiển quá trình trong công nghiệp hóa chất, lọc dầu, dược phẩm:} các phản ứng diễn ra trong bồn kín, đường ống; đại lượng cần điều khiển là nhiệt độ, áp suất, lưu lượng, nồng độ pH, được đo bằng cặp nhiệt, cảm biến áp suất, lưu lượng kế và điều khiển bằng bộ PID.
+    \item \textbf{Lên men (bia, sữa chua, nước mắm):} kiểm soát nhiệt độ, thời gian, độ đường, nồng độ cồn bằng cảm biến hóa lý.
+    \item \textbf{Định lượng và phối trộn nguyên liệu:} cân điện tử (load cell) đo khối lượng; định lượng bằng thể tích qua bơm định lượng.
+    \item \textbf{Bảo trì dự đoán máy quay (động cơ, bơm, tua-bin):} hỏng hóc bên trong ổ bi, bánh răng được phát hiện qua tín hiệu rung, âm thanh, dòng điện và nhiệt độ.
+    \item \textbf{Vận hành lưới điện, trạm bơm, hệ thống HVAC:} điều khiển dựa trên điện áp, dòng điện, công suất, nhiệt độ và độ ẩm.
+    \item \textbf{Các khâu nghiệp vụ thuần dữ liệu:} lập kế hoạch sản xuất, quản lý kho bằng mã RFID, kế toán, chuỗi cung ứng (ERP).
+\end{itemize}
+
+Tuy nhiên, ranh giới này chỉ mang tính tương đối. Nhiều quy trình ``không cần'' dữ liệu thị giác vẫn có thể được \emph{bổ trợ} bởi nó: camera nhiệt phát hiện điểm nóng của tủ điện, camera đọc số trên đồng hồ cơ cũ chưa có đầu ra số, ảnh hiển vi kiểm tra chất lượng men vi sinh. Vì vậy, câu trả lời chính xác hơn là: dữ liệu thị giác không phải là nguồn thông tin \emph{chính} trong các quy trình trên, nhưng hiếm có quy trình nào hoàn toàn không thể hưởng lợi từ nó.
+
+% =====================================================================
+\subsection{Sự khác biệt giữa dữ liệu thu nhận bằng mắt người và bằng thiết bị nhân tạo}
+\label{subsec:w1_eye}
+
+\textit{Câu hỏi: Dữ liệu thị giác thu nhận bằng mắt người và bằng thiết bị nhân tạo (camera, cảm biến ảnh) khác nhau như thế nào?}
+
+Cả mắt người và camera đều hoạt động theo nguyên lý chung: thấu kính hội tụ ánh sáng lên một bề mặt cảm quang, bề mặt này chuyển năng lượng ánh sáng thành tín hiệu. Tuy nhiên, cách lấy mẫu, mã hóa và sử dụng tín hiệu ở hai hệ thống rất khác nhau (Bảng~\ref{tab:w1_eye}).
+
+\textbf{Lấy mẫu không gian.} Võng mạc người có khoảng $4{,}6$ triệu tế bào nón và $92$ triệu tế bào que~\citep{curcio1990human}, phân bố \emph{không đều}: tế bào nón tập trung dày đặc ở hố trung tâm (fovea) và thưa dần ra ngoại vi. Vì vậy mắt chỉ nhìn rõ một vùng rất nhỏ quanh điểm nhìn và phải liên tục đảo mắt để ``quét'' cảnh. Cảm biến CCD/CMOS lấy mẫu trên một lưới \emph{đều}: mọi điểm ảnh có cùng kích thước và độ nhạy, toàn bộ khung hình rõ như nhau.
+
+\textbf{Mã hóa màu.} Mắt người có ba loại tế bào nón (nhạy với bước sóng dài, trung bình, ngắn). Camera màu thông thường chỉ có một cảm biến, phía trên đặt mảng lọc màu Bayer; mỗi điểm ảnh chỉ đo một trong ba kênh R, G, B và hai kênh còn lại được nội suy (demosaicing).
+
+\textbf{Đầu ra.} Đây là khác biệt quan trọng nhất. Tín hiệu từ mắt được não xử lý ngay thành \emph{tri giác}: con người không ``thấy'' các con số mà thấy ``một chiếc xe đỏ đang lao tới''. Camera chỉ cho ra một ma trận số $I \in \{0, \ldots, 255\}^{H \times W \times 3}$; mọi ý nghĩa phải được trích xuất bằng thuật toán — đây chính là nguồn gốc của khoảng cách ngữ nghĩa (semantic gap)~\citep{smeulders2000content}.
+
+\textbf{Tính khách quan và khả năng lưu trữ.} Tri giác của con người chịu ảnh hưởng của bối cảnh, kinh nghiệm và ảo giác thị giác (ví dụ, cùng một mảng xám trông sáng hơn khi đặt trên nền tối). Dữ liệu từ camera là phép đo vật lý, có thể lưu trữ, sao chép, so sánh và xử lý lại nhiều lần với kết quả giống nhau.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh dữ liệu thị giác thu nhận bằng mắt người và bằng thiết bị nhân tạo}
+\label{tab:w1_eye}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.6cm}|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Mắt người} & \textbf{Thiết bị nhân tạo} \\
+\hline
+\textbf{Phần tử cảm quang} & Tế bào que và nón, phân bố không đều, dày nhất ở fovea. & Lưới điểm ảnh CCD/CMOS đều nhau. \\
+\hline
+\textbf{Dải phổ} & Ánh sáng khả kiến, khoảng $380$--$740$ nm. & Tùy cảm biến: khả kiến, hồng ngoại, tia X, sóng radar\ldots \\
+\hline
+\textbf{Màu sắc} & Ba loại tế bào nón. & Một cảm biến + bộ lọc Bayer, nội suy màu; hoặc cảm biến đa phổ. \\
+\hline
+\textbf{Dải động} & Rất rộng nhờ cơ chế thích nghi sáng/tối của đồng tử và võng mạc. & Hẹp hơn, dễ cháy sáng hoặc mất chi tiết vùng tối; cần kỹ thuật HDR. \\
+\hline
+\textbf{Thời gian} & Liên tục, không có khái niệm khung hình. & Rời rạc theo khung hình (30, 60, \ldots, hàng nghìn fps). \\
+\hline
+\textbf{Đầu ra} & Tri giác có ý nghĩa, tích hợp ngay với tri thức. & Ma trận số, chưa có ngữ nghĩa. \\
+\hline
+\textbf{Tính khách quan} & Chủ quan, chịu ảo giác, mệt mỏi. & Khách quan, lặp lại được, có thể hiệu chuẩn. \\
+\hline
+\textbf{Lưu trữ \& chia sẻ} & Chỉ lưu trong trí nhớ, không sao chép được. & Lưu trữ, truyền đi, xử lý lại vô số lần. \\
+\hline
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\subsection{Đề xuất cách phân lớp nội dung trong một bức ảnh}
+\label{subsec:w1_layers}
+
+\textit{Câu hỏi: Đề xuất một cách phân lớp nội dung trong một bức ảnh.}
+
+Nhóm đề xuất phân lớp nội dung ảnh theo \textbf{mức độ trừu tượng tăng dần}: lớp dưới là dữ liệu gần với tín hiệu vật lý, lớp trên là ý nghĩa gần với cách con người diễn đạt. Mỗi lớp được xây dựng từ kết quả của lớp ngay dưới nó.
+
+\begin{enumerate}[label=\textbf{Lớp \arabic*:}, leftmargin=*, start=0]
+    \item \textbf{Tín hiệu (Pixel).} Ma trận giá trị cường độ/màu của từng điểm ảnh. Chưa có ý nghĩa.
+    \item \textbf{Đặc trưng cấp thấp.} Màu sắc, kết cấu (vân), biên cạnh, góc, điểm đặc trưng cục bộ. Đây là nội dung chính của các tuần về đặc trưng (Mục~\ref{subsec:w4_concepts}).
+    \item \textbf{Vùng.} Các nhóm điểm ảnh liền kề có tính chất tương tự (siêu điểm ảnh, vùng phân đoạn). Ở lớp này bắt đầu phân biệt \emph{``stuff''} — vùng vô định hình không đếm được như bầu trời, mặt đường, bãi cỏ — với \emph{``things''} — vật thể có hình dạng xác định, đếm được~\citep{heitz2008learning,kirillov2019panoptic}.
+    \item \textbf{Đối tượng và bộ phận.} Từng thực thể riêng lẻ (người thứ nhất, chiếc xe thứ hai\ldots) cùng nhãn lớp, vị trí, mặt nạ và các bộ phận của nó (bánh xe, cửa xe).
+    \item \textbf{Quan hệ.} Quan hệ không gian và tương tác giữa các đối tượng (``người \emph{đang dắt} xe đạp'', ``ly \emph{trên} bàn''), biểu diễn dưới dạng đồ thị cảnh (scene graph)~\citep{johnson2015image}.
+    \item \textbf{Cảnh và sự kiện.} Ngữ cảnh tổng thể: địa điểm (chợ, bệnh viện, đường cao tốc), thời điểm (ngày/đêm, mùa), hoạt động đang diễn ra (tai nạn, lễ hội).
+    \item \textbf{Ngữ nghĩa cấp cao.} Ý nghĩa, cảm xúc, ý đồ, giá trị thẩm mỹ của bức ảnh — phần phụ thuộc nhiều nhất vào người xem và văn hóa.
+\end{enumerate}
+
+\textbf{Ví dụ.} Với ảnh chụp một ngã tư lúc tan tầm: Lớp 0 là ma trận $1920 \times 1080 \times 3$; Lớp 1 gồm các mảng màu đỏ đèn hậu, biên của vạch kẻ đường; Lớp 2 tách mặt đường, bầu trời, vỉa hè; Lớp 3 phát hiện $37$ xe máy, $5$ ô tô, $1$ đèn tín hiệu; Lớp 4 xác định ``xe máy \emph{chờ trước} vạch dừng'', ``ô tô \emph{lấn} làn''; Lớp 5 kết luận ``giờ cao điểm ở ngã tư đô thị''; Lớp 6 có thể là ``sự ngột ngạt của giao thông đô thị''.
+
+\textbf{Ưu điểm của cách phân lớp.} (i) Mỗi lớp tương ứng với một nhóm bài toán xử lý ảnh/thị giác máy tính rõ ràng (lọc ảnh $\rightarrow$ trích đặc trưng $\rightarrow$ phân đoạn $\rightarrow$ phát hiện/nhận dạng $\rightarrow$ suy luận quan hệ $\rightarrow$ hiểu cảnh), nên dễ xác định một ứng dụng cần đi đến lớp nào. (ii) Khoảng cách ngữ nghĩa được ``chia nhỏ'' thành các bước chuyển giữa hai lớp liên tiếp. (iii) Lớp càng cao thì càng ít dữ liệu nhưng càng giàu ý nghĩa, phù hợp để lưu trữ và truy vấn.
+
+% =====================================================================
+\subsection{Khái niệm đối tượng trong ảnh}
+\label{subsec:w1_object}
+
+\textit{Câu hỏi: Đối tượng (object) trong ảnh là gì?}
+
+Trong thị giác máy tính, \textbf{đối tượng} là phần ảnh tương ứng với một thực thể vật lý \emph{độc lập, có giới hạn và đếm được} trong thế giới thực. Theo Alexe và cộng sự~\citep{alexe2012measuring}, một vùng ảnh được coi là chứa đối tượng khi thỏa ít nhất một trong các tính chất:
+\begin{itemize}
+    \item có \textbf{đường biên khép kín, xác định rõ} trong không gian;
+    \item có \textbf{diện mạo khác biệt} so với vùng xung quanh;
+    \item đôi khi \textbf{nổi bật, khác thường} trong toàn bộ bức ảnh.
+\end{itemize}
+
+Định nghĩa này phân biệt đối tượng (\emph{thing}: người, xe, con mèo, cái ly) với vùng nền vô định hình (\emph{stuff}: bầu trời, mặt nước, cát, cỏ) — những thứ không có hình dạng riêng và không đếm được theo cá thể~\citep{heitz2008learning}. Bài toán phân đoạn toàn cảnh (panoptic segmentation) chính thức hóa sự phân biệt này: mỗi điểm ảnh được gán một nhãn lớp, và riêng các lớp \emph{thing} được gán thêm định danh cá thể~\citep{kirillov2019panoptic}.
+
+Đối tượng có thể được xét ở hai cấp độ:
+\begin{itemize}
+    \item \textbf{Cấp lớp (category-level):} đối tượng thuộc khái niệm chung nào (``một chiếc xe máy'').
+    \item \textbf{Cấp thực thể (instance-level):} đối tượng là cá thể cụ thể nào (``xe máy biển số 59-X1 123.45'').
+\end{itemize}
+
+Ngoài ra, khái niệm đối tượng còn \textbf{phụ thuộc vào mục đích}: với bài toán đếm xe, chiếc xe là đối tượng; với bài toán kiểm định xe, bánh xe, đèn pha, biển số lại là các đối tượng riêng. Vì vậy đối tượng nên được hiểu là \emph{đơn vị nội dung mà bài toán cần định vị và gán nhãn}.
+
+% =====================================================================
+\subsection{Ví dụ về những bức ảnh không chứa đối tượng}
+\label{subsec:w1_noobject}
+
+\textit{Câu hỏi: Cho ví dụ về những bức ảnh không chứa đối tượng.}
+
+Theo định nghĩa ở Mục~\ref{subsec:w1_object}, một bức ảnh ``không có đối tượng'' là ảnh chỉ chứa các vùng \emph{stuff} hoặc tín hiệu không mang hình dạng xác định. Ví dụ:
+\begin{itemize}
+    \item \textbf{Ảnh kết cấu thuần túy:} cận cảnh mặt cát, vân gỗ, mặt bê tông, thảm cỏ, mặt nước gợn sóng, bề mặt vải.
+    \item \textbf{Ảnh bầu trời} trong xanh hoặc chỉ có mây; ảnh màn sương mù dày đặc.
+    \item \textbf{Ảnh đồng màu:} ảnh chụp bức tường trơn, ảnh hoàn toàn đen (ống kính bị che), ảnh trắng xóa do cháy sáng.
+    \item \textbf{Ảnh nhiễu:} khung hình nhiễu từ camera bị lỗi, ảnh nhiễu ngẫu nhiên do máy tính sinh ra.
+    \item \textbf{Ảnh trừu tượng:} các dải màu chuyển sắc (gradient), hoa văn lặp lại.
+    \item \textbf{Ảnh nền trong ứng dụng:} khung hình camera giám sát hành lang khi không có người — đối với bài toán phát hiện người, ảnh này ``không có đối tượng'' và được dùng làm \emph{ảnh nền} trong kỹ thuật trừ nền.
+\end{itemize}
+
+Ví dụ cuối cho thấy ``không có đối tượng'' thường mang nghĩa tương đối: \emph{không có đối tượng thuộc các lớp mà bài toán quan tâm}. Những ảnh này có giá trị thực tế: chúng là \emph{mẫu âm} (negative samples) trong huấn luyện bộ phát hiện, giúp mô hình giảm báo động nhầm; và là \emph{ảnh nền} để phát hiện sự xuất hiện của đối tượng mới.
+
+% =====================================================================
+\subsection{Số lượng loại đối tượng hiện nay}
+\label{subsec:w1_numclasses}
+
+\textit{Câu hỏi: Theo nhóm, hiện nay có bao nhiêu loại đối tượng?}
+
+Không có một con số cố định, vì số loại đối tượng phụ thuộc vào \textbf{cách định nghĩa ``loại''} (mức độ chi tiết của phân loại) và \textbf{mục đích sử dụng}. Có thể nhìn từ ba góc độ:
+
+\textbf{Góc độ nhận thức con người.} Biederman ước tính một người trưởng thành biết khoảng $3\,000$ loại đối tượng ở cấp cơ bản (basic level: ``ghế'', ``chó'', ``xe đạp''); mỗi loại lại có trung bình khoảng $10$ kiểu dáng dễ phân biệt, tổng cộng khoảng $30\,000$ đối tượng có thể nhận biết dễ dàng~\citep{biederman1987recognition}. Nếu đi xuống cấp chi tiết hơn (giống chó, mẫu xe), con số còn tăng lên nhiều.
+
+\textbf{Góc độ tập dữ liệu.} Các bộ dữ liệu chỉ định nghĩa một tập lớp hữu hạn để phục vụ huấn luyện và đánh giá:
+\begin{itemize}
+    \item MS COCO: $91$ loại đối tượng thường gặp, trong đó $80$ loại được gán nhãn phân đoạn trong bản phát hành năm 2014~\citep{lin2014microsoft}; COCO-Stuff bổ sung $91$ lớp vùng nền~\citep{caesar2018coco}.
+    \item LVIS: hơn $1\,000$ lớp, bao gồm nhiều lớp hiếm~\citep{gupta2019lvis}.
+    \item ImageNet: tổ chức theo cây khái niệm WordNet~\citep{deng2009imagenet}; phiên bản đầy đủ (ImageNet-21K) có $21\,841$ lớp.
+\end{itemize}
+
+\textbf{Góc độ mô hình hiện đại.} Các mô hình liên kết ảnh -- ngôn ngữ như CLIP~\citep{radford2021learning} cho phép nhận dạng theo \emph{từ vựng mở} (open-vocabulary): bất kỳ khái niệm nào mô tả được bằng ngôn ngữ đều có thể là một ``loại đối tượng''. Các mô hình phân đoạn như Segment Anything~\citep{kirillov2023segment} còn có thể tách đối tượng mà không cần biết nó thuộc lớp nào. Theo góc nhìn này, số loại đối tượng là \textbf{không giới hạn} và tăng theo sự phát triển của ngôn ngữ, công nghệ (mỗi sản phẩm mới là một loại đối tượng mới).
+
+\textbf{Kết luận của nhóm.} Ở cấp khái niệm cơ bản, có thể ước lượng cỡ hàng chục nghìn loại; nhưng về nguyên tắc, tập các loại đối tượng là một \emph{tập mở}. Trong thực tế, mỗi ứng dụng chỉ cần quan tâm đến một tập lớp hữu hạn phù hợp với nghiệp vụ của nó (ví dụ, hệ thống giám sát giao thông chỉ cần khoảng chục lớp phương tiện).
+
+% =====================================================================
+\subsection{Mô hình ba chân trụ của Khoa học dữ liệu thị giác}
+\label{subsec:w1_threepillars}
+
+\textit{Câu hỏi: Giải thích hình minh họa ba chân trụ của Khoa học dữ liệu thị giác trong bài giảng.}
+
+Hình minh họa trong bài giảng~\citep{xlav_ai4cv} biểu diễn Khoa học dữ liệu thị giác (Visual Data Science) là \textbf{phần giao của ba vòng tròn}, mỗi vòng là một ``chân trụ'':
+\begin{enumerate}
+    \item \textbf{Dữ liệu thị giác (Visual Data):} tập điểm 2D -- 3D, ảnh, video. Đây là \emph{đối tượng} của ngành: mọi bài toán đều bắt đầu từ dữ liệu được thu nhận từ thế giới thực (hoặc được tổng hợp) và kết thúc bằng việc kiểm chứng trên dữ liệu.
+    \item \textbf{Toán học, Thống kê, Trí tuệ nhân tạo (Math, Statistics, AI):} các \emph{công cụ tổng quát} để mô hình hóa, suy luận và học từ dữ liệu — đại số tuyến tính, hình học, xác suất thống kê, tối ưu, học máy, học sâu.
+    \item \textbf{Đồ họa máy tính, Xử lý ảnh, Thị giác máy tính (Computer Graphics, Image Processing, Computer Vision):} các \emph{mô hình chuyên ngành} xử lý dữ liệu thị giác — mô hình hình thành ảnh và camera, mô hình màu, lọc ảnh, phát hiện biên, hình học nhiều góc nhìn, dựng hình\ldots
+\end{enumerate}
+
+\textbf{Ý nghĩa của hình.} Khoa học dữ liệu thị giác chỉ hình thành ở vùng giao của cả ba vòng tròn. Nhóm phân tích vai trò của từng chân trụ bằng cách xét điều gì xảy ra khi thiếu một chân trụ:
+\begin{itemize}
+    \item \textbf{Thiếu dữ liệu thị giác:} chỉ còn lý thuyết và thuật toán trên giấy — mô hình không có gì để học, không có cách kiểm chứng trên thế giới thực.
+    \item \textbf{Thiếu Toán -- Thống kê -- AI:} chỉ còn các phép xử lý được thiết kế thủ công, không có khả năng học từ dữ liệu, khó thích ứng khi điều kiện thay đổi và không đánh giá được độ tin cậy của kết quả.
+    \item \textbf{Thiếu mô hình xử lý dữ liệu thị giác:} AI được áp dụng như hộp đen lên ma trận điểm ảnh, bỏ qua hiểu biết về quá trình tạo ảnh (quang học, hình học camera, màu sắc). Kết quả là cần nhiều dữ liệu hơn, dễ sai khi điều kiện chụp thay đổi và không thể đạt được những yêu cầu mang tính vật lý như đo kích thước thật (Mục~\ref{subsec:w1_twopillars}).
+\end{itemize}
+Hình này cũng giải thích vì sao ba môn Đồ họa máy tính, Xử lý ảnh và Thị giác máy tính được đặt chung trong một vòng tròn: chúng cùng là các mô hình xử lý dữ liệu thị giác, chỉ khác chiều biến đổi giữa ảnh và mô tả (Mục~\ref{subsec:w1_three_fields}).
+
+% =====================================================================
+\subsection{Bài toán không thể giải quyết nếu chỉ dùng trí tuệ nhân tạo}
+\label{subsec:w1_twopillars}
+
+\textit{Câu hỏi: Dựa trên mô hình ba chân trụ ở Mục~\ref{subsec:w1_threepillars}, cho ví dụ một bài toán mà nếu chỉ sử dụng trí tuệ nhân tạo, không có hai chân trụ còn lại (dữ liệu thị giác và mô hình xử lý dữ liệu thị giác), thì không thể giải quyết được.}
+
+\textbf{Ví dụ: Đo kích thước sản phẩm trên dây chuyền sản xuất bằng camera} (ví dụ đo đường kính lỗ khoan, khoảng cách chân linh kiện với dung sai $\pm 0{,}02$ mm).
+
+\textbf{Vì sao chỉ dùng AI thì không giải được.} Giả sử ta huấn luyện một mạng học sâu nhận ảnh và trả về kích thước. Mạng này gặp ba trở ngại không thể vượt qua bằng việc thêm dữ liệu hay tăng số lớp:
+\begin{itemize}
+    \item \textbf{Nhập nhằng tỉ lệ:} phép chiếu phối cảnh làm một vật nhỏ ở gần và một vật lớn ở xa cho ảnh giống hệt nhau. Từ một ảnh đơn, không có thông tin nào cho biết kích thước tuyệt đối — đây là giới hạn của quá trình tạo ảnh, không phải của mô hình học.
+    \item \textbf{Độ chính xác dưới mức điểm ảnh:} dung sai $0{,}02$ mm thường nhỏ hơn kích thước một điểm ảnh trên vật; mạng phân lớp hay hồi quy thông thường không cho độ chính xác và độ tin cậy có thể chứng minh ở mức này.
+    \item \textbf{Yêu cầu truy xuất nguồn gốc:} kết quả đo trong sản xuất phải giải thích được và hiệu chuẩn được theo chuẩn đo lường; một ``hộp đen'' không đáp ứng yêu cầu này.
+\end{itemize}
+
+\textbf{Cần hai chân trụ còn lại như thế nào.}
+\begin{itemize}
+    \item \textbf{Chân trụ dữ liệu thị giác:} thiết kế cách thu nhận — camera công nghiệp độ phân giải cao, ống kính telecentric (không có hiệu ứng phối cảnh), đèn nền chiếu từ phía sau để biên sắc nét, hoặc camera kép / ánh sáng cấu trúc khi cần đo 3D.
+    \item \textbf{Chân trụ mô hình xử lý dữ liệu thị giác:} mô hình camera lỗ kim và hiệu chuẩn camera với bảng mẫu có kích thước đã biết để quy đổi điểm ảnh sang milimét và khử méo ống kính; phát hiện biên ở mức dưới điểm ảnh; khớp hình học (đường tròn, đường thẳng) bằng bình phương tối thiểu.
+\end{itemize}
+AI vẫn có vai trò, nhưng là \emph{một phần} của lời giải: định vị nhanh vùng cần đo, phân loại sản phẩm lỗi ngoại quan, bỏ qua bụi bẩn. Phép đo cuối cùng phải dựa trên mô hình hình học và dữ liệu được thu nhận có kiểm soát.
+
+\textbf{Các ví dụ tương tự.} Xe tự hành cần biết khoảng cách chính xác đến vật cản (cần mô hình hình học camera kép, radar, LiDAR — Mục~\ref{subsec:w2_radar}); tái tạo mô hình 3D có kích thước thật của công trình để số hóa di sản; phát hiện ảnh giả mạo dựa trên dấu vết vật lý của cảm biến và thuật toán nén.
+
+% =====================================================================
+\subsection{Phân biệt Xử lý ảnh, Thị giác máy tính và Đồ họa máy tính}
+\label{subsec:w1_three_fields}
+
+\textit{Câu hỏi: Phân biệt ba lĩnh vực chủ chốt liên quan đến dữ liệu thị giác: Xử lý ảnh, Thị giác máy tính và Đồ họa máy tính.}
+
+Ba lĩnh vực cùng làm việc với dữ liệu thị giác nhưng khác nhau ở \textbf{chiều biến đổi} giữa ảnh và mô tả. Gọi $I$ là ảnh và $D$ là mô tả (mô hình hình học, nhãn, tham số cảnh):
+\begin{itemize}
+    \item \textbf{Xử lý ảnh (Image Processing):} $I \rightarrow I'$. Đầu vào và đầu ra đều là ảnh; mục tiêu là làm ảnh tốt hơn hoặc phù hợp hơn cho bước sau: khử nhiễu, tăng tương phản, làm nét, nén, khôi phục, chuyển không gian màu~\citep{gonzalez2018digital}.
+    \item \textbf{Thị giác máy tính (Computer Vision):} $I \rightarrow D$. Từ ảnh suy ra thông tin về thế giới: có đối tượng gì, ở đâu, đang làm gì, cấu trúc 3D ra sao. Đây là bài toán \emph{ngược} và thường không có lời giải duy nhất (một ảnh 2D có thể ứng với nhiều cảnh 3D khác nhau).
+    \item \textbf{Đồ họa máy tính (Computer Graphics):} $D \rightarrow I$. Từ mô tả hình học, vật liệu, ánh sáng, camera tổng hợp ra ảnh. Đây là bài toán \emph{thuận}, có quy luật vật lý rõ ràng.
+\end{itemize}
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh Xử lý ảnh, Thị giác máy tính và Đồ họa máy tính}
+\label{tab:w1_three_fields}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{2.3cm}|X|X|X|}
+\hline
+\textbf{Tiêu chí} & \textbf{Xử lý ảnh} & \textbf{Thị giác máy tính} & \textbf{Đồ họa máy tính} \\
+\hline
+\textbf{Đầu vào} & Ảnh & Ảnh, video & Mô hình, tham số cảnh \\
+\hline
+\textbf{Đầu ra} & Ảnh & Thông tin, ngữ nghĩa, mô hình & Ảnh, video \\
+\hline
+\textbf{Câu hỏi trả lời} & Làm sao để ảnh tốt hơn? & Trong ảnh có gì? & Cảnh này trông như thế nào? \\
+\hline
+\textbf{Tính chất bài toán} & Biến đổi tín hiệu & Bài toán ngược, nhập nhằng & Bài toán thuận \\
+\hline
+\textbf{Ví dụ} & Lọc trung vị khử nhiễu, cân bằng lược đồ xám, nén JPEG & Phát hiện khuôn mặt, nhận dạng biển số, tái tạo 3D & Dựng hình game, kỹ xảo điện ảnh, mô phỏng \\
+\hline
+\end{tabularx}
+\end{table}
+
+Ba lĩnh vực ngày càng giao thoa: xử lý ảnh thường là bước tiền xử lý của thị giác máy tính; thị giác máy tính cung cấp mô hình 3D thật cho đồ họa (quét 3D, bắt chuyển động); đồ họa sinh dữ liệu tổng hợp để huấn luyện mô hình thị giác. Các mô hình tạo sinh hiện đại (Mục~\ref{subsec:w2_generative}) còn làm mờ ranh giới giữa ``hiểu ảnh'' và ``tạo ảnh''.
+
+% =====================================================================
+\subsection{Ứng dụng cần kết hợp cả ba lĩnh vực}
+\label{subsec:w1_three_fields_app}
+
+\textit{Câu hỏi: Cho ví dụ một ứng dụng cần kết hợp cả ba lĩnh vực trên.}
+
+\textbf{Ứng dụng: Thử kính mắt trực tuyến bằng thực tế tăng cường (AR virtual try-on).} Người dùng mở camera điện thoại, chọn mẫu gọng kính và thấy chiếc kính ``đeo'' trên mặt mình, chuyển động theo khi quay đầu. Ứng dụng này cần cả ba lĩnh vực:
+
+\begin{enumerate}
+    \item \textbf{Xử lý ảnh:} cân bằng trắng, khử nhiễu khung hình chụp trong điều kiện thiếu sáng; ước lượng ánh sáng môi trường để kính được chiếu sáng giống khuôn mặt; sau cùng là hòa trộn (compositing) và lọc khử răng cưa khi ghép kính vào ảnh.
+    \item \textbf{Thị giác máy tính:} phát hiện khuôn mặt, định vị các điểm mốc (mắt, sống mũi, tai), ước lượng tư thế đầu 3D (góc quay, vị trí) theo từng khung hình, ước lượng độ sâu để biết phần nào của gọng kính bị tai hoặc tóc che khuất.
+    \item \textbf{Đồ họa máy tính:} lưu mô hình 3D của gọng kính (lưới đa giác, vật liệu kim loại/nhựa, độ trong của tròng), áp dụng phép biến đổi theo tư thế đầu, chiếu phối cảnh theo thông số camera và dựng hình (rendering) với bóng đổ, phản xạ.
+\end{enumerate}
+
+Chuỗi xử lý đi theo đúng ba chiều biến đổi ở Mục~\ref{subsec:w1_three_fields}: $I \xrightarrow{\text{XLA}} I' \xrightarrow{\text{TGMT}} D$ (tư thế, độ sâu) $\xrightarrow{\text{ĐHMT}} I_{\text{kính}} \xrightarrow{\text{XLA}} I_{\text{kết quả}}$. Thiếu bất kỳ lĩnh vực nào, kết quả sẽ hoặc không bám theo khuôn mặt, hoặc trông giả tạo. Các ứng dụng tương tự: bộ lọc khuôn mặt trên mạng xã hội, đường việt vị ảo trong truyền hình bóng đá, kỹ xảo điện ảnh ghép nhân vật số vào cảnh quay thật.

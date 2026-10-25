@@ -1,0 +1,592 @@
+\section{Tuần 4: Không gian Màu, Độ đo Khoảng cách và Đặc trưng Màu -- Cạnh}
+\label{sec:week4}
+
+% =====================================================================
+\subsection{Ý nghĩa các đại lượng trong hệ màu HSV qua ví dụ}
+\label{subsec:w4_hsv_examples}
+
+\textit{Câu hỏi: Cho một số ví dụ về hệ màu HSV để làm rõ ý nghĩa các đại lượng trong hệ màu này.}
+
+Hệ màu HSV~\citep{smith1978color} biểu diễn một màu bằng ba đại lượng gần với cách con người mô tả màu sắc:
+\begin{itemize}
+    \item \textbf{H (Hue -- sắc độ):} góc $H \in [0^\circ, 360^\circ)$ trên vòng màu, cho biết ``\emph{đó là màu gì}'': $0^\circ$ đỏ, $60^\circ$ vàng, $120^\circ$ lục, $180^\circ$ lục lam, $240^\circ$ lam, $300^\circ$ đỏ tía.
+    \item \textbf{S (Saturation -- độ bão hòa):} $S \in [0, 1]$, cho biết ``\emph{màu thuần đến mức nào}'', tức tỉ lệ thành phần màu so với thành phần xám. $S = 1$ là màu thuần; $S = 0$ là màu xám (khi đó $H$ không xác định).
+    \item \textbf{V (Value -- độ sáng):} $V = \max(R, G, B) \in [0, 1]$, cho biết ``\emph{màu sáng hay tối}''. $V = 0$ luôn là màu đen, bất kể $H$ và $S$.
+\end{itemize}
+
+Về hình học, không gian HSV là một hình nón lục giác: trục đứng là $V$ (đen ở đỉnh, trắng ở tâm mặt đáy), khoảng cách tới trục là $S$, góc quanh trục là $H$. Bảng~\ref{tab:w4_hsv_examples} cho một số ví dụ (giá trị RGB 8 bit, HSV tính theo Giải thuật~\ref{alg:w4_rgb2hsv}).
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Một số màu trong RGB và HSV}
+\label{tab:w4_hsv_examples}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|l|c|c|c|c|l|}
+\hline
+\textbf{Màu} & \textbf{$(R, G, B)$} & \textbf{$H$} & \textbf{$S$} & \textbf{$V$} & \textbf{Nhận xét} \\
+\hline
+Đỏ thuần & $(255, 0, 0)$ & $0^\circ$ & $1$ & $1$ & Gốc so sánh \\
+Đỏ sẫm & $(128, 0, 0)$ & $0^\circ$ & $1$ & $0.50$ & Chỉ $V$ giảm \\
+Hồng & $(255, 128, 128)$ & $0^\circ$ & $0.50$ & $1$ & Chỉ $S$ giảm (pha trắng) \\
+Cam & $(255, 165, 0)$ & $38.8^\circ$ & $1$ & $1$ & Nằm giữa đỏ và vàng \\
+Nâu & $(139, 69, 19)$ & $25^\circ$ & $0.86$ & $0.55$ & ``Cam tối'' \\
+Lục & $(0, 128, 0)$ & $120^\circ$ & $1$ & $0.50$ & \\
+Lam & $(0, 0, 255)$ & $240^\circ$ & $1$ & $1$ & \\
+Xám & $(128, 128, 128)$ & không xác định & $0$ & $0.50$ & Màu vô sắc \\
+Đen & $(0, 0, 0)$ & không xác định & $0$ & $0$ & \\
+\hline
+\end{tabular}
+\end{table}
+
+Các ví dụ cho thấy ba đại lượng \emph{tách biệt} nhau: ba màu đỏ thuần, đỏ sẫm, hồng có cùng $H = 0^\circ$ — con người vẫn gọi chung là ``họ đỏ'' — chỉ khác ở $V$ (ánh sáng yếu hơn) hoặc $S$ (pha thêm trắng). Ngược lại, trong RGB ba màu này có cả ba thành phần đều khác nhau. Màu nâu có cùng sắc độ với cam, chỉ tối hơn và kém thuần hơn — một điều rất khó nhận ra nếu chỉ nhìn bộ số $(139, 69, 19)$.
+
+% =====================================================================
+\subsection{Khi nào sử dụng RGB, khi nào sử dụng HSV}
+\label{subsec:w4_rgb_vs_hsv}
+
+\textit{Câu hỏi: Khi nào nên sử dụng không gian màu RGB, khi nào nên sử dụng HSV?}
+
+\textbf{RGB} là không gian \emph{gắn với thiết bị}: cảm biến camera đo ba kênh R, G, B và màn hình phát ba kênh R, G, B. Nên dùng RGB khi:
+\begin{itemize}
+    \item thu nhận, lưu trữ, hiển thị ảnh (định dạng ảnh và phần cứng đều dùng RGB);
+    \item các phép xử lý tác động \emph{đồng đều} lên cả ba kênh: lọc làm mờ, khử nhiễu, thay đổi kích thước, trộn ảnh, nén;
+    \item làm đầu vào cho mạng học sâu (mạng tự học phép biến đổi màu phù hợp);
+    \item điều kiện chiếu sáng được kiểm soát (dây chuyền sản xuất có đèn chiếu cố định).
+\end{itemize}
+
+\textbf{HSV} là không gian \emph{gắn với cảm nhận}: tách thông tin ``màu gì'' ($H$, $S$) khỏi thông tin ``sáng hay tối'' ($V$). Nên dùng HSV khi:
+\begin{itemize}
+    \item \textbf{phân đoạn hoặc phát hiện theo màu}: tìm vật màu đỏ chỉ cần ngưỡng trên $H$ (và $S$ đủ lớn) — trong RGB, cùng một vật đỏ ở chỗ sáng và chỗ bóng râm có bộ $(R, G, B)$ rất khác nhau, nên khó đặt ngưỡng;
+    \item \textbf{điều kiện ánh sáng thay đổi}: bóng đổ, ánh sáng mạnh yếu chủ yếu làm thay đổi $V$, ít ảnh hưởng $H$;
+    \item \textbf{trích xuất đặc trưng màu cho truy vấn ảnh}: định lượng $H$ mịn, $S$ và $V$ thô cho lược đồ màu phù hợp với cảm nhận~\citep{smith1996visualseek,manjunath2001color} (Mục~\ref{subsec:w4_quant});
+    \item \textbf{chỉnh sửa màu theo trực giác}: tăng độ rực (tăng $S$), đổi tông màu (xoay $H$) mà không làm thay đổi độ sáng.
+\end{itemize}
+
+\textbf{Lưu ý khi dùng HSV.} $H$ là đại lượng vòng ($359^\circ$ và $1^\circ$ rất gần nhau), nên không thể tính khoảng cách bằng phép trừ thông thường. $H$ không ổn định khi $S$ hoặc $V$ nhỏ: với màu gần xám hoặc gần đen, một thay đổi nhỏ trong RGB làm $H$ nhảy rất xa. Ngoài ra, HSV vẫn chưa đồng đều về cảm nhận; khi cần đo chênh lệch màu khớp với cảm nhận của con người, nên dùng CIELAB và công thức CIEDE2000~\citep{sharma2005ciede2000}.
+
+% =====================================================================
+\subsection{Giải thuật chuyển đổi giữa RGB và HSV}
+\label{subsec:w4_rgb_hsv_alg}
+
+\textit{Câu hỏi: Trình bày giải thuật chuyển đổi từ RGB sang HSV và ngược lại.}
+
+Giải thuật được đề xuất bởi Smith~\citep{smith1978color} và trình bày trong các giáo trình xử lý ảnh~\citep{gonzalez2018digital}. Giả sử $R, G, B$ đã được chuẩn hóa về $[0, 1]$ (chia cho $255$).
+
+\textbf{RGB $\rightarrow$ HSV.} Đặt $C_{\max} = \max(R, G, B)$, $C_{\min} = \min(R, G, B)$, $\Delta = C_{\max} - C_{\min}$. Khi đó
+\begin{equation}
+V = C_{\max}, \qquad
+S = \begin{cases} \Delta / C_{\max} & \text{nếu } C_{\max} > 0 \\ 0 & \text{nếu } C_{\max} = 0 \end{cases},
+\end{equation}
+\begin{equation}
+H = \begin{cases}
+\text{không xác định (quy ước } 0^\circ) & \text{nếu } \Delta = 0 \\
+60^\circ \times \left( \dfrac{G - B}{\Delta} \bmod 6 \right) & \text{nếu } C_{\max} = R \\
+60^\circ \times \left( \dfrac{B - R}{\Delta} + 2 \right) & \text{nếu } C_{\max} = G \\
+60^\circ \times \left( \dfrac{R - G}{\Delta} + 4 \right) & \text{nếu } C_{\max} = B
+\end{cases}
+\end{equation}
+Ý tưởng: thành phần lớn nhất quyết định $H$ thuộc vùng nào trong ba vùng $120^\circ$ của vòng màu (quanh đỏ, lục hoặc lam); chênh lệch giữa hai thành phần còn lại cho biết lệch về phía nào trong vùng đó.
+
+\begin{algorithm}[ht]
+\caption{Chuyển đổi RGB sang HSV}
+\label{alg:w4_rgb2hsv}
+\begin{algorithmic}[1]
+\Require $R, G, B \in [0, 1]$
+\Ensure $H \in [0, 360)$, $S, V \in [0, 1]$
+\State $C_{\max} \gets \max(R, G, B)$; \quad $C_{\min} \gets \min(R, G, B)$; \quad $\Delta \gets C_{\max} - C_{\min}$
+\State $V \gets C_{\max}$
+\If{$C_{\max} = 0$} \State $S \gets 0$ \Else \State $S \gets \Delta / C_{\max}$ \EndIf
+\If{$\Delta = 0$}
+    \State $H \gets 0$ \Comment{màu xám, $H$ không xác định}
+\ElsIf{$C_{\max} = R$}
+    \State $H \gets 60 \cdot \big((G - B)/\Delta\big)$
+\ElsIf{$C_{\max} = G$}
+    \State $H \gets 60 \cdot \big((B - R)/\Delta + 2\big)$
+\Else
+    \State $H \gets 60 \cdot \big((R - G)/\Delta + 4\big)$
+\EndIf
+\If{$H < 0$} \State $H \gets H + 360$ \EndIf
+\State \Return $(H, S, V)$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{HSV $\rightarrow$ RGB.} Vòng màu được chia thành $6$ cung, mỗi cung $60^\circ$. Trong mỗi cung, một thành phần bằng $V$ (lớn nhất), một thành phần bằng $p = V(1 - S)$ (nhỏ nhất) và thành phần còn lại thay đổi tuyến tính theo vị trí $f$ trong cung.
+
+\begin{algorithm}[ht]
+\caption{Chuyển đổi HSV sang RGB}
+\label{alg:w4_hsv2rgb}
+\begin{algorithmic}[1]
+\Require $H \in [0, 360)$, $S, V \in [0, 1]$
+\Ensure $R, G, B \in [0, 1]$
+\If{$S = 0$} \State \Return $(V, V, V)$ \Comment{màu xám} \EndIf
+\State $h \gets H / 60$; \quad $i \gets \lfloor h \rfloor \bmod 6$; \quad $f \gets h - \lfloor h \rfloor$
+\State $p \gets V(1 - S)$; \quad $q \gets V(1 - fS)$; \quad $t \gets V\big(1 - (1 - f)S\big)$
+\State \textbf{chọn theo} $i$: \;
+$0\!: (V, t, p)$, \; $1\!: (q, V, p)$, \; $2\!: (p, V, t)$, \; $3\!: (p, q, V)$, \; $4\!: (t, p, V)$, \; $5\!: (V, p, q)$
+\State \Return $(R, G, B)$ theo bộ ba đã chọn
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Ví dụ kiểm tra.} Màu $(51, 153, 204)$ $\rightarrow$ $(R, G, B) = (0.2, 0.6, 0.8)$. Ta có $C_{\max} = 0.8$ (kênh B), $C_{\min} = 0.2$, $\Delta = 0.6$. Suy ra $V = 0.8$, $S = 0.6/0.8 = 0.75$, $H = 60 \times \big((0.2 - 0.6)/0.6 + 4\big) = 60 \times 3.\overline{3} = 200^\circ$. Chuyển ngược: $h = 3.\overline{3}$, $i = 3$, $f = 0.\overline{3}$; $p = 0.8 \times 0.25 = 0.2$, $q = 0.8 \times (1 - 0.25) = 0.6$; cung $3$ cho $(p, q, V) = (0.2, 0.6, 0.8)$ — đúng màu ban đầu.
+
+% =====================================================================
+\subsection{Giải thuật định lượng màu trong không gian HSV}
+\label{subsec:w4_quant}
+
+\textit{Câu hỏi: Viết giải thuật định lượng (lượng tử hóa) màu trong không gian HSV.}
+
+\textbf{Mục tiêu.} Ánh xạ mỗi màu $(H, S, V)$ liên tục về một chỉ số nguyên $k \in \{0, \ldots, K - 1\}$ sao cho các màu mà con người cảm nhận gần giống nhau rơi vào cùng chỉ số. Kết quả được dùng để tính lược đồ màu (Mục~\ref{subsec:w4_functions}).
+
+\textbf{Nguyên tắc thiết kế.}
+\begin{enumerate}
+    \item \textbf{$H$ được chia mịn nhất}, vì mắt người phân biệt sắc độ tốt hơn độ bão hòa và độ sáng; $S$ và $V$ chia thô hơn. Ví dụ, MPEG-7 dùng $16 \times 4 \times 4 = 256$ ô cho $H \times S \times V$~\citep{manjunath2001color}; Smith và Chang dùng $18 \times 3 \times 3 = 162$ ô màu cộng thêm $4$ ô xám, tổng cộng $166$ ô~\citep{smith1996visualseek}.
+    \item \textbf{Tách riêng các màu vô sắc}: khi $S$ hoặc $V$ rất nhỏ, $H$ không ổn định (Mục~\ref{subsec:w4_rgb_vs_hsv}), nên các màu này được gom vào $Q_g$ ô xám chỉ dựa trên $V$.
+    \item \textbf{Xử lý tính vòng của $H$}: dịch $H$ đi nửa ô để màu đỏ ($H \approx 0^\circ$ và $H \approx 360^\circ$) nằm trọn trong một ô thay vì bị cắt làm đôi.
+\end{enumerate}
+
+\begin{algorithm}[ht]
+\caption{Định lượng một màu HSV về chỉ số ô}
+\label{alg:w4_quant}
+\begin{algorithmic}[1]
+\Require Màu $(H, S, V)$ với $H \in [0, 360)$, $S, V \in [0, 1]$; số mức $Q_H, Q_S, Q_V, Q_g$; ngưỡng vô sắc $\tau_S, \tau_V$
+\Ensure Chỉ số $k \in \{0, \ldots, Q_H Q_S Q_V + Q_g - 1\}$
+\Function{QuantizeHSV}{$H, S, V$}
+    \If{$S < \tau_S$ \textbf{or} $V < \tau_V$} \Comment{màu vô sắc}
+        \State $g \gets \min\big(\lfloor V \cdot Q_g \rfloor, Q_g - 1\big)$
+        \State \Return $Q_H Q_S Q_V + g$
+    \EndIf
+    \State $H' \gets (H + 180/Q_H) \bmod 360$ \Comment{dịch nửa ô để không cắt đôi màu đỏ}
+    \State $h \gets \lfloor H' \cdot Q_H / 360 \rfloor$
+    \State $s \gets \min\big(\lfloor S \cdot Q_S \rfloor, Q_S - 1\big)$; \quad $v \gets \min\big(\lfloor V \cdot Q_V \rfloor, Q_V - 1\big)$
+    \State \Return $h \cdot Q_S Q_V + s \cdot Q_V + v$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+Bài giảng sử dụng cách định lượng đều $Q_H = 12$, $Q_S = 3$, $Q_V = 3$, tức $108$ màu, với lược đồ $h(i) = N(i)/N$, $i = 0, \ldots, 107$~\citep{xlav_lec2}; đây là trường hợp riêng của Giải thuật~\ref{alg:w4_quant} khi bỏ nhánh màu vô sắc ($Q_g = 0$). Với $Q_H = 18$, $Q_S = Q_V = 3$, $Q_g = 4$ ta được bảng màu $166$ ô như của Smith và Chang. Mỗi màu chỉ cần $O(1)$ phép tính, nên định lượng cả ảnh $N$ điểm ảnh tốn $O(N)$. Muốn sát cảm nhận hơn, có thể chia $S$, $V$ không đều (dày hơn ở vùng mắt nhạy) hoặc thay thế bằng phân cụm $k$-means trên tập màu của cơ sở dữ liệu.
+
+% =====================================================================
+\subsection{Tính hợp lý của việc giảm từ 16,8 triệu màu xuống khoảng 2.000 màu}
+\label{subsec:w4_reduce}
+
+\textit{Câu hỏi: Việc giảm từ khoảng 16,8 triệu màu (ảnh màu 24 bit) xuống khoảng 2.000 màu khi định lượng trong HSV có quá vô lý về mặt số liệu hay không?}
+
+Ảnh 24 bit có $256^3 = 16\,777\,216$ màu. Giảm xuống khoảng $2\,000$ màu nghĩa là trung bình $16\,777\,216 / 2\,048 = 8\,192$ màu RGB được gom vào một ô. Con số này nghe có vẻ mất mát lớn, nhưng \textbf{không vô lý} khi xét đúng mục đích:
+
+\textbf{1. Phần lớn 16,8 triệu màu là ``thừa'' đối với mắt người.} Pointer và Attridge ước tính con người chỉ phân biệt được khoảng $2{,}28$ triệu màu~\citep{pointer1998number}, tức khoảng $1/7$ số màu mà ảnh 24 bit mã hóa được. Con số $16{,}8$ triệu đến từ cách mã hóa thuận tiện cho phần cứng ($8$ bit mỗi kênh), không phải từ nhu cầu cảm nhận.
+
+\textbf{2. Mục đích là so sánh ảnh, không phải hiển thị ảnh.} Lược đồ màu dùng để đo hai ảnh giống nhau đến đâu. Ở đây, ``giống'' cần \emph{bền vững}: hai ảnh chụp cùng một bông hoa đỏ ở hai thời điểm sẽ lệch nhau vài đơn vị ở mỗi kênh do nhiễu, ánh sáng, nén JPEG. Nếu mỗi màu RGB là một ô, hai ảnh này gần như không có ô chung nào và bị coi là khác hẳn nhau. Định lượng thô gom các biến thể nhỏ vào cùng ô, giúp so sánh đúng bản chất.
+
+\textbf{3. Lý do thống kê.} Ảnh $640 \times 480$ có $307\,200$ điểm ảnh. Nếu dùng $16{,}8$ triệu ô, trung bình mỗi ô chỉ có $0{,}018$ điểm ảnh — lược đồ cực kỳ thưa, gần như mỗi màu chỉ xuất hiện một lần và không thể ước lượng tin cậy phân phối màu. Với $2\,048$ ô, trung bình mỗi ô có khoảng $150$ điểm ảnh, đủ để lược đồ phản ánh phân phối màu thực sự.
+
+\textbf{4. Lý do lưu trữ và tính toán.} Một lược đồ $16{,}8$ triệu ô kiểu số thực $4$ byte chiếm khoảng $67$ MB cho \emph{mỗi} ảnh, và mỗi lần so sánh hai ảnh cần $16{,}8$ triệu phép tính. Với $2\,048$ ô, lược đồ chỉ chiếm $8$ KB và so sánh nhanh gấp hơn $8\,000$ lần — yếu tố quyết định khi truy vấn trên kho hàng triệu ảnh.
+
+\textbf{5. Thực tiễn nghiên cứu.} Swain và Ballard dùng $8 \times 16 \times 16 = 2\,048$ ô trên các trục màu đối lập trong công trình kinh điển về chỉ mục màu~\citep{swain1991color}; MPEG-7 thậm chí chỉ dùng $256$ ô HSV~\citep{manjunath2001color}; Smith và Chang dùng $166$ ô~\citep{smith1996visualseek}. Bản thân bài giảng chỉ dùng $12 \times 3 \times 3 = 108$ màu~\citep{xlav_lec2}. Như vậy, khoảng $2\,000$ ô thuộc nhóm \emph{khá mịn} trong các lược đồ màu thường dùng.
+
+\textbf{Giới hạn.} Định lượng thô chỉ phù hợp cho mục đích \emph{mô tả và so sánh}. Nếu mục đích là tái tạo ảnh để hiển thị, $2\,000$ màu đồng đều sẽ gây hiện tượng loang màu ở các vùng chuyển sắc mịn (bầu trời, làn da); khi đó cần bảng màu thích nghi theo từng ảnh kèm khuếch tán sai số.
+
+% =====================================================================
+\subsection{Đề xuất hàm đo độ dị biệt màu giữa hai điểm ảnh}
+\label{subsec:w4_dissim}
+
+\textit{Câu hỏi: Đề xuất một hàm đo độ dị biệt màu giữa hai điểm ảnh $c_i$ và $c_j$; mở rộng thành độ đo khác biệt giữa hai vector đặc trưng, sử dụng họ khoảng cách Minkowski.}
+
+\textbf{Yêu cầu đối với hàm dị biệt.} Hàm $d(c_i, c_j)$ nên thỏa các tính chất của một metric: (i) không âm, $d = 0$ khi và chỉ khi hai màu trùng nhau; (ii) đối xứng $d(c_i, c_j) = d(c_j, c_i)$; (iii) bất đẳng thức tam giác $d(c_i, c_k) \le d(c_i, c_j) + d(c_j, c_k)$. Tính chất (iii) cho phép dùng các cấu trúc chỉ mục để tăng tốc tìm kiếm. Ngoài ra, giá trị $d$ nên tăng khi cảm nhận khác biệt tăng.
+
+\textbf{Khoảng cách Minkowski.} Với hai vector $\mathbf{x}, \mathbf{y} \in \mathbb{R}^n$ (màu của điểm ảnh có $n = 3$; vector đặc trưng như lược đồ màu có $n = K$ ô):
+\begin{equation}
+d_p(\mathbf{x}, \mathbf{y}) = \left( \sum_{k=1}^{n} |x_k - y_k|^p \right)^{1/p}, \qquad p \ge 1.
+\label{eq:w4_minkowski}
+\end{equation}
+Ba trường hợp quan trọng:
+\begin{align}
+d_1(\mathbf{x}, \mathbf{y}) &= \sum_{k=1}^{n} |x_k - y_k| && \text{(Manhattan)}, \\
+d_2(\mathbf{x}, \mathbf{y}) &= \sqrt{\sum_{k=1}^{n} (x_k - y_k)^2} && \text{(Euclid)}, \\
+d_\infty(\mathbf{x}, \mathbf{y}) &= \lim_{p \to \infty} d_p(\mathbf{x}, \mathbf{y}) = \max_{1 \le k \le n} |x_k - y_k| && \text{(Chebyshev)}.
+\end{align}
+Khi các thành phần có vai trò khác nhau, dùng dạng có trọng số $d_{p,\mathbf{w}}(\mathbf{x}, \mathbf{y}) = \big( \sum_k w_k |x_k - y_k|^p \big)^{1/p}$, $w_k > 0$.
+
+\textbf{Đề xuất cho điểm ảnh trong HSV.} Do $H$ là góc, không thể dùng trực tiếp $|H_i - H_j|$ (màu $H = 359^\circ$ và $H = 1^\circ$ gần như giống nhau). Nhóm đề xuất ánh xạ mỗi màu lên hình nón HSV rồi dùng khoảng cách Euclid trong không gian đó:
+\begin{equation}
+\phi(H, S, V) = \big( S \cos H,\; S \sin H,\; V \big),
+\end{equation}
+\begin{equation}
+d_{\text{HSV}}(c_i, c_j) = \big\| \phi(c_i) - \phi(c_j) \big\|_2
+= \sqrt{(V_i - V_j)^2 + S_i^2 + S_j^2 - 2 S_i S_j \cos(H_i - H_j)}.
+\label{eq:w4_dhsv}
+\end{equation}
+Hàm này có các ưu điểm: tự động xử lý tính vòng của $H$; khi $S$ nhỏ (màu gần xám), chênh lệch $H$ ít ảnh hưởng — đúng với cảm nhận vì màu nhạt khó phân biệt sắc độ; và vì là khoảng cách Euclid sau một phép ánh xạ nên thỏa đủ ba tính chất metric. Có thể thêm trọng số cho thành phần $V$ nếu muốn giảm ảnh hưởng của thay đổi ánh sáng. Nếu cần khớp cảm nhận tốt hơn nữa, chuyển sang CIELAB và dùng CIEDE2000~\citep{sharma2005ciede2000}.
+
+\textbf{Mở rộng cho hai vector đặc trưng.} Với hai lược đồ màu chuẩn hóa $\mathbf{h}, \mathbf{g}$ ($\sum_k h_k = \sum_k g_k = 1$), dùng trực tiếp~\eqref{eq:w4_minkowski} với $n = K$. Đáng chú ý, $d_1$ liên hệ trực tiếp với độ đo giao lược đồ (histogram intersection) của Swain và Ballard~\citep{swain1991color}: vì $\min(a, b) = \frac{1}{2}(a + b - |a - b|)$ nên
+\begin{equation}
+\sum_{k=1}^{K} \min(h_k, g_k) = 1 - \frac{1}{2} d_1(\mathbf{h}, \mathbf{g}).
+\end{equation}
+Hạn chế của họ Minkowski là chỉ so sánh \emph{từng ô tương ứng}: nếu ảnh bị lệch màu nhẹ, khối lượng dồn sang ô kế bên và bị tính là khác biệt hoàn toàn. Các độ đo xét đến quan hệ giữa các ô, như khoảng cách Earth Mover~\citep{rubner2000earth}, khắc phục được điểm này nhưng tốn chi phí tính toán hơn.
+
+% =====================================================================
+\subsection{Hình dạng các mặt cầu đơn vị của khoảng cách Minkowski}
+\label{subsec:w4_slide23}
+
+\textit{Câu hỏi: Bài giảng định nghĩa khoảng cách Minkowski giữa hai điểm ảnh $d(p, q) = \big(\sum_{i=1}^{n} |p_i - q_i|^r\big)^{1/r}$, $0 < r < \infty$, và minh họa các ``mặt cầu đơn vị'' (tập điểm có độ đo bằng $1$) trong $\mathbb{R}^2$ với $r = \tfrac12, 1, 2, \infty$~\citep{xlav_lec2}. Hãy chứng minh hình dạng của các mặt cầu đơn vị này.}
+
+Đặt $\mathbf{x} = (x, y) = p - q$ và $\|\mathbf{x}\|_r = (|x|^r + |y|^r)^{1/r}$. Mặt cầu đơn vị là $S_r = \{\mathbf{x} \in \mathbb{R}^2 : \|\mathbf{x}\|_r = 1\}$. Vì $\|\mathbf{x}\|_r$ chỉ phụ thuộc vào $|x|$ và $|y|$, $S_r$ đối xứng qua hai trục tọa độ; do đó chỉ cần xét góc phần tư thứ nhất $x, y \ge 0$ rồi lấy đối xứng. Ngoài ra, $\|\mathbf{x}\|_r = 1 \iff |x|^r + |y|^r = 1$ (nâng hai vế lên lũy thừa $r > 0$).
+
+\textbf{Trường hợp $r = 2$: đường tròn.} $x^2 + y^2 = 1$ là phương trình đường tròn tâm $O$ bán kính $1$.
+
+\textbf{Trường hợp $r = 1$: hình vuông xoay $45^\circ$ (hình thoi).} Trong góc phần tư thứ nhất, $|x| + |y| = 1$ trở thành $x + y = 1$, $0 \le x \le 1$: đoạn thẳng nối $(1, 0)$ và $(0, 1)$. Lấy đối xứng qua hai trục, ta được bốn đoạn thẳng nối các đỉnh $(\pm 1, 0)$, $(0, \pm 1)$ — một hình vuông có đường chéo nằm trên hai trục tọa độ.
+
+\textbf{Trường hợp $r = \infty$: hình vuông có cạnh song song với trục.} Trước hết chứng minh $\lim_{r \to \infty} \|\mathbf{x}\|_r = \max(|x|, |y|)$. Đặt $m = \max(|x|, |y|) > 0$, ta có
+\begin{equation}
+m^r \le |x|^r + |y|^r \le 2 m^r \;\Longrightarrow\; m \le \|\mathbf{x}\|_r \le 2^{1/r} m,
+\end{equation}
+và $2^{1/r} \to 1$ khi $r \to \infty$, nên $\|\mathbf{x}\|_\infty = m$. Khi đó $\|\mathbf{x}\|_\infty = 1$ khi và chỉ khi $|x| \le 1$, $|y| \le 1$ và ít nhất một trong hai bằng $1$: đó là bốn cạnh $x = \pm 1$ ($|y| \le 1$) và $y = \pm 1$ ($|x| \le 1$) của hình vuông $[-1, 1]^2$.
+
+\textbf{Trường hợp $r = \tfrac12$: đường cong lõm vào trong (hình sao bốn cánh).} Trong góc phần tư thứ nhất, $\sqrt{x} + \sqrt{y} = 1$, tức $y = f(x) = (1 - \sqrt{x})^2$ với $0 \le x \le 1$. Đường cong đi qua $(1, 0)$ và $(0, 1)$ như trường hợp $r = 1$, nhưng
+\begin{equation}
+f(x) = 1 - 2\sqrt{x} + x \le 1 - x \iff x \le \sqrt{x},
+\end{equation}
+luôn đúng trên $[0, 1]$, với dấu bằng chỉ tại $x = 0$ và $x = 1$. Hơn nữa $f''(x) = \tfrac{1}{2} x^{-3/2} > 0$ nên $f$ lồi: đường cong nằm \emph{dưới} đoạn thẳng $x + y = 1$ và cong lõm về phía gốc tọa độ. Lấy đối xứng ta được hình sao bốn cánh với các đỉnh nhọn tại $(\pm 1, 0)$, $(0, \pm 1)$, nằm bên trong hình thoi của $r = 1$ — đúng như hình minh họa.
+
+\textbf{Thứ tự lồng nhau của các mặt cầu.} Hình minh họa cho thấy các mặt cầu lồng nhau: $r$ càng lớn thì mặt cầu càng ``phình'' ra ngoài. Ta chứng minh tổng quát: với $0 < r < s \le \infty$ và mọi $\mathbf{x}$, $\|\mathbf{x}\|_s \le \|\mathbf{x}\|_r$. Thật vậy, nếu $\|\mathbf{x}\|_r = 1$ thì $|x_i| \le 1$ với mọi $i$, nên $|x_i|^s \le |x_i|^r$ và $\sum_i |x_i|^s \le \sum_i |x_i|^r = 1$, tức $\|\mathbf{x}\|_s \le 1$; trường hợp tổng quát suy ra bằng cách chia $\mathbf{x}$ cho $\|\mathbf{x}\|_r$ (tính thuần nhất $\|\lambda \mathbf{x}\|_r = |\lambda| \|\mathbf{x}\|_r$). Do đó quả cầu đơn vị $B_r = \{\|\mathbf{x}\|_r \le 1\}$ thỏa
+\begin{equation}
+B_{1/2} \subset B_1 \subset B_2 \subset B_\infty,
+\end{equation}
+khớp với thứ tự hình sao $\subset$ hình thoi $\subset$ hình tròn $\subset$ hình vuông trong hình vẽ. Kết quả này cũng là cơ sở của bất đẳng thức~\eqref{eq:w4_norm_ineq} ở Mục~\ref{subsec:w4_query}.
+
+\textbf{Nhận xét: khi $r < 1$, $d$ không còn là metric.} Hình sao của $r = \tfrac12$ là tập \emph{không lồi}, dấu hiệu cho thấy bất đẳng thức tam giác bị vi phạm. Ví dụ với $r = \tfrac12$, $a = (0, 0)$, $b = (1, 0)$, $c = (1, 1)$:
+\begin{equation}
+d(a, c) = \big(1 + 1\big)^{2} = 4 \;>\; d(a, b) + d(b, c) = 1 + 1 = 2.
+\end{equation}
+Vì vậy, mặc dù công thức xác định với mọi $0 < r < \infty$, chỉ khi $r \ge 1$ thì $d$ mới là một metric đúng nghĩa và mới dùng được các cấu trúc chỉ mục dựa trên bất đẳng thức tam giác. Các giá trị $r = 1, 2, \infty$ là ba trường hợp được dùng nhiều nhất (Mục~\ref{subsec:w4_rgb_dist}).
+
+% =====================================================================
+\subsection{Biện luận kết quả truy vấn theo ba độ đo $d_1$, $d_2$, $d_\infty$}
+\label{subsec:w4_query}
+
+\textit{Câu hỏi: Cho $\mathbf{x}$ là vector đặc trưng có $n$ thành phần và truy vấn đặt tại gốc tọa độ $O$. Biện luận kết quả truy vấn trả về dựa trên ba độ đo $d_1$, $d_2$, $d_\infty$ của họ Minkowski.}
+
+Với truy vấn $O = \mathbf{0}$, khoảng cách từ $\mathbf{x}$ đến truy vấn chính là chuẩn của $\mathbf{x}$: $d_p(\mathbf{x}, O) = \|\mathbf{x}\|_p$.
+
+\textbf{1. Hình dạng tập ``giống truy vấn''.} Truy vấn theo phạm vi trả về mọi $\mathbf{x}$ có $d_p(\mathbf{x}, O) \le r$, tức các điểm nằm trong \emph{quả cầu} $B_p(r)$. Hình dạng quả cầu phụ thuộc vào $p$ (minh họa trong $\mathbb{R}^2$): $B_1$ là hình thoi $|x_1| + |x_2| \le r$; $B_2$ là hình tròn; $B_\infty$ là hình vuông $\max(|x_1|, |x_2|) \le r$. Mỗi độ đo định nghĩa một khái niệm ``giống'' khác nhau.
+
+\textbf{2. Quan hệ bao hàm.} Với mọi $\mathbf{x} \in \mathbb{R}^n$:
+\begin{equation}
+\|\mathbf{x}\|_\infty \;\le\; \|\mathbf{x}\|_2 \;\le\; \|\mathbf{x}\|_1 \;\le\; \sqrt{n}\, \|\mathbf{x}\|_2 \;\le\; n\, \|\mathbf{x}\|_\infty.
+\label{eq:w4_norm_ineq}
+\end{equation}
+\emph{Chứng minh.} Gọi $m = \max_k |x_k|$. (a) $m^2 \le \sum_k x_k^2$ nên $\|\mathbf{x}\|_\infty \le \|\mathbf{x}\|_2$. (b) $\big(\sum_k |x_k|\big)^2 = \sum_k x_k^2 + 2\sum_{k<l} |x_k||x_l| \ge \sum_k x_k^2$ nên $\|\mathbf{x}\|_2 \le \|\mathbf{x}\|_1$. (c) Theo bất đẳng thức Cauchy--Schwarz, $\sum_k 1 \cdot |x_k| \le \sqrt{n} \sqrt{\sum_k x_k^2}$. (d) $\sum_k x_k^2 \le n m^2$ nên $\sqrt{n}\|\mathbf{x}\|_2 \le n m$. $\blacksquare$
+
+Từ~\eqref{eq:w4_norm_ineq} suy ra, với cùng bán kính $r$: $B_1(r) \subseteq B_2(r) \subseteq B_\infty(r)$. Do đó số kết quả trả về luôn thỏa
+\begin{equation}
+N_1(r) \le N_2(r) \le N_\infty(r).
+\end{equation}
+Nghĩa là \textbf{$d_1$ khắt khe nhất, $d_\infty$ dễ dãi nhất}. Dấu bằng $\|\mathbf{x}\|_1 = \|\mathbf{x}\|_2 = \|\mathbf{x}\|_\infty$ xảy ra khi $\mathbf{x}$ chỉ có một thành phần khác $0$; khoảng cách giữa các chuẩn lớn nhất khi mọi thành phần bằng nhau về trị tuyệt đối ($\|\mathbf{x}\|_1 = n\|\mathbf{x}\|_\infty$).
+
+\textbf{3. Chênh lệch tăng theo số chiều.} Thể tích các quả cầu bán kính $r$ trong $\mathbb{R}^n$:
+\begin{equation}
+V_1 = \frac{(2r)^n}{n!}, \qquad V_2 = \frac{\pi^{n/2}}{\Gamma(n/2 + 1)}\, r^n, \qquad V_\infty = (2r)^n.
+\end{equation}
+Với $n = 2$: $V_1 : V_2 : V_\infty = 2 : 3{,}14 : 4$ — chênh lệch nhỏ. Với $n = 10$: $V_2 / V_\infty \approx 0{,}0025$ và $V_1 / V_\infty = 1/10! \approx 2{,}8 \times 10^{-7}$. Như vậy, với vector đặc trưng nhiều chiều (lược đồ màu có hàng trăm ô), cùng một ngưỡng $r$ có thể cho số kết quả chênh nhau nhiều bậc độ lớn tùy độ đo; ngưỡng phải được chọn riêng cho từng độ đo.
+
+\textbf{4. Thứ tự xếp hạng có thể đảo ngược.} Với truy vấn $k$ láng giềng gần nhất, các độ đo không chỉ khác về giá trị mà còn khác về \emph{thứ tự}. Xét $\mathbf{a} = (1, 1)$ và $\mathbf{b} = (1{,}5;\, 0)$:
+\begin{center}
+\begin{tabular}{|c|c|c|l|}
+\hline
+ & $\mathbf{a} = (1, 1)$ & $\mathbf{b} = (1{,}5;\, 0)$ & \textbf{Gần $O$ hơn} \\
+\hline
+$d_1$ & $2$ & $1{,}5$ & $\mathbf{b}$ \\
+$d_2$ & $1{,}414$ & $1{,}5$ & $\mathbf{a}$ \\
+$d_\infty$ & $1$ & $1{,}5$ & $\mathbf{a}$ \\
+\hline
+\end{tabular}
+\end{center}
+Diễn giải: $\mathbf{a}$ lệch ít nhưng \emph{trải đều} trên nhiều thành phần, $\mathbf{b}$ lệch nhiều nhưng \emph{tập trung} ở một thành phần.
+\begin{itemize}
+    \item $d_1$ cộng dồn mọi sai khác, nên ưu tiên các mẫu chỉ khác truy vấn ở ít thành phần (như $\mathbf{b}$).
+    \item $d_\infty$ chỉ quan tâm sai khác lớn nhất, nên ưu tiên các mẫu không có thành phần nào lệch xa (như $\mathbf{a}$), bất kể lệch nhỏ ở bao nhiêu thành phần.
+    \item $d_2$ nằm giữa hai thái cực: phạt sai khác lớn nặng hơn $d_1$ (do bình phương) nhưng vẫn tính đến mọi thành phần. Ngoài ra, $d_2$ là độ đo duy nhất trong ba độ đo không đổi khi xoay hệ trục.
+\end{itemize}
+
+\textbf{5. Hệ quả trong không gian nhiều chiều.} Khi $n$ lớn, khoảng cách từ truy vấn đến điểm gần nhất và điểm xa nhất có xu hướng xấp xỉ nhau, làm truy vấn láng giềng gần nhất kém ý nghĩa~\citep{beyer1999nearest}. Hiện tượng này nghiêm trọng hơn với $p$ lớn; $d_1$ (thậm chí $p < 1$) giữ được độ tương phản giữa gần và xa tốt hơn $d_2$ và $d_\infty$~\citep{aggarwal2001surprising}. Đây là một lý do $d_1$ thường được ưu tiên khi so sánh lược đồ.
+
+\textbf{Kết luận.} Kết quả truy vấn phụ thuộc vào độ đo cả về \emph{số lượng} (với truy vấn phạm vi) lẫn \emph{thứ tự} (với truy vấn $k$-NN). Lựa chọn độ đo là lựa chọn ngữ nghĩa của từ ``giống'': chọn $d_\infty$ khi muốn mọi thành phần đều không được lệch quá ngưỡng (kiểm soát chất lượng màu sản phẩm), chọn $d_1$ khi quan tâm tổng khác biệt và làm việc với vector nhiều chiều (lược đồ), chọn $d_2$ khi cần độ đo đẳng hướng.
+
+% =====================================================================
+\subsection{Công thức tính độ dị biệt giữa hai màu RGB theo $d_1$, $d_2$, $d_\infty$}
+\label{subsec:w4_rgb_dist}
+
+\textit{Câu hỏi: Viết công thức tính độ dị biệt giữa hai màu $c_1$, $c_2$ theo các độ đo $d_1$, $d_2$, $d_\infty$, trong đó mỗi màu $c_x = (R_x, G_x, B_x)$ gồm ba thành phần RGB.}
+
+Đặt $\Delta R = R_1 - R_2$, $\Delta G = G_1 - G_2$, $\Delta B = B_1 - B_2$. Áp dụng~\eqref{eq:w4_minkowski} với $n = 3$:
+\begin{align}
+d_1(c_1, c_2) &= |\Delta R| + |\Delta G| + |\Delta B|, \\
+d_2(c_1, c_2) &= \sqrt{\Delta R^2 + \Delta G^2 + \Delta B^2}, \\
+d_\infty(c_1, c_2) &= \max\big(|\Delta R|, |\Delta G|, |\Delta B|\big).
+\end{align}
+Với ảnh 8 bit, giá trị lớn nhất (giữa đen và trắng) lần lượt là $765$, $255\sqrt{3} \approx 441{,}7$ và $255$; có thể chia cho các giá trị này để chuẩn hóa về $[0, 1]$.
+
+\textbf{Ví dụ.} $c_1 = (200, 100, 50)$, $c_2 = (180, 140, 60)$ $\Rightarrow$ $|\Delta R| = 20$, $|\Delta G| = 40$, $|\Delta B| = 10$:
+\begin{equation*}
+d_1 = 70, \qquad d_2 = \sqrt{400 + 1600 + 100} = \sqrt{2100} \approx 45{,}8, \qquad d_\infty = 40.
+\end{equation*}
+Kết quả thỏa~\eqref{eq:w4_norm_ineq}: $40 \le 45{,}8 \le 70$.
+
+\textbf{Lưu ý.} RGB không đồng đều về cảm nhận: cùng một giá trị $d_2$ có thể tương ứng với chênh lệch rất rõ ở vùng màu này nhưng khó nhận ra ở vùng màu khác. Vì vậy các công thức trên phù hợp cho so khớp nhanh; khi cần đánh giá chênh lệch màu theo cảm nhận, nên dùng~\eqref{eq:w4_dhsv} hoặc CIEDE2000~\citep{sharma2005ciede2000}.
+
+% =====================================================================
+\subsection{Ý nghĩa các hệ số khi chuyển ảnh màu RGB sang ảnh mức xám}
+\label{subsec:w4_gray}
+
+\textit{Câu hỏi: Giải thích ý nghĩa các hệ số đứng trước các giá trị R, G, B trong công thức chuyển ảnh màu sang ảnh mức xám.}
+
+Công thức thường dùng (chuẩn ITU-R BT.601~\citep{itu2011bt601}):
+\begin{equation}
+Y = 0{,}299\, R + 0{,}587\, G + 0{,}114\, B.
+\end{equation}
+
+\textbf{Vì sao không lấy trung bình cộng?} Mục đích của ảnh xám là giữ lại \emph{độ sáng mà mắt người cảm nhận}. Mắt người không nhạy như nhau với mọi bước sóng: hàm hiệu suất phát sáng $V(\lambda)$ đạt cực đại quanh $555$ nm (vùng lục -- vàng) và giảm mạnh về hai phía lam và đỏ. Do đó, với cùng năng lượng, ánh sáng lục trông sáng nhất, đỏ đứng thứ hai, lam tối nhất — đúng với thứ tự các hệ số $0{,}587 > 0{,}299 > 0{,}114$.
+
+\textbf{Ví dụ.} Lục thuần $(0, 255, 0)$ và lam thuần $(0, 0, 255)$ có cùng trung bình cộng $85$, nhưng theo công thức trên: $Y_{\text{lục}} = 0{,}587 \times 255 \approx 150$, $Y_{\text{lam}} = 0{,}114 \times 255 \approx 29$. Kết quả này khớp với cảm nhận: chữ màu lam trên nền đen khó đọc hơn nhiều so với chữ màu lục.
+
+\textbf{Nguồn gốc các con số.} Về nguyên tắc, hệ số độ chói của mỗi kênh được tính từ tọa độ màu của ba màu cơ bản (đỏ, lục, lam) và điểm trắng của hệ màu đang dùng. Bộ hệ số $0{,}299$ / $0{,}587$ / $0{,}114$ đã được dùng trong truyền hình màu từ năm 1953 và được giữ lại trong chuẩn BT.601~\citep{poynton2012digital,itu2011bt601}. Vì vậy hệ số \emph{phụ thuộc vào chuẩn màu}: với chuẩn HDTV BT.709~\citep{itu2015bt709} (cũng là màu cơ bản của sRGB) các hệ số là
+\begin{equation}
+Y = 0{,}2126\, R + 0{,}7152\, G + 0{,}0722\, B.
+\end{equation}
+
+\textbf{Tổng các hệ số bằng 1.} Điều này đảm bảo màu trắng $(255, 255, 255)$ cho $Y = 255$ và mọi màu xám $(a, a, a)$ giữ nguyên giá trị $a$: phép chuyển đổi không làm thay đổi độ sáng của các màu vốn đã là xám.
+
+\textbf{Ghi chú.} Khi áp dụng trên giá trị RGB đã hiệu chỉnh gamma (như ảnh JPEG thông thường), đại lượng thu được gọi chính xác là \emph{luma} $Y'$, chỉ là xấp xỉ của độ chói vật lý~\citep{poynton2012digital}; trong thực hành xử lý ảnh, xấp xỉ này là đủ.
+
+% =====================================================================
+\subsection{Định nghĩa và khái niệm về màu sắc, kết cấu (vân) và hình dạng}
+\label{subsec:w4_concepts}
+
+\textit{Câu hỏi: Trình bày một số định nghĩa, khái niệm về màu sắc, kết cấu (vân) và hình dạng.}
+
+\textbf{Màu sắc (Color).} Màu là cảm nhận của thị giác đối với phân bố năng lượng theo bước sóng của ánh sáng đến mắt. Trong ảnh số, màu của một điểm ảnh là bộ ba giá trị trong một không gian màu (RGB, HSV, CIELAB\ldots). Màu là đặc trưng \emph{cấp điểm ảnh}: có thể tính tại từng điểm mà không cần xét lân cận. Các đặc trưng màu thường dùng: lược đồ màu, các mô-men màu (trung bình, độ lệch chuẩn, độ lệch), màu chủ đạo~\citep{manjunath2001color}, và các biến thể có thông tin không gian như vector liên kết màu~\citep{pass1996comparing}, correlogram màu~\citep{huang1997image}.
+
+\textbf{Kết cấu / vân (Texture).} Kết cấu là \emph{mẫu biến thiên cường độ lặp lại trong một vùng} — ví dụ vân gỗ, mặt vải, bãi cỏ, tường gạch. Khác với màu, kết cấu là đặc trưng \emph{cấp vùng}: một điểm ảnh đơn lẻ không có kết cấu. Tamura và cộng sự mô tả kết cấu theo các tính chất gần với cảm nhận: độ thô, độ tương phản, tính định hướng, tính giống đường, tính đều đặn và độ nhám~\citep{tamura1978textural}. Các phương pháp trích xuất tiêu biểu: ma trận đồng xuất mức xám (GLCM) và các đại lượng thống kê trên đó~\citep{haralick1973textural}, mẫu nhị phân cục bộ (LBP), bộ lọc Gabor.
+
+\textbf{Hình dạng (Shape).} Hình dạng là \emph{dạng hình học} của đối tượng, xác định bởi đường biên hoặc vùng chiếm chỗ của nó, và lý tưởng là không đổi khi đối tượng tịnh tiến, quay hay thay đổi kích thước. Các phương pháp mô tả chia thành hai nhóm~\citep{zhang2004review}: \emph{dựa trên đường biên} (mã xích, mô tả Fourier, lược đồ hướng cạnh) và \emph{dựa trên vùng} (diện tích, độ tròn, mô-men bất biến). Mô tả hình dạng thường đòi hỏi phân đoạn đối tượng trước, nên khó hơn so với màu và kết cấu.
+
+\textbf{Biên cạnh (Edge)} — nền tảng của nhiều đặc trưng hình dạng — là tập điểm ảnh tại đó cường độ thay đổi đột ngột, thường tương ứng với ranh giới đối tượng. Biên được phát hiện qua độ lớn gradient (toán tử Sobel, Prewitt) hoặc bộ dò Canny~\citep{canny1986computational}; hướng gradient tại điểm biên cho biết hướng của đường biên, là cơ sở của lược đồ hướng cạnh (Mục~\ref{subsec:w4_functions}).
+
+\textbf{Quan hệ giữa ba đặc trưng.} Ba đặc trưng bổ trợ nhau theo mức độ dùng thông tin không gian: màu không cần lân cận, kết cấu cần lân cận cục bộ, hình dạng cần cấu trúc toàn cục của đối tượng. Hệ thống truy vấn ảnh theo nội dung thường kết hợp cả ba~\citep{smeulders2000content}.
+
+% =====================================================================
+\subsection{Hàm định lượng màu và hàm tính lược đồ màu}
+\label{subsec:w4_functions}
+
+\textit{Câu hỏi: Viết giải thuật (hàm) định lượng màu và giải thuật (hàm) tính lược đồ màu.}
+
+\textbf{Định nghĩa lược đồ màu.} Cho ảnh $I$ có $N$ điểm ảnh, hàm định lượng $q: \text{màu} \rightarrow \{0, \ldots, K - 1\}$. Lược đồ màu chuẩn hóa là
+\begin{equation}
+h(k) = \frac{1}{N} \sum_{\mathbf{p} \in I} \big[\, q(I(\mathbf{p})) = k \,\big], \qquad k = 0, \ldots, K - 1,
+\label{eq:w4_ch}
+\end{equation}
+trong đó $[\cdot]$ bằng $1$ nếu mệnh đề đúng và $0$ nếu sai. Chuẩn hóa chia cho $N$ giúp so sánh được các ảnh có kích thước khác nhau, và $\sum_k h(k) = 1$.
+
+Hàm định lượng $q$ chính là hàm \textsc{QuantizeHSV} ở Giải thuật~\ref{alg:w4_quant}. Giải thuật~\ref{alg:w4_hist} tính lược đồ dựa trên hàm đó.
+
+\begin{algorithm}[ht]
+\caption{Tính lược đồ màu HSV của một ảnh}
+\label{alg:w4_hist}
+\begin{algorithmic}[1]
+\Require Ảnh RGB $I$ kích thước $H_I \times W_I$; tham số định lượng như Giải thuật~\ref{alg:w4_quant}
+\Ensure Lược đồ chuẩn hóa $h \in \mathbb{R}^K$, $K = Q_H Q_S Q_V + Q_g$
+\Function{ColorHistogram}{$I$}
+    \State $h[0 \ldots K-1] \gets 0$
+    \For{mỗi điểm ảnh $\mathbf{p}$ trong $I$}
+        \State $(R, G, B) \gets I(\mathbf{p}) / 255$
+        \State $(H, S, V) \gets \textsc{RGBtoHSV}(R, G, B)$ \Comment{Giải thuật~\ref{alg:w4_rgb2hsv}}
+        \State $k \gets \textsc{QuantizeHSV}(H, S, V)$ \Comment{Giải thuật~\ref{alg:w4_quant}}
+        \State $h[k] \gets h[k] + 1$
+    \EndFor
+    \State $h \gets h / (H_I \cdot W_I)$ \Comment{chuẩn hóa, $\sum_k h[k] = 1$}
+    \State \Return $h$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Độ phức tạp.} Mỗi điểm ảnh được xử lý trong $O(1)$, nên tính lược đồ tốn thời gian $O(N)$ và bộ nhớ $O(K)$; so sánh hai lược đồ bằng $d_1$ hoặc giao lược đồ tốn $O(K)$.
+
+\textbf{Lược đồ hướng cạnh.} Để phục vụ các câu hỏi tiếp theo, ta định nghĩa lược đồ hướng cạnh (Edge Direction Histogram, EDH, còn gọi là lược đồ hệ số góc) theo bài giảng~\citep{xlav_lec2}. Tính gradient $G_x, G_y$ (ví dụ bằng toán tử Sobel), độ lớn $M = \sqrt{G_x^2 + G_y^2}$ và hướng cạnh $\alpha = \operatorname{atan2}(G_y, G_x) \in [0^\circ, 360^\circ)$. Gọi $E = \{\mathbf{p} : M(\mathbf{p}) > \tau\}$ là tập điểm biên, $n_E(I) = |E|$ và $n(I)$ là tổng số điểm ảnh. EDH gồm $73$ phần tử: $72$ phần tử đầu ứng với $72$ khoảng hướng rộng $5^\circ$, phần tử cuối là tỉ lệ điểm ảnh không nằm trên biên:
+\begin{equation}
+EDH(i) = \frac{m(i)}{n_E(I)}, \quad i = 0, \ldots, 71; \qquad EDH(72) = \frac{n(I) - n_E(I)}{n(I)},
+\label{eq:w4_eh}
+\end{equation}
+trong đó $m(i)$ là số điểm biên có hướng $\alpha$ thỏa $5i \le \alpha < 5(i + 1)$. Phần tử cuối cho biết ảnh ``nhiều cạnh'' hay ``trơn'', bổ sung thông tin mà $72$ phần tử hướng không thể hiện được sau khi chuẩn hóa. Tổng quát, có thể chia thành $K_e$ khoảng hướng bất kỳ; trong bài này $K_e = 72$.
+Jain và Vailaya dùng lược đồ hướng cạnh để mô tả hình dạng trong truy vấn ảnh~\citep{jain1996image}; bộ mô tả lược đồ cạnh của MPEG-7 chia ảnh thành $4 \times 4$ khối, mỗi khối thống kê $5$ loại cạnh (dọc, ngang, chéo $45^\circ$, chéo $135^\circ$, không định hướng), tổng cộng $80$ ô~\citep{manjunath2001color}.
+
+% =====================================================================
+\subsection{Ưu, khuyết điểm của lược đồ màu và lược đồ hướng cạnh; tiêu chí đánh giá đặc trưng}
+\label{subsec:w4_proscons}
+
+\textit{Câu hỏi: Nêu ưu, khuyết điểm của đặc trưng lược đồ màu và lược đồ hướng cạnh (lược đồ hệ số góc). Dựa trên những tiêu chí nào để đánh giá một đặc trưng là tốt hay xấu?}
+
+\textbf{Tiêu chí đánh giá một đặc trưng.} Một đặc trưng tốt cần cân bằng các tiêu chí sau:
+\begin{enumerate}
+    \item \textbf{Tính phân biệt (discriminative):} ảnh có nội dung khác nhau phải cho đặc trưng khác nhau đủ xa.
+    \item \textbf{Tính bất biến / bền vững (invariant / robust):} ảnh có cùng nội dung nhưng khác điều kiện chụp (tịnh tiến, quay, tỉ lệ, góc nhìn, ánh sáng, nhiễu, che khuất một phần) phải cho đặc trưng gần nhau.
+    \item \textbf{Tính gọn (compactness):} số chiều nhỏ để tiết kiệm bộ nhớ và tăng tốc so sánh.
+    \item \textbf{Chi phí tính toán:} trích xuất và so sánh nhanh, phù hợp với quy mô dữ liệu.
+    \item \textbf{Có độ đo phù hợp:} khoảng cách giữa hai đặc trưng phản ánh đúng mức độ giống nhau về nội dung.
+\end{enumerate}
+Hai tiêu chí đầu thường mâu thuẫn: càng bất biến với nhiều biến đổi thì càng mất thông tin, dẫn đến giảm khả năng phân biệt. Thiết kế đặc trưng là tìm điểm cân bằng phù hợp với ứng dụng.
+
+\textbf{Lược đồ màu.}
+\begin{itemize}
+    \item \emph{Ưu điểm:} đơn giản, tính nhanh trong $O(N)$; bất biến với tịnh tiến và quay quanh trục nhìn; ít thay đổi khi góc nhìn thay đổi nhẹ và khi đối tượng bị che khuất một phần~\citep{swain1991color}; sau khi chuẩn hóa thì bất biến với tỉ lệ ảnh; hiệu quả với các đối tượng có màu đặc trưng (cờ, logo, trái cây, cảnh hoàng hôn).
+    \item \emph{Khuyết điểm:} mất hoàn toàn thông tin phân bố không gian; nhạy với thay đổi màu và cường độ nguồn sáng; hiệu ứng biên ô — một màu nằm sát ranh giới ô có thể nhảy sang ô bên cạnh khi thay đổi rất nhỏ; không mô tả được hình dạng và kết cấu; vô dụng với ảnh xám hoặc các đối tượng khác nhau nhưng cùng màu.
+\end{itemize}
+
+\textbf{Lược đồ hướng cạnh.}
+\begin{itemize}
+    \item \emph{Ưu điểm:} mô tả được thông tin cấu trúc và hình dạng mà lược đồ màu bỏ qua; dùng được cho ảnh xám; ít nhạy với thay đổi màu sắc và độ sáng đồng đều trên toàn ảnh (do dựa vào gradient); bất biến với tịnh tiến; sau khi chuẩn hóa theo số điểm biên thì ít phụ thuộc vào tỉ lệ.
+    \item \emph{Khuyết điểm:} \emph{không} bất biến với phép quay — quay ảnh một góc $\beta$ làm lược đồ dịch vòng tương ứng; nhạy với nhiễu và với lựa chọn ngưỡng $\tau$ của bộ dò biên; các cạnh của nền phức tạp lẫn vào cạnh của đối tượng; cũng mất thông tin vị trí của các cạnh; khó mô tả các đối tượng không có biên rõ.
+\end{itemize}
+
+Hai đặc trưng có điểm mạnh và điểm yếu \emph{bổ sung cho nhau}, vì vậy trong thực tế chúng thường được kết hợp: ví dụ Jain và Vailaya kết hợp lược đồ màu với lược đồ hướng cạnh trong hệ thống truy vấn ảnh theo màu và hình dạng~\citep{jain1996image}.
+
+% =====================================================================
+\subsection{Tác hại khi hai ảnh khác nhau có cùng lược đồ}
+\label{subsec:w4_same_hist}
+
+\textit{Câu hỏi: Khi hai ảnh khác nhau nhưng có lược đồ màu (hoặc lược đồ hướng cạnh) giống nhau, điều này dẫn đến tác hại gì?}
+
+\textbf{Nguyên nhân.} Lược đồ chỉ ghi nhận \emph{tỉ lệ} mỗi màu (hoặc mỗi hướng cạnh), không ghi nhận \emph{vị trí}. Phép ánh xạ từ ảnh sang lược đồ là ánh xạ nhiều -- một: mọi hoán vị điểm ảnh của một ảnh đều cho cùng lược đồ màu. Ví dụ:
+\begin{itemize}
+    \item Lá cờ nửa trên đỏ, nửa dưới xanh và bàn cờ ô đỏ -- xanh xen kẽ với cùng tỉ lệ có lược đồ màu \emph{giống hệt nhau}.
+    \item Ảnh bãi biển (trời xanh ở trên, cát vàng ở dưới) và ảnh một chiếc xe buýt vàng đỗ dưới tường xanh có thể có lược đồ màu rất gần nhau.
+    \item Ảnh một hàng rào sọc dọc và ảnh một tòa nhà nhiều cột có lược đồ hướng cạnh gần như trùng nhau (đều tập trung ở $90^\circ$).
+\end{itemize}
+
+\textbf{Tác hại.}
+\begin{enumerate}
+    \item \textbf{Kết quả sai (dương tính giả):} hệ thống truy vấn trả về những ảnh ``cùng bảng màu'' nhưng khác hẳn nội dung, làm giảm độ chính xác (precision); hệ thống nhận dạng có thể gán nhầm lớp.
+    \item \textbf{Không thể phân biệt bằng bất kỳ độ đo nào:} khi hai lược đồ trùng nhau, mọi độ đo $d(\mathbf{h}, \mathbf{g})$ đều bằng $0$. Lỗi nằm ở \emph{đặc trưng} chứ không phải ở độ đo, nên thay đổi độ đo không khắc phục được.
+    \item \textbf{Lỗ hổng an ninh:} kẻ xấu có thể tạo ảnh có lược đồ giống ảnh mục tiêu để qua mặt các hệ thống lọc hoặc phát hiện trùng lặp chỉ dựa vào lược đồ.
+    \item \textbf{Ảnh hưởng dây chuyền:} trong các ứng dụng giám sát, kiểm tra chất lượng, một kết quả sai ở bước so khớp dẫn đến quyết định sai ở bước sau (báo động nhầm, bỏ sót sản phẩm lỗi).
+\end{enumerate}
+
+\textbf{Cách khắc phục.} Bổ sung thông tin không gian vào đặc trưng: chia ảnh thành lưới và tính lược đồ cho từng ô (như bộ mô tả cạnh $4 \times 4$ khối của MPEG-7~\citep{manjunath2001color}) hoặc theo kim tự tháp không gian~\citep{lazebnik2006beyond}; dùng vector liên kết màu để tách điểm ảnh thuộc vùng lớn với điểm ảnh rời rạc~\citep{pass1996comparing}; dùng correlogram màu để mô tả xác suất hai màu xuất hiện cách nhau một khoảng cho trước~\citep{huang1997image}; hoặc kết hợp nhiều loại đặc trưng (màu + cạnh + kết cấu) vì xác suất hai ảnh khác nhau trùng cả ba là nhỏ hơn nhiều.
+
+% =====================================================================
+\subsection{Tiêu chí đánh giá lược đồ màu và lược đồ hướng cạnh là tốt}
+\label{subsec:w4_criteria}
+
+\textit{Câu hỏi: Dựa trên những tiêu chí nào để đánh giá lược đồ màu và lược đồ hướng cạnh là tốt?}
+
+Ngoài các tiêu chí chung cho mọi đặc trưng (Mục~\ref{subsec:w4_proscons}), chất lượng của lược đồ màu và lược đồ hướng cạnh phụ thuộc vào các lựa chọn thiết kế cụ thể và được đánh giá theo hai nhóm tiêu chí.
+
+\textbf{Nhóm 1: Tiêu chí thiết kế.}
+\begin{itemize}
+    \item \textbf{Số ô và cách định lượng:} quá ít ô thì mất khả năng phân biệt; quá nhiều ô thì lược đồ thưa, nhạy nhiễu và tốn bộ nhớ (Mục~\ref{subsec:w4_reduce}). Với lược đồ màu, cách chia nên phù hợp với cảm nhận (chia $H$ mịn hơn $S$, $V$; tách màu vô sắc); với lược đồ hướng cạnh, số ô quyết định độ phân giải góc.
+    \item \textbf{Không gian màu / toán tử gradient:} không gian màu càng gần cảm nhận (HSV, CIELAB) thì lược đồ càng ổn định; toán tử gradient và ngưỡng $\tau$ quyết định bao nhiêu nhiễu bị tính là cạnh.
+    \item \textbf{Chuẩn hóa:} chia cho tổng số điểm ảnh (hoặc số điểm biên) để bất biến với kích thước ảnh.
+    \item \textbf{Xử lý tính vòng:} cả $H$ trong lược đồ màu và $\alpha$ trong lược đồ hướng cạnh đều là đại lượng góc, cần xử lý để ô đầu và ô cuối được coi là liền kề.
+    \item \textbf{Độ đo đi kèm:} giao lược đồ, $d_1$, $\chi^2$ hoặc Earth Mover~\citep{rubner2000earth}; độ đo xét quan hệ giữa các ô giảm được hiệu ứng biên ô.
+\end{itemize}
+
+\textbf{Nhóm 2: Tiêu chí đánh giá thực nghiệm.}
+\begin{itemize}
+    \item \textbf{Khả năng tách lớp:} khoảng cách trung bình giữa các ảnh khác lớp phải lớn so với khoảng cách giữa các ảnh cùng lớp. Có thể đo bằng tỉ số kiểu Fisher
+    \begin{equation}
+    J = \frac{\mathbb{E}\big[d(\mathbf{h}_a, \mathbf{h}_b) \mid a, b \text{ khác lớp}\big]}{\mathbb{E}\big[d(\mathbf{h}_a, \mathbf{h}_b) \mid a, b \text{ cùng lớp}\big]},
+    \end{equation}
+    $J$ càng lớn càng tốt.
+    \item \textbf{Độ bền vững:} áp dụng các biến đổi có kiểm soát lên ảnh (thêm nhiễu Gauss, thay đổi độ sáng $\pm 20\%$, quay, thu phóng, nén JPEG, che khuất một phần) rồi đo mức thay đổi của lược đồ; lược đồ tốt thay đổi ít.
+    \item \textbf{Hiệu quả truy vấn:} trên bộ dữ liệu có nhãn, đo Precision@$k$, Recall@$k$ và mAP khi dùng lược đồ để truy vấn~\citep{smeulders2000content}.
+    \item \textbf{Chi phí:} thời gian trích xuất trên mỗi ảnh, kích thước đặc trưng, thời gian truy vấn trên toàn bộ cơ sở dữ liệu.
+\end{itemize}
+
+Một lược đồ màu được coi là tốt khi đạt độ chính xác truy vấn cao trên các tập ảnh mà màu sắc là yếu tố phân biệt chính và giữ được độ chính xác khi ánh sáng thay đổi vừa phải; một lược đồ hướng cạnh được coi là tốt khi phân biệt được các cấu trúc khác nhau và ổn định khi có nhiễu và thay đổi tỉ lệ.
+
+% =====================================================================
+\subsection{Bảng thống kê hai đặc trưng màu và cạnh}
+\label{subsec:w4_table}
+
+\textit{Câu hỏi: Lập bảng thống kê cho hai đặc trưng màu và cạnh, gồm các cột: công thức, tính bền vững (robustness) trước các biến đổi (ánh sáng, tịnh tiến, tỉ lệ, quay, góc nhìn, che khuất, nền phức tạp), chi phí lưu trữ và độ phức tạp tính toán (complexity).}
+
+Bảng~\ref{tab:w4_features} tổng hợp hai đặc trưng đã trình bày, với $N$ là số điểm ảnh, $K$ và $K_e$ là số ô của lược đồ màu và lược đồ hướng cạnh.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption{Bảng thống kê đặc trưng lược đồ màu và lược đồ hướng cạnh}
+\label{tab:w4_features}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{|p{1.6cm}|p{3.3cm}|X|X|p{2.2cm}|}
+\hline
+\textbf{Đặc trưng} & \textbf{Công thức} & \textbf{Bền vững với} & \textbf{Không bền vững với} & \textbf{Độ phức tạp} \\
+\hline
+\textbf{Lược đồ màu (Color Histogram)} &
+$h(k) = \dfrac{1}{N} \displaystyle\sum_{\mathbf{p}} \big[q(I(\mathbf{p})) = k\big]$ \newline
+$q$: định lượng HSV (Giải thuật~\ref{alg:w4_quant}) \newline
+So sánh: $d_1$, giao lược đồ &
+Tịnh tiến; quay quanh trục nhìn; tỉ lệ (sau chuẩn hóa); che khuất một phần; thay đổi nhẹ góc nhìn; nhiễu nhỏ (nhờ định lượng thô) &
+Thay đổi màu/cường độ nguồn sáng; lệch màu do camera; nền phức tạp; hiệu ứng biên ô; hoán vị không gian (ảnh khác nhau cùng lược đồ) &
+Trích xuất: $O(N)$ \newline
+Bộ nhớ: $O(K)$ \newline
+So sánh: $O(K)$ \\
+\hline
+\textbf{Lược đồ hướng cạnh (Edge Histogram)} &
+$\alpha = \operatorname{atan2}(G_y, G_x)$, \newline $M = \sqrt{G_x^2 + G_y^2}$ \newline
+$EDH(i) = \dfrac{m(i)}{n_E(I)}$, $i = 0..71$ \newline $m(i)$: số điểm biên có $5i \le \alpha < 5(i{+}1)$ \newline $EDH(72) = 1 - \dfrac{n_E(I)}{n(I)}$ \newline
+$E = \{\mathbf{p} : M(\mathbf{p}) > \tau\}$ &
+Tịnh tiến; thay đổi màu sắc; thay đổi độ sáng đồng đều; tỉ lệ (sau chuẩn hóa theo $|E|$); dùng được cho ảnh xám &
+Phép quay (lược đồ dịch vòng); nhiễu; ngưỡng $\tau$; cạnh của nền phức tạp; hoán vị vị trí cạnh &
+Gradient Sobel: $O(9N)$ \newline
+Lược đồ: $O(N)$ \newline
+Canny (nếu dùng): $O(N)$ với hằng số lớn hơn \newline
+So sánh: $O(K_e)$ \\
+\hline
+\end{tabularx}
+\end{table}
+
+Bảng~\ref{tab:w4_robust} đánh giá tính bền vững của hai đặc trưng theo từng loại biến đổi thường gặp. ``Có'' nghĩa là đặc trưng gần như không đổi khi ảnh chịu biến đổi đó; ``Không'' nghĩa là đặc trưng thay đổi đáng kể.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\caption{Tính bền vững của lược đồ màu và lược đồ hướng cạnh (EDH) trước các biến đổi}
+\label{tab:w4_robust}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\dimexpr\textwidth-2pt\relax}{|>{\raggedright\arraybackslash}p{1.5cm}|*{8}{>{\centering\arraybackslash}X|}}
+\hline
+\multirow{2}{*}{\textbf{Đặc trưng}} & \multirow{2}{=}{\centering\textbf{Ánh sáng}} & \multicolumn{3}{c|}{\textbf{Biến đổi hình học}} & \multirow{2}{=}{\centering\textbf{Lưu trữ}} & \multirow{2}{=}{\centering\textbf{Góc nhìn}} & \multirow{2}{=}{\centering\textbf{Che khuất}} & \multirow{2}{=}{\centering\textbf{Nền phức tạp}} \\
+\cline{3-5}
+ & & \textbf{Tịnh tiến} & \textbf{Tỉ lệ} & \textbf{Quay} & & & & \\
+\hline
+\textbf{Lược đồ màu} & Không & Có & Có$^{(1)}$ & Có & Nhỏ ($108$ ô theo bài giảng) & Có$^{(2)}$ & Có$^{(3)}$ & Không \\
+\hline
+\textbf{Lược đồ hướng cạnh (EDH)} & Có$^{(4)}$ & Có & Có$^{(1)}$ & Không & Nhỏ ($73$ ô theo bài giảng) & Không & Có$^{(3)}$ & Không \\
+\hline
+\end{tabularx}
+
+\vspace{2pt}
+\noindent\begin{minipage}{\textwidth}
+\scriptsize
+$^{(1)}$ Với điều kiện lược đồ được chuẩn hóa (chia cho $N$ hoặc $|E|$). \quad
+$^{(2)}$ Chỉ khi góc nhìn thay đổi nhẹ. \quad
+$^{(3)}$ Chỉ khi bị che khuất một phần nhỏ. \quad
+$^{(4)}$ Với thay đổi độ sáng đồng đều trên toàn ảnh.
+\end{minipage}
+\end{table}
+
+Giải thích từng cột:
+\begin{itemize}
+    \item \textbf{Ánh sáng.} Lược đồ màu đếm trực tiếp giá trị màu, nên khi nguồn sáng mạnh lên, yếu đi hoặc đổi màu, các điểm ảnh chuyển sang ô khác. Định lượng HSV giảm bớt nhưng không loại bỏ được ảnh hưởng này (ánh sáng đổi màu làm lệch cả $H$). EDH dựa vào \emph{hướng} gradient; khi ảnh sáng lên hoặc tối đi đồng đều, độ lớn gradient thay đổi nhưng hướng $\alpha$ giữ nguyên. Ngoại lệ là bóng đổ: bóng tạo ra cạnh mới và làm thay đổi EDH.
+    \item \textbf{Tịnh tiến.} Cả hai lược đồ chỉ đếm số lần xuất hiện, không ghi lại vị trí, nên dời đối tượng sang chỗ khác không làm thay đổi kết quả.
+    \item \textbf{Tỉ lệ.} Phóng to hay thu nhỏ ảnh làm thay đổi số điểm ảnh (hoặc số điểm biên) nhưng gần như giữ nguyên \emph{tỉ lệ} giữa các màu, các hướng. Sau khi chuẩn hóa, hai lược đồ gần như không đổi. Khi thu nhỏ quá mạnh, các cạnh mảnh bị mất nên EDH bị ảnh hưởng nhiều hơn lược đồ màu.
+    \item \textbf{Quay.} Phép quay không làm đổi màu của điểm ảnh nào, nên lược đồ màu bất biến. Với EDH, quay ảnh một góc $\beta$ làm mọi hướng cạnh tăng thêm $\beta$, tức lược đồ bị \emph{dịch vòng}; so sánh từng ô tương ứng sẽ cho kết quả sai. Có thể khắc phục bằng cách dịch vòng lược đồ sao cho ô lớn nhất về vị trí đầu, hoặc dùng độ đo bất biến với dịch vòng.
+    \item \textbf{Lưu trữ.} Cả hai đặc trưng đều là vector có kích thước cố định, không phụ thuộc vào độ phân giải ảnh: bài giảng dùng $108$ ô cho lược đồ màu và $73$ ô cho EDH~\citep{xlav_lec2}; trong các nghiên cứu khác, lược đồ màu thường có khoảng $166$--$2\,048$ ô (Mục~\ref{subsec:w4_reduce}) còn bộ mô tả cạnh của MPEG-7 có $80$ ô~\citep{manjunath2001color}. Với số thực $4$ byte, mỗi ảnh chỉ tốn khoảng $0{,}3$--$8$ KB.
+    \item \textbf{Góc nhìn.} Khi góc nhìn thay đổi nhẹ, các mặt nhìn thấy của đối tượng vẫn có màu gần như cũ, nên lược đồ màu ổn định~\citep{swain1991color}. Ngược lại, góc nhìn thay đổi làm đường biên bị biến dạng phối cảnh: các cạnh song song trở thành hội tụ, cạnh ngang trở thành cạnh xiên. Vì vậy EDH thay đổi rõ rệt.
+    \item \textbf{Che khuất.} Khi chỉ một phần nhỏ đối tượng bị che, phần còn lại vẫn đóng góp đúng tỉ lệ màu và hướng cạnh, nên cả hai lược đồ chỉ thay đổi ít. Swain và Ballard cho thấy so khớp bằng giao lược đồ vẫn nhận dạng đúng khi đối tượng bị che một phần~\citep{swain1991color}. Khi phần bị che lớn, hoặc vật che có màu và cạnh nổi bật, kết quả giảm nhanh.
+    \item \textbf{Nền phức tạp.} Cả hai đặc trưng đều tính trên toàn ảnh, nên không phân biệt được điểm ảnh của đối tượng với điểm ảnh của nền. Nền nhiều màu làm lẫn lược đồ màu; nền nhiều chi tiết (cây cối, chữ, hoa văn) sinh thêm rất nhiều cạnh và lấn át EDH của đối tượng. Cách khắc phục là phân đoạn hoặc khoanh vùng đối tượng trước, hoặc tính lược đồ theo từng khối ảnh (Mục~\ref{subsec:w4_same_hist}).
+\end{itemize}
+
+Về tổng thể, cả hai đặc trưng đều có chi phí tuyến tính theo số điểm ảnh và kích thước nhỏ, nên rất phù hợp cho truy vấn trên cơ sở dữ liệu lớn. Lược đồ hướng cạnh tốn chi phí trích xuất cao hơn (do phải tính gradient bằng tích chập) nhưng bổ sung thông tin cấu trúc mà lược đồ màu không có; hai đặc trưng có tính bền vững gần như bổ sung cho nhau (Mục~\ref{subsec:w4_proscons}).
