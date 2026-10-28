@@ -1,15 +1,387 @@
-\section{Tuần 5: Mô hình Hình học Camera \& Khôi phục Không gian 3D}
+\section{Tuần 5: Thuật toán Vẽ Đường cong Ellipse, Đường cong Bézier và Phân vùng Đa giác}
 \label{sec:week5}
 
-\subsection{Tổng quan nội dung Tuần 5}
-Phần này dành cho các mô hình hình học máy ảnh và tái tạo không gian 3 chiều.
+\subsection{Thuật toán Vẽ Cung tròn và Cung Ellipse trên Lưới Tọa độ Nguyên}
 
+Trong đồ họa máy tính, việc tạo dựng các đường cong bậc hai (Conic Sections) như cung tròn và ellipse đòi hỏi các giải pháp rời rạc hóa tối ưu nhằm xác định chính xác các điểm ảnh nguyên trên màn hình hiển thị~\citep{hearn2004computer,foley1996computer}.
+
+\textbf{1. Kỹ thuật Vẽ Cung tròn (Circular Arc Generation):}
+Khác với đường tròn khép kín hoàn chỉnh vốn tận dụng triệt để tính đối xứng 8 phần để sinh toàn bộ chu vi từ một cung bát phân đơn lẻ, việc vẽ một cung tròn giới hạn bởi góc xuất phát $\theta_{\text{start}}$ và góc kết thúc $\theta_{\text{end}}$ (với $\theta \in [0, 2\pi]$) đòi hỏi cơ chế kiểm tra điều kiện góc hoặc tọa độ mút:
 \begin{itemize}
-    \item Mô hình Pinhole Camera và các tham số nội/ngoại (Intrinsic \& Extrinsic Parameters).
-    \item Hiệu chuẩn Camera (Camera Calibration).
-    \item Thị giác hai mắt (Stereo Vision) và Epipolar Geometry.
-    \item Structure from Motion (SfM) sơ bộ.
+    \item \textit{Phương pháp góc cực:} Thuật toán Midpoint Circle duyệt qua các điểm ứng viên, sau đó tính góc cực $\theta = \text{atan2}(y - y_c, x - x_c)$ (hoặc dùng phép so sánh tích vô hướng và tích có hướng giữa vector hiện tại với hai vector giới hạn biên mút). Điểm ảnh chỉ được xuất ra bộ đệm khung hình (Frame Buffer) nếu góc nằm trong khoảng $[\theta_{\text{start}}, \theta_{\text{end}}]$.
+    \item \textit{Phương pháp điểm mút:} Xác định trước tọa độ nguyên của hai điểm đầu mút $P_{\text{start}}(x_s, y_s)$ và $P_{\text{end}}(x_e, y_e)$ trên đường tròn giải tích, sau đó chạy giải thuật gia số dọc theo chiều quay xác định và dừng vòng lặp khi chạm tới điểm mút kết thúc.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\textbf{2. Thuật toán Vẽ Đường cong Ellipse Điểm Giữa (Midpoint Ellipse Algorithm):}
+Phương trình đại số của một hình ellipse chuẩn có tâm tại gốc tọa độ $O(0, 0)$ với bán trục lớn $r_x$ dọc theo trục hoành và bán trục nhỏ $r_y$ dọc theo trục tung có dạng:
+\begin{equation}
+\frac{x^2}{r_x^2} + \frac{y^2}{r_y^2} = 1
+\end{equation}
+Khử mẫu số, ta định nghĩa hàm ellipse giải tích:
+\begin{equation}
+f_{\text{ellipse}}(x, y) = r_y^2 x^2 + r_x^2 y^2 - r_x^2 r_y^2
+\end{equation}
+với dấu của hàm phân định vị trí tương đối: $f_{\text{ellipse}}(x, y) < 0$ khi điểm nằm trong ellipse, $f_{\text{ellipse}}(x, y) = 0$ khi điểm nằm trên biên, và $f_{\text{ellipse}}(x, y) > 0$ khi điểm nằm ngoài ellipse.
+
+Hình ellipse đối xứng qua hai trục tọa độ $x = 0$ và $y = 0$, do đó chỉ cần khảo sát trong góc phần tư thứ nhất ($x \ge 0, y \ge 0$), sau đó áp dụng tính đối xứng 4 phần (4-Way Symmetry) để suy ra các điểm trên 3 góc phần tư còn lại:
+\begin{equation}
+(x, y), \quad (-x, y), \quad (x, -y), \quad (-x, -y)
+\end{equation}
+
+Khác với đường tròn có độ cong đồng đều, độ dốc tiếp tuyến của ellipse thay đổi liên tục:
+\begin{equation}
+\frac{dy}{dx} = -\frac{r_y^2 x}{r_x^2 y}
+\end{equation}
+Do đó, góc phần tư thứ nhất được phân tách thành hai miền rõ rệt thông qua điểm phân giới có độ lớn độ dốc bằng $1$ ($|\frac{dy}{dx}| = 1 \iff 2 r_y^2 x = 2 r_x^2 y$):
+
+\textbf{Miền 1 (Region 1: $|\frac{dy}{dx}| < 1 \iff 2 r_y^2 x < 2 r_x^2 y$):}
+Độ dốc tiếp tuyến thoải ($|m| < 1$). Hoành độ $x$ tăng đều từng bước nguyên ($x_{k+1} = x_k + 1$), trong khi tung độ $y$ giữ nguyên hoặc giảm 1 đơn vị. Tham số quyết định tại điểm giữa $M(x_k + 1, y_k - 1/2)$ có dạng:
+\begin{equation}
+p_{1k} = f_{\text{ellipse}}\left( x_k + 1, y_k - \frac{1}{2} \right) = r_y^2 (x_k + 1)^2 + r_x^2 \left( y_k - \frac{1}{2} \right)^2 - r_x^2 r_y^2
+\end{equation}
+Giá trị khởi tạo tại đỉnh trên $(0, r_y)$ là:
+\begin{equation}
+p_{10} = f_{\text{ellipse}}\left( 1, r_y - \frac{1}{2} \right) = r_y^2 - r_x^2 r_y + \frac{1}{4} r_x^2
+\end{equation}
+Công thức truy hồi cập nhật cho bước kế tiếp:
+\begin{itemize}
+    \item Nếu $p_{1k} < 0$: Điểm giữa nằm trong ellipse, chọn pixel trên $(x_k + 1, y_k)$, cập nhật:
+    \begin{equation}
+    p_{1, k+1} = p_{1k} + 2 r_y^2 x_{k+1} + r_y^2
+    \end{equation}
+    \item Nếu $p_{1k} \ge 0$: Điểm giữa nằm ngoài ellipse, chọn pixel dưới $(x_k + 1, y_k - 1)$, cập nhật:
+    \begin{equation}
+    p_{1, k+1} = p_{1k} + 2 r_y^2 x_{k+1} - 2 r_x^2 y_{k+1} + r_y^2
+    \end{equation}
+\end{itemize}
+Miền 1 kết thúc ngay khi $2 r_y^2 x \ge 2 r_x^2 y$.
+
+\textbf{Miền 2 (Region 2: $|\frac{dy}{dx}| \ge 1 \iff 2 r_y^2 x \ge 2 r_x^2 y$):}
+Độ dốc tiếp tuyến dốc đứng ($|m| \ge 1$). Tung độ $y$ giảm đều từng bước nguyên ($y_{k+1} = y_k - 1$), trong khi hoành độ $x$ giữ nguyên hoặc tăng 1 đơn vị. Tham số quyết định tại điểm giữa $M(x_k + 1/2, y_k - 1)$ có dạng:
+\begin{equation}
+p_{2k} = f_{\text{ellipse}}\left( x_k + \frac{1}{2}, y_k - 1 \right) = r_y^2 \left( x_k + \frac{1}{2} \right)^2 + r_x^2 (y_k - 1)^2 - r_x^2 r_y^2
+\end{equation}
+Giá trị khởi tạo $p_{20}$ được tính tại điểm cuối cùng $(x_{\text{last}}, y_{\text{last}})$ của Miền 1:
+\begin{equation}
+p_{20} = f_{\text{ellipse}}\left( x_{\text{last}} + \frac{1}{2}, y_{\text{last}} - 1 \right) = r_y^2 \left( x_{\text{last}} + \frac{1}{2} \right)^2 + r_x^2 (y_{\text{last}} - 1)^2 - r_x^2 r_y^2
+\end{equation}
+Công thức truy hồi cập nhật cho bước kế tiếp:
+\begin{itemize}
+    \item Nếu $p_{2k} > 0$: Điểm giữa nằm ngoài ellipse, chọn pixel bên trái $(x_k, y_k - 1)$, cập nhật:
+    \begin{equation}
+    p_{2, k+1} = p_{2k} - 2 r_x^2 y_{k+1} + r_x^2
+    \end{equation}
+    \item Nếu $p_{2k} \le 0$: Điểm giữa nằm trong ellipse, chọn pixel chéo $(x_k + 1, y_k - 1)$, cập nhật:
+    \begin{equation}
+    p_{2, k+1} = p_{2k} + 2 r_y^2 x_{k+1} - 2 r_x^2 y_{k+1} + r_x^2
+    \end{equation}
+\end{itemize}
+Miền 2 tiếp diễn cho đến khi tung độ chạm gốc $y = 0$.
+
+\subsection{Hạn chế của Phương trình Tường minh \texorpdfstring{$y = f(x)$}{y = f(x)} trong Biểu diễn Đường cong}
+
+Phương trình tường minh (Explicit Form) $y = f(x)$ bộc lộ các khiếm khuyết hình học và giải thuật nghiêm trọng khi mô hình hóa các đường cong trong đồ họa máy tính:
+
+\textbf{1. Không thể biểu diễn các đường cong đa trị (Multi-valued Curves):}
+Theo định nghĩa ánh xạ giải tích, một hàm số tường minh $y = f(x)$ chỉ gán duy nhất một giá trị $y$ cho mỗi giá trị $x$. Tuy nhiên, hầu hết các đường cong tự nhiên và hình học thực tế (như hình tròn, ellipse, hình quả táo, đường xoắn ốc hay đường cong tự uốn lượn) đều có nhiều giá trị tung độ tương ứng với một hoành độ. Ví dụ với đường tròn tâm $O$ bán kính $r$, phương trình tường minh buộc phải phân tách thành hai nhánh hàm độc lập $y = \sqrt{r^2 - x^2}$ và $y = -\sqrt{r^2 - x^2}$, gây phức tạp cho cấu trúc dữ liệu và giải thuật quản lý.
+
+\textbf{2. Điểm kỳ dị và Độ dốc vô hạn (Infinite Slopes / Vertical Tangents):}
+Khi tiếp tuyến của đường cong tiến dần tới phương thẳng đứng ($\frac{dy}{dx} \to \pm \infty$), bước nhảy tung độ $\Delta y$ bùng nổ vượt khỏi giới hạn hiển thị của lưới điểm ảnh. Nếu tiếp tục tăng đều $x$, các điểm ảnh vẽ ra sẽ bị ngắt quãng nghiêm trọng, tạo thành các khoảng trống lỗ hổng trên màn hình.
+
+\textbf{3. Mất tính Bất biến Hình học trước Phép quay (Lack of Rotational Invariance):}
+Hình dạng của một thực thể vật lý không đổi khi quay trong không gian. Tuy nhiên, dạng hàm tường minh $y = f(x)$ phụ thuộc tuyệt đối vào hệ trục tọa độ tham chiếu. Một hàm số đơn trị sau khi quay một góc $\theta$ có thể biến thành hàm đa trị hoặc không thể biểu diễn giải tích dưới dạng $y = f(x)$.
+
+\textbf{Ưu thế của Dạng Tham số (Parametric Form):}
+Để giải quyết triệt để các rào cản trên, đồ họa máy tính hiện đại chuẩn hóa việc biểu diễn đường cong dưới dạng tham số vector:
+\begin{equation}
+\mathbf{P}(t) = \begin{bmatrix} x(t) \\ y(t) \end{bmatrix}, \quad t \in [0, 1]
+\end{equation}
+Mỗi thành phần tọa độ là một hàm đa thức đơn trị trơn tru theo biến tham số chuẩn hóa $t$. Dạng tham số cho phép biểu diễn tự nhiên các đường cong khép kín, đường uốn lượn tự cắt, bảo toàn tính bất biến đối với mọi phép biến đổi affine (quay, tịnh tiến, co giãn), đồng thời kiểm soát chính xác điểm đầu và điểm cuối của đoạn cong.
+
+\subsection{Cơ sở Toán học và Kỹ thuật Vẽ Đường cong Bézier trên Lưới Tọa độ Nguyên}
+
+Đường cong Bézier, được phát minh độc lập bởi Pierre Bézier và Paul de Casteljau~\citep{bezier1972numerical,decasteljau1959courbes}, là chuẩn mực toán học trong mô hình hóa hình học tham số và thiết kế đồ họa vector (định dạng SVG, PostScript, OpenType).
+
+\textbf{1. Phương trình Đường cong Bézier Tổng quát:}
+Cho $n+1$ điểm điều khiển (Control Points) $\mathbf{p}_0, \mathbf{p}_1, \dots, \mathbf{p}_n \in \mathbb{R}^2$. Đường cong Bézier bậc $n$ được xác định bởi tổ hợp lồi của các đa thức cơ sở Bernstein (Bernstein Polynomials):
+\begin{equation}
+\mathbf{P}(u) = \sum_{k=0}^n \mathbf{p}_k B_{k, n}(u), \quad u \in [0, 1]
+\end{equation}
+trong đó đa thức Bernstein bậc $n$ được định nghĩa bằng:
+\begin{equation}
+B_{k, n}(u) = C_n^k u^k (1 - u)^{n-k} = \frac{n!}{k!(n - k)!} u^k (1 - u)^{n-k}
+\end{equation}
+
+\textbf{2. Kỹ thuật Vẽ trên Lưới Tọa độ Nguyên:}
+Do màn hình hiển thị hoạt động trên lưới điểm ảnh nguyên rời rạc, có hai phương pháp tiêu chuẩn để đưa đường cong Bézier lên màn hình:
+\begin{itemize}
+    \item \textit{Phương pháp lấy mẫu rời rạc hóa (Uniform Parameter Sampling):} Chia đoạn tham số $u \in [0, 1]$ thành $N$ bước rời rạc $\Delta u = 1 / N$, tính tọa độ thực $(x(u_i), y(u_i))$ rồi áp dụng thuật toán vẽ đoạn thẳng Bresenham nối các điểm nguyên kế tiếp $([x(u_i)], [y(u_i)])$ với nhau.
+    \item \textit{Phương pháp chia nhỏ đệ quy De Casteljau (Recursive Subdivision):} Chia đôi đường cong tại điểm giữa $u = 0.5$ thành hai đoạn cong con. Đệ quy tiếp tục cho đến khi đa giác điều khiển của từng đoạn con đạt tiêu chuẩn độ phẳng (Flatness Tolerance, tức khoảng cách từ các điểm điều khiển bên trong đến đoạn thẳng nối hai điểm mút nhỏ hơn $0.5$ pixel). Khi đó, đoạn cong con được xấp xỉ bằng một đoạn thẳng và vẽ trực tiếp bằng giải thuật Bresenham nguyên.
+\end{itemize}
+
+\subsection{Kiểm soát Bậc Thấp cho Tập Điểm Điều khiển Lớn: Đường cong Ghép mảnh (Piecewise Curves)}
+
+Khi một thiết kế kỹ thuật chứa hàng trăm hoặc hàng nghìn điểm điều khiển ($N = 1000$), việc xây dựng một đường cong Bézier đơn lẻ với bậc $n = N - 1 = 999$ dẫn đến những thảm họa tính toán và thẩm mỹ:
+\begin{itemize}
+    \item \textbf{Mất ổn định số học (Numerical Instability):} Bậc đa thức $u^{999}$ dẫn đến các hệ số tổ hợp nhị thức khổng lồ $C_{999}^k$, vượt quá độ chính xác dấu phẩy động của phần cứng và gây tràn số nghiêm trọng.
+    \item \textbf{Mất tính Kiểm soát Cục bộ (Loss of Local Control):} Do tính chất toàn cục của đa thức Bernstein, việc dịch chuyển một điểm điều khiển bất kỳ sẽ làm biến dạng toàn bộ hình dáng của toàn bộ đường cong từ đầu đến cuối.
+    \item \textbf{Hiện tượng Dao động Runge (Runge Phenomenon):} Đa thức bậc quá cao dễ sinh ra các gợn sóng uốn éo không mong muốn ở các vùng biên mút.
+\end{itemize}
+
+\textbf{Giải pháp: Đường cong Bézier Ghép mảnh (Piecewise Cubic Bézier Curves / Splines):}
+Thay vì dùng một đường cong bậc cao duy nhất, hệ thống chia tập 1000 điểm điều khiển thành chuỗi các phân đoạn đường cong Bézier bậc thấp (chuẩn mực là bậc 3, Cubic Bézier, gồm 4 điểm điều khiển mỗi đoạn). Mỗi đoạn cong nhỏ độc lập đảm bảo việc tính toán đại số ma trận cực kỳ gọn nhẹ và ổn định. Đồng thời, chỉnh sửa một điểm điều khiển chỉ tác động cục bộ lên đoạn cong chứa nó mà không làm xáo trộn các phân đoạn đồ họa ở xa.
+
+\subsection{Ý nghĩa Hình học của Đặc tính Nội suy Điểm Mút \texorpdfstring{$P(0) = p_0, P(1) = p_n$}{P(0) = p0, P(1) = pn}}
+
+Đặc tính nội suy điểm mút của đường cong Bézier:
+\begin{equation}
+\mathbf{P}(0) = \mathbf{p}_0 \quad \text{và} \quad \mathbf{P}(1) = \mathbf{p}_n
+\end{equation}
+giữ vai trò nền tảng quyết định trong việc ghép nối các phân đoạn đường cong phức tạp (Composite Curves / Splines) mà không làm gãy nét:
+
+\textbf{1. Đảm bảo Tính Liên tục Vị trí ($C^0$ / $G^0$ Continuity):}
+Đặc tính này bảo đảm đường cong luôn đi qua chính xác điểm điều khiển đầu tiên và điểm điều khiển cuối cùng. Nhờ đó, để nối hai phân đoạn cong $\mathbf{P}^{(1)}(u)$ và $\mathbf{P}^{(2)}(u)$ lại với nhau tại mối nối, ta chỉ cần ràng buộc điểm cuối của đoạn thứ nhất trùng với điểm đầu của đoạn thứ hai:
+\begin{equation}
+\mathbf{P}^{(1)}(1) = \mathbf{P}^{(2)}(0) \iff \mathbf{p}_n^{(1)} = \mathbf{p}_0^{(2)}
+\end{equation}
+
+\textbf{2. Đảm bảo Tính Liên tục Tiếp tuyến và Pháp tuyến ($C^1$ / $G^1$ Continuity):}
+Vector tiếp tuyến tại điểm mút xuất phát và kết thúc của đường cong Bézier luôn có phương trùng với đoạn nối hai điểm điều khiển kề mút:
+\begin{equation}
+\mathbf{P}'(0) = n(\mathbf{p}_1 - \mathbf{p}_0), \quad \mathbf{P}'(1) = n(\mathbf{p}_n - \mathbf{p}_{n-1})
+\end{equation}
+Do đó, để hai phân đoạn cong nối tiếp nhau một cách trơn tru, mềm mại mà không bị gãy góc (kink), ta chỉ cần thiết lập điều kiện ba điểm điều khiển kề mối nối thẳng hàng:
+\begin{equation}
+\mathbf{p}_{n-1}^{(1)}, \quad \mathbf{p}_n^{(1)} = \mathbf{p}_0^{(2)}, \quad \mathbf{p}_1^{(2)} \quad \text{thẳng hàng}
+\end{equation}
+Khi đó, vector tiếp tuyến của hai đoạn cong tại mối nối cùng phương (ngược hướng), kéo theo vector pháp tuyến (vuông góc với tiếp tuyến) cũng hoàn toàn thẳng hàng và trùng khớp. Đây chính là tiền đề cốt lõi giúp các phần mềm thiết kế đồ họa vector (như Adobe Illustrator hay Inkscape) cho phép người dùng kéo các tay đòn điều khiển (Tangent Handles) qua điểm neo để tạo ra các đường cong trơn tru hoàn hảo.
+
+\subsection{Phương trình Tham số của Đường cong Bézier Bậc Ba (Cubic Bézier Curve)}
+
+Đường cong Bézier bậc ba được định nghĩa bởi 4 điểm điều khiển $\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2, \mathbf{p}_3$. Với $n = 3$, các đa thức cơ sở Bernstein là:
+\begin{align}
+B_{0, 3}(u) &= (1 - u)^3 \\
+B_{1, 3}(u) &= 3u(1 - u)^2 \\
+B_{2, 3}(u) &= 3u^2(1 - u) \\
+B_{3, 3}(u) &= u^3
+\end{align}
+
+Phương trình tham số của đường cong Bézier bậc ba có dạng khai triển:
+\begin{equation}
+\mathbf{P}(u) = (1 - u)^3 \mathbf{p}_0 + 3u(1 - u)^2 \mathbf{p}_1 + 3u^2(1 - u) \mathbf{p}_2 + u^3 \mathbf{p}_3, \quad u \in [0, 1]
+\end{equation}
+
+Dưới dạng biểu diễn ma trận thuận tiện cho các phép nhân GPU:
+\begin{equation}
+\mathbf{P}(u) = \begin{bmatrix} u^3 & u^2 & u & 1 \end{bmatrix} \begin{bmatrix} -1 & 3 & -3 & 1 \\ 3 & -6 & 3 & 0 \\ -3 & 3 & 0 & 0 \\ 1 & 0 & 0 & 0 \end{bmatrix} \begin{bmatrix} \mathbf{p}_0 \\ \mathbf{p}_1 \\ \mathbf{p}_2 \\ \mathbf{p}_3 \end{bmatrix}
+\end{equation}
+
+\subsection{Kiểm tra Đạo hàm Bậc Hai \texorpdfstring{$P''(0)$ và $P''(1)$}{P''(0) và P''(1)}: Độ cong tại Hai Điểm Mút}
+
+Để kiểm tra hành vi độ cong của đường cong Bézier bậc ba tại hai đầu mút, ta tiến hành đạo hàm hai cấp theo tham số $u$:
+
+Lấy đạo hàm cấp một của $\mathbf{P}(u)$:
+\begin{align}
+\mathbf{P}'(u) &= -3(1 - u)^2 \mathbf{p}_0 + [3(1 - u)^2 - 6u(1 - u)] \mathbf{p}_1 + [6u(1 - u) - 3u^2] \mathbf{p}_2 + 3u^2 \mathbf{p}_3 \nonumber \\
+&= 3(1 - u)^2 (\mathbf{p}_1 - \mathbf{p}_0) + 6u(1 - u)(\mathbf{p}_2 - \mathbf{p}_1) + 3u^2 (\mathbf{p}_3 - \mathbf{p}_2)
+\end{align}
+Thay $u = 0$ và $u = 1$, ta thu được các vector tiếp tuyến đầu mút:
+\begin{equation}
+\mathbf{P}'(0) = 3(\mathbf{p}_1 - \mathbf{p}_0), \quad \mathbf{P}'(1) = 3(\mathbf{p}_3 - \mathbf{p}_2)
+\end{equation}
+
+Tiếp tục lấy đạo hàm cấp hai:
+\begin{align}
+\mathbf{P}''(u) &= -6(1 - u)(\mathbf{p}_1 - \mathbf{p}_0) + [6(1 - u) - 6u](\mathbf{p}_2 - \mathbf{p}_1) + 6u(\mathbf{p}_3 - \mathbf{p}_2) \nonumber \\
+&= 6(1 - u)[(\mathbf{p}_2 - \mathbf{p}_1) - (\mathbf{p}_1 - \mathbf{p}_0)] + 6u[(\mathbf{p}_3 - \mathbf{p}_2) - (\mathbf{p}_2 - \mathbf{p}_1)] \nonumber \\
+&= 6(1 - u)(\mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2) + 6u(\mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3)
+\end{align}
+
+Tại điểm bắt đầu $u = 0$:
+\begin{equation}
+\mathbf{P}''(0) = 6(\mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2) = 6[(\mathbf{p}_2 - \mathbf{p}_1) - (\mathbf{p}_1 - \mathbf{p}_0)]
+\end{equation}
+
+Tại điểm kết thúc $u = 1$:
+\begin{equation}
+\mathbf{P}''(1) = 6(\mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3) = 6[(\mathbf{p}_3 - \mathbf{p}_2) - (\mathbf{p}_2 - \mathbf{p}_1)]
+\end{equation}
+
+\textbf{Ý nghĩa Hình học và Kỹ thuật:}
+Đạo hàm cấp hai phản ánh gia tốc chuyển động và bán kính độ cong (Curvature) của đường cong. Kết quả trên chứng minh rằng độ cong tại điểm bắt đầu chỉ phụ thuộc duy nhất vào ba điểm điều khiển đầu tiên $(\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2)$, trong khi độ cong tại điểm kết thúc chỉ phụ thuộc vào ba điểm điều khiển cuối cùng $(\mathbf{p}_1, \mathbf{p}_2, \mathbf{p}_3)$. Đây là cơ sở toán học để thiết lập điều kiện liên tục độ cong $C^2$ khi nối ghép hai phân đoạn Bézier, đòi hỏi vector sai phân cấp hai tại mối nối phải bằng nhau.
+
+\subsection{Phương trình Đoạn thẳng theo Tham số Đi qua \texorpdfstring{$p_0, p_1$}{p0, p1}}
+
+Phương trình tham số của đoạn thẳng nối hai điểm mút $\mathbf{p}_0$ và $\mathbf{p}_1$ được định nghĩa bằng phép nội suy tuyến tính (Linear Interpolation, Lerp):
+\begin{equation}
+\mathbf{P}(t) = (1 - t) \mathbf{p}_0 + t \mathbf{p}_1 = \mathbf{p}_0 + t(\mathbf{p}_1 - \mathbf{p}_0), \quad t \in [0, 1]
+\end{equation}
+
+Nhận xét rằng biểu thức này chính là dạng suy biến của đường cong Bézier bậc nhất ($n = 1$) với hai đa thức Bernstein cơ sở $B_{0, 1}(t) = 1 - t$ và $B_{1, 1}(t) = t$. Khi $t = 0$, điểm trùng với $\mathbf{p}_0$; khi $t = 1$, điểm trùng với $\mathbf{p}_1$; và khi $t$ quét tuyến tính từ $0$ đến $1$, điểm $\mathbf{P}(t)$ vạch nên đoạn thẳng nối hai mút.
+
+\subsection{Chứng minh Thuật toán De Casteljau cho Đường cong Bézier Bậc 2 và Bậc 3}
+
+Thuật toán De Casteljau là phương pháp hình học giải tích thực hiện phép nội suy tuyến tính lặp (Recursive Linear Interpolation) để tính tọa độ điểm trên đường cong Bézier:
+
+\textbf{1. Chứng minh với 3 Điểm Điều khiển $\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2$ (Bézier Bậc Hai):}
+\begin{itemize}
+    \item Bước chia thứ nhất ($r = 1$): Nội suy trên các đoạn nối ban đầu với tỉ lệ $t$:
+    \begin{align}
+    \mathbf{p}_0^1(t) &= (1 - t) \mathbf{p}_0 + t \mathbf{p}_1 \\
+    \mathbf{p}_1^1(t) &= (1 - t) \mathbf{p}_1 + t \mathbf{p}_2
+    \end{align}
+    \item Bước chia thứ hai ($r = 2$): Nội suy giữa hai điểm trung gian $\mathbf{p}_0^1(t)$ và $\mathbf{p}_1^1(t)$:
+    \begin{equation}
+    \mathbf{p}_0^2(t) = (1 - t) \mathbf{p}_0^1(t) + t \mathbf{p}_1^1(t)
+    \end{equation}
+    Thay thế các biểu thức ở bước một vào:
+    \begin{align}
+    \mathbf{p}_0^2(t) &= (1 - t)[(1 - t) \mathbf{p}_0 + t \mathbf{p}_1] + t[(1 - t) \mathbf{p}_1 + t \mathbf{p}_2] \nonumber \\
+    &= (1 - t)^2 \mathbf{p}_0 + t(1 - t) \mathbf{p}_1 + t(1 - t) \mathbf{p}_1 + t^2 \mathbf{p}_2 \nonumber \\
+    &= (1 - t)^2 \mathbf{p}_0 + 2t(1 - t) \mathbf{p}_1 + t^2 \mathbf{p}_2
+    \end{align}
+    Biểu thức thu được hoàn toàn trùng khớp với định nghĩa đường cong Bézier bậc hai:
+    \begin{equation}
+    \mathbf{P}(t) = \sum_{k=0}^2 C_2^k t^k (1 - t)^{2-k} \mathbf{p}_k
+    \end{equation}
+\end{itemize}
+
+\textbf{2. Chứng minh với 4 Điểm Điều khiển $\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2, \mathbf{p}_3$ (Bézier Bậc Ba):}
+\begin{itemize}
+    \item Bước chia thứ nhất ($r = 1$):
+    \begin{align}
+    \mathbf{p}_0^1(t) &= (1 - t) \mathbf{p}_0 + t \mathbf{p}_1 \\
+    \mathbf{p}_1^1(t) &= (1 - t) \mathbf{p}_1 + t \mathbf{p}_2 \\
+    \mathbf{p}_2^1(t) &= (1 - t) \mathbf{p}_2 + t \mathbf{p}_3
+    \end{align}
+    \item Bước chia thứ hai ($r = 2$):
+    \begin{align}
+    \mathbf{p}_0^2(t) &= (1 - t) \mathbf{p}_0^1(t) + t \mathbf{p}_1^1(t) = (1 - t)^2 \mathbf{p}_0 + 2t(1 - t) \mathbf{p}_1 + t^2 \mathbf{p}_2 \\
+    \mathbf{p}_1^2(t) &= (1 - t) \mathbf{p}_1^1(t) + t \mathbf{p}_2^1(t) = (1 - t)^2 \mathbf{p}_1 + 2t(1 - t) \mathbf{p}_2 + t^2 \mathbf{p}_3
+    \end{align}
+    \item Bước chia thứ ba ($r = 3$):
+    \begin{equation}
+    \mathbf{p}_0^3(t) = (1 - t) \mathbf{p}_0^2(t) + t \mathbf{p}_1^2(t)
+    \end{equation}
+    \begin{align}
+    \mathbf{p}_0^3(t) &= (1 - t)\left[(1 - t)^2 \mathbf{p}_0 + 2t(1 - t) \mathbf{p}_1 + t^2 \mathbf{p}_2\right] \nonumber \\
+    &\quad + t\left[(1 - t)^2 \mathbf{p}_1 + 2t(1 - t) \mathbf{p}_2 + t^2 \mathbf{p}_3\right] \nonumber \\
+    &= (1 - t)^3 \mathbf{p}_0 + 2t(1 - t)^2 \mathbf{p}_1 + t^2(1 - t) \mathbf{p}_2 \nonumber \\
+    &\quad + t(1 - t)^2 \mathbf{p}_1 + 2t^2(1 - t) \mathbf{p}_2 + t^3 \mathbf{p}_3 \nonumber \\
+    &= (1 - t)^3 \mathbf{p}_0 + 3t(1 - t)^2 \mathbf{p}_1 + 3t^2(1 - t) \mathbf{p}_2 + t^3 \mathbf{p}_3
+    \end{align}
+    Biểu thức thu được hoàn toàn trùng khớp với định nghĩa đường cong Bézier bậc ba:
+    \begin{equation}
+    \mathbf{P}(t) = \sum_{k=0}^3 C_3^k t^k (1 - t)^{3-k} \mathbf{p}_k
+    \end{equation}
+\end{itemize}
+
+Chứng minh hoàn tất. Thuật toán De Casteljau không chỉ cung cấp cơ sở hình học vững chắc cho đường cong Bézier mà còn là giải thuật có độ ổn định số học cao nhất để tính toán tọa độ điểm trên thực tế.
+
+\subsection{So sánh Bản chất giữa Spline Hermite và Đường cong Bézier Bậc Ba}
+
+Cả đường cong Hermite bậc ba (Cubic Hermite Spline) và đường cong Bézier bậc ba đều sử dụng đa thức bậc 3 theo tham số $u \in [0, 1]$, nhưng khác biệt căn bản về triết lý giao tiếp dữ liệu:
+
+\textbf{1. Mô hình Toán học Hermite:}
+Đường cong Hermite được xác định bởi hai điểm mút $(\mathbf{P}_0, \mathbf{P}_1)$ và hai vector tiếp tuyến (đạo hàm bậc nhất) tại hai đầu mút $(\mathbf{D}_0, \mathbf{D}_1)$:
+\begin{equation}
+\mathbf{P}_H(u) = (2u^3 - 3u^2 + 1)\mathbf{P}_0 + (-2u^3 + 3u^2)\mathbf{P}_1 + (u^3 - 2u^2 + u)\mathbf{D}_0 + (u^3 - u^2)\mathbf{D}_1
+\end{equation}
+
+\textbf{2. Tương quan Đại số và Điểm khác biệt Cốt lõi:}
+Hai dạng đường cong này hoàn toàn tương đương về mặt toán học thông qua phép ánh xạ:
+\begin{equation}
+\mathbf{P}_0 = \mathbf{p}_0, \quad \mathbf{P}_1 = \mathbf{p}_3, \quad \mathbf{D}_0 = 3(\mathbf{p}_1 - \mathbf{p}_0), \quad \mathbf{D}_1 = 3(\mathbf{p}_3 - \mathbf{p}_2)
+\end{equation}
+Tức là hai điểm điều khiển giữa của Bézier được suy ra trực tiếp từ vector tiếp tuyến của Hermite: $\mathbf{p}_1 = \mathbf{p}_0 + \frac{1}{3}\mathbf{D}_0$ và $\mathbf{p}_2 = \mathbf{p}_3 - \frac{1}{3}\mathbf{D}_1$.
+
+\textbf{Ưu thế Vượt trội của Đường cong Bézier trong Đồ họa:}
+\begin{itemize}
+    \item \textit{Tính trực quan đối với người thiết kế:} Dạng Hermite đòi hỏi người dùng phải chỉ định các vector đạo hàm vô hình $(\mathbf{D}_0, \mathbf{D}_1)$ với cả hướng và độ lớn đại số trừu tượng. Ngược lại, Bézier thay thế các vector toán học bằng các điểm điều khiển trực quan $(\mathbf{p}_1, \mathbf{p}_2)$. Người thiết kế chỉ cần tương tác kéo thả điểm trên màn hình để uốn nắn đường cong.
+    \item \textit{Tính chất Bao lồi (Convex Hull Property):} Toàn bộ đường cong Bézier luôn nằm hoàn toàn bên trong đa giác bao lồi tạo bởi 4 điểm điều khiển. Tính chất hình học cực kỳ quan trọng này không tồn tại ở dạng Hermite thông thường, hỗ trợ đắc lực cho các thuật toán kiểm tra va chạm, cắt xén (Clipping) và tối ưu hóa vùng hiển thị.
+\end{itemize}
+
+\subsection{Phương pháp Xác định Điểm Nằm Trong và Ngoài Hình Đa giác}
+
+Để xác định một điểm kiểm tra $P(x, y)$ nằm bên trong (Interior) hay bên ngoài (Exterior) một đa giác phẳng hai chiều, đồ họa máy tính ứng dụng hai quy tắc chuẩn mực:
+
+\textbf{1. Quy tắc Đếm Giao điểm Lẻ/Chẵn (Odd-Even Rule / Parity Test):}
+Từ điểm kiểm tra $P$, phóng một tia bán vô hạn (Ray) theo một hướng bất kỳ (thông thường là tia nằm ngang hướng về phía $+x$) ra vô cực. Đếm tổng số lần tia cắt qua các cạnh của đa giác:
+\begin{itemize}
+    \item Nếu số lượng giao điểm là số lẻ: Điểm $P$ nằm bên trong đa giác.
+    \item Nếu số lượng giao điểm là số chẵn: Điểm $P$ nằm bên ngoài đa giác.
+\end{itemize}
+
+\textbf{2. Quy tắc Số Vòng quay (Non-Zero Winding Number Rule):}
+Đếm số vòng mà chu vi đa giác quay quanh điểm $P$. Phóng một tia từ $P$ ra vô cực, mỗi khi có một cạnh của đa giác cắt ngang qua tia từ phải sang trái (theo chiều kim đồng hồ) thì cộng thêm $1$; nếu cắt từ trái sang phải thì trừ đi $1$. Điểm $P$ nằm trong đa giác nếu tổng số vòng quay khác 0, và nằm ngoài nếu số vòng quay bằng 0.
+
+\subsection{Chứng minh Cơ sở Toán học Dựa trên Định lý Đường cong Jordan}
+
+Định lý Đường cong Jordan (Jordan Curve Theorem) là định lý topo kinh điển chứng minh tính đúng đắn của việc phân loại điểm:
+
+\textbf{Phát biểu Định lý Jordan:}
+Mọi đường cong phẳng đơn, liên tục và khép kín $C$ chia mặt phẳng $\mathbb{R}^2$ thành đúng hai miền liên thông rời rạc: một miền trong bị chặn (Interior, $S_{\text{int}}$) và một miền ngoài không bị chặn (Exterior, $S_{\text{ext}}$), với đường cong $C$ là biên giới chung duy nhất của cả hai miền. Bất kỳ đường đi liên tục nào nối một điểm thuộc $S_{\text{int}}$ với một điểm thuộc $S_{\text{ext}}$ bắt buộc phải cắt qua đường cong $C$ ít nhất một lần.
+
+\textbf{Chứng minh Xác định Vị trí Điểm $P(x, y)$:}
+Xét một điểm mốc $P_\infty$ nằm ở vô cực, chắc chắn thuộc miền ngoài ($P_\infty \in S_{\text{ext}}$). Nối một đoạn thẳng hoặc tia $L$ từ điểm kiểm tra $P$ đến $P_\infty$.
+\begin{itemize}
+    \item Chu vi đa giác là một đường cong Jordan khép kín phân tách mặt phẳng thành $S_{\text{int}}$ và $S_{\text{ext}}$.
+    \item Xét một điểm chuyển động liên tục dọc theo tia $L$ từ $P$ ra $P_\infty$. Mỗi khi tia cắt xuyên qua một cạnh của đa giác, điểm chuyển động bắt buộc phải thay đổi trạng thái miền: từ trong ra ngoài ($S_{\text{int}} \to S_{\text{ext}}$) hoặc từ ngoài vào trong ($S_{\text{ext}} \to S_{\text{int}}$).
+    \item Gọi $k$ là tổng số giao điểm mà tia $L$ cắt qua biên đa giác. Điểm kết thúc $P_\infty$ đã biết chắc chắn nằm ở miền ngoài ($S_{\text{ext}}$). Do đó:
+    \begin{itemize}
+        \item Nếu $k$ là số lẻ: Để kết thúc tại miền ngoài, trạng thái ban đầu của $P$ bắt buộc phải khác với $S_{\text{ext}}$, tức là $P \in S_{\text{int}}$ (nằm bên trong).
+        \item Nếu $k$ là số chẵn: Số lần đi vào và đi ra triệt tiêu lẫn nhau, do đó trạng thái ban đầu của $P$ phải cùng trạng thái với $P_\infty$, tức là $P \in S_{\text{ext}}$ (nằm bên ngoài).
+    \end{itemize}
+\end{itemize}
+
+Chứng minh hoàn tất.
+
+\subsection{Nguồn gốc và Bản chất Topo của Quy tắc Chẵn Lẻ (Odd-Even Rule)}
+
+Quy tắc Chẵn Lẻ (Odd-Even Rule) thực chất là sự số hóa trực tiếp định lý đường cong Jordan trên hệ tọa độ rời rạc của máy tính:
+
+Bản chất của quy tắc xuất phát từ tính chất đối xứng nhị phân của việc phân hoạch không gian. Một đường biên đóng đóng vai trò như một bức tường ngăn cách. Mỗi lần một thực thể vượt qua bức tường, trạng thái nhị phân của nó bị đảo ngược:
+\begin{equation}
+\text{Trạng thái}(P) = \left( \sum_{i=1}^m \text{Giao điểm}(L, E_i) \right) \bmod 2
+\end{equation}
+Giá trị bằng 1 tương ứng với miền trong (Interior) và bằng 0 tương ứng với miền ngoài (Exterior).
+
+Sở dĩ quy tắc này luôn đúng và liên quan chặt chẽ đến định lý Jordan là vì định lý Jordan khẳng định tính bất biến topo: không tồn tại bất kỳ con đường nào đi từ miền trong ra miền ngoài mà không vượt qua biên. Do đó, tính chẵn lẻ của số giao điểm không phụ thuộc vào hướng của tia kiểm tra (dù phóng tia sang phải, sang trái hay theo góc chéo bất kỳ, tính chẵn lẻ của số lần xuyên qua biên luôn luôn là một đại lượng bất biến).
+
+\subsection{Kỹ thuật Rút ngắn Cạnh tại các Đỉnh Không Cực trị trong Thuật toán Tô màu theo Dòng quét}
+
+Thuật toán tô màu đa giác theo dòng quét (Scan-line Polygon Fill Algorithm) hoạt động bằng cách cho dòng quét $y = y_{\text{scan}}$ quét tuần tự từ đáy lên đỉnh đa giác. Tại mỗi dòng quét, thuật toán tìm các giao điểm với các cạnh trong Bảng cạnh kích hoạt (Active Edge Table, AET), sắp xếp giao điểm theo hoành độ $x$ tăng dần, rồi tô màu các đoạn pixel nằm kẹp giữa từng cặp giao điểm lẻ và chẵn $(x_1, x_2), (x_3, x_4), \dots$ theo quy tắc chẵn lẻ.
+
+\textbf{Vấn đề Xảy ra khi Dòng quét Đi qua Đỉnh Đa giác:}
+Một đỉnh là giao điểm chung của hai cạnh kề nhau. Nếu dòng quét đi qua đỉnh, phép toán tìm giao điểm thông thường sẽ tìm thấy đỉnh đó hai lần (một lần trên mỗi cạnh), sinh ra hai giao điểm có tọa độ trùng nhau:
+\begin{equation}
+x_{\text{intersect}}^{(1)} = x_{\text{intersect}}^{(2)} = x_{\text{vertex}}
+\end{equation}
+
+Sự xuất hiện của hai giao điểm trùng nhau này có thể phá vỡ quy tắc Parity của toàn bộ các pixel phía sau trên dòng quét. Để xử lý chính xác, thuật toán phân loại đỉnh thành hai trường hợp bản chất:
+
+\textbf{1. Đỉnh Cực trị Địa phương (Local Extremum gồm cực tiểu địa phương Local Minimum hoặc cực đại địa phương Local Maximum):}
+Hai cạnh kề nhau của đỉnh cùng nằm về một phía của dòng quét (cùng nằm phía trên hoặc cùng nằm phía dưới, tức tung độ của hai đỉnh lân cận cùng lớn hơn hoặc cùng nhỏ hơn tung độ của đỉnh đang xét).
+\begin{itemize}
+    \item Khi dòng quét đi qua đỉnh cực trị, nó chỉ tiếp xúc với mép biên của đa giác mà không đi xuyên qua từ trong ra ngoài (hoặc ngược lại).
+    \item Để bảo toàn quy tắc chẵn lẻ, đỉnh cực trị phải được tính là \textbf{hai giao điểm} (hoặc bỏ qua không tính). Khi được tính hai lần, tính chẵn lẻ không bị đảo lộn, các đoạn tô màu phía sau vẫn vận hành chính xác. Do đó, \textbf{giữ nguyên độ dài hai cạnh, không rút ngắn}.
+\end{itemize}
+
+\textbf{2. Đỉnh Không Cực trị (Non-extremum Vertex / Monotonic Vertex):}
+Hai cạnh kề nhau của đỉnh nằm về hai phía đối lập của dòng quét: một cạnh đi lên phía trên và một cạnh đi xuống phía dưới.
+\begin{itemize}
+    \item Khi dòng quét đi qua đỉnh này, nó thực sự đâm xuyên từ miền ngoài vào miền trong đa giác (hoặc từ miền trong ra miền ngoài).
+    \item Nếu tính cả hai cạnh, ta có 2 giao điểm (số chẵn), khiến thuật toán lầm tưởng dòng quét không đi xuyên qua biên, dẫn đến việc đảo ngược toàn bộ trạng thái tô màu của các pixel phía sau trên dòng quét đó (gây hiện tượng tràn màu ra ngoài hoặc mất màu bên trong).
+    \item Vì vậy, đỉnh không cực trị bắt buộc chỉ được tính là \textbf{đúng một giao điểm duy nhất}.
+\end{itemize}
+
+\textbf{Giải pháp Kỹ thuật: Rút ngắn Cạnh (Edge Shortening):}
+Để đảm bảo đỉnh không cực trị chỉ tạo ra đúng 1 giao điểm khi dòng quét đi qua, thuật toán chuẩn hóa quy ước rút ngắn một trong hai cạnh kề đi đúng 1 đơn vị tung độ:
+\begin{equation}
+y_{\max} = y_{\max} - 1 \quad \text{(đối với cạnh nằm phía dưới đỉnh)}
+\end{equation}
+hoặc:
+\begin{equation}
+y_{\min} = y_{\min} + 1 \quad \text{(đối với cạnh nằm phía trên đỉnh)}
+\end{equation}
+Nhờ việc rút ngắn cạnh này, tại dòng quét đi qua đỉnh, chỉ có duy nhất một cạnh chứa đỉnh đó còn nằm trong Bảng cạnh kích hoạt AET, đảm bảo số giao điểm luôn được ghi nhận là một số lẻ khi xuyên qua biên, giúp thuật toán Scan-line Fill tô màu chính xác $100\%$ không gian đa giác mà không gặp lỗi tràn biên.
