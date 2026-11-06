@@ -17,7 +17,7 @@ f_{\text{ellipse}}(x, y) = r_y^2 x^2 + r_x^2 y^2 - r_x^2 r_y^2,
 âm khi điểm ở trong, bằng $0$ khi ở trên biên, dương khi ở ngoài. Do ellipse đối xứng qua $x = 0$ và $y = 0$ nên chỉ khảo sát góc phần tư thứ nhất, bắt đầu từ $(0, r_y)$. Hệ số góc tiếp tuyến $\frac{dy}{dx} = -\frac{r_y^2 x}{r_x^2 y}$ chia góc phần tư thành hai miền, phân giới tại $2r_y^2 x = 2r_x^2 y$:
 
 \begin{itemize}
-    \item \textbf{Miền 1} ($|dy/dx| \le 1$): $x$ tăng đều, ứng viên là $(x_k + 1, y_k)$ và $(x_k + 1, y_k - 1)$. Xét giá trị tại điểm giữa $p1_k = f_{\text{ellipse}}(x_k + 1, y_k - \frac12)$. Nếu $p1_k < 0$ thì điểm giữa nằm trong ellipse nên chọn $(x_k + 1, y_k)$, ngược lại chọn $(x_k + 1, y_k - 1)$. Lấy hiệu công thức (2) và (1) trên slide và rút gọn hạng tử $r_x^2[(y_{k+1} - \frac12)^2 - (y_k - \frac12)^2]$ (bằng $0$ nếu $y_{k+1} = y_k$, bằng $-2r_x^2 y_{k+1}$ nếu $y_{k+1} = y_k - 1$), ta được
+    \item \textbf{Miền 1} ($|dy/dx| \le 1$): $x$ tăng đều, ứng viên là $(x_k + 1, y_k)$ và $(x_k + 1, y_k - 1)$. Xét giá trị tại điểm giữa $p1_k = f_{\text{ellipse}}(x_k + 1, y_k - \frac12)$. Nếu $p1_k < 0$ thì điểm giữa nằm trong ellipse nên chọn $(x_k + 1, y_k)$, ngược lại chọn $(x_k + 1, y_k - 1)$. Lấy hiệu $p1_{k+1} - p1_k$ và rút gọn hạng tử $r_x^2[(y_{k+1} - \frac12)^2 - (y_k - \frac12)^2]$ (bằng $0$ nếu $y_{k+1} = y_k$, bằng $-2r_x^2 y_{k+1}$ nếu $y_{k+1} = y_k - 1$), ta được
     \begin{equation}
     p1_{k+1} =
     \begin{cases}
@@ -38,7 +38,7 @@ f_{\text{ellipse}}(x, y) = r_y^2 x^2 + r_x^2 y^2 - r_x^2 r_y^2,
 \end{itemize}
 Các đại lượng $2r_y^2 x$ và $2r_x^2 y$ được cập nhật bằng phép cộng hằng số $\pm 2r_y^2$, $\pm 2r_x^2$, nên mỗi bước chỉ cần phép cộng và so sánh dấu. Mỗi điểm $(x, y)$ tính được sinh ra 4 điểm $(\pm x, \pm y)$ rồi tịnh tiến theo $(x_c, y_c)$. Đường tròn là trường hợp riêng $r_x = r_y$, khi đó còn có thêm đối xứng qua $y = \pm x$ (8 điểm).
 
-\emph{Lưu ý về slide:} ở bước B13 điều kiện in là ``$p2_k \ge 0$'', đúng ra phải là $p2_k \le 0$ (phần bù của B12). Định nghĩa $f_{\text{ellipse}}$ trên slide 9 ghi ``outside the circle boundary'' và phần phát biểu bài toán ghi ``radius of circle'', cần hiểu là ellipse với hai bán trục $r_x, r_y$.
+\emph{Lưu ý:} trong giải thuật ở tài liệu~\citep{dhmt_lec5}, điều kiện của bước B13 được in là ``$p2_k \ge 0$'', đúng ra phải là $p2_k \le 0$ (phần bù của B12); định nghĩa $f_{\text{ellipse}}$ ghi ``outside the circle boundary'' và phần phát biểu bài toán ghi ``radius of circle'', cần hiểu là ellipse với hai bán trục $r_x, r_y$.
 
 \textbf{2. Lọc điểm thuộc cung.} Có hai cách:
 \begin{itemize}
@@ -60,7 +60,7 @@ Các đại lượng $2r_y^2 x$ và $2r_x^2 y$ được cập nhật bằng phé
 
 \begin{enumerate}
     \item \textbf{Không biểu diễn được đường cong đa trị.} Hàm số gán mỗi $x$ đúng một $y$, trong khi đường tròn, ellipse, đường cong khép kín hay tự cắt có nhiều $y$ ứng với một $x$. Đường tròn phải tách thành hai nhánh $y = \pm\sqrt{r^2 - x^2}$, ellipse cũng vậy; đường cong chữ S nằm ngang không thể viết thành một hàm.
-    \item \textbf{Tiếp tuyến thẳng đứng làm đứt nét.} Khi $|f'(x)| \to \infty$ (ví dụ tại $x = \pm r$ của đường tròn), lấy mẫu đều theo $x$ làm $\Delta y$ giữa hai mẫu liên tiếp rất lớn, các điểm vẽ không còn liên tục lân cận 8. Đây chính là lý do thuật toán đường tròn, ellipse phải chia miền và đổi biến chạy ($x$ hay $y$) khi $|dy/dx|$ vượt quá $1$, giống như đoạn thẳng có $|m| > 1$ ở tuần 4.
+    \item \textbf{Tiếp tuyến thẳng đứng làm đứt nét.} Khi $|f'(x)| \to \infty$ (ví dụ tại $x = \pm r$ của đường tròn), lấy mẫu đều theo $x$ làm $\Delta y$ giữa hai mẫu liên tiếp rất lớn, các điểm vẽ không còn liên tục lân cận 8. Đây chính là lý do thuật toán đường tròn, ellipse phải chia miền và đổi biến chạy ($x$ hay $y$) khi $|dy/dx|$ vượt quá $1$, giống như đoạn thẳng có $|m| > 1$ (mục~\ref{subsec:w4_assumption}).
     \item \textbf{Mật độ điểm không đều và chi phí tính.} Lấy mẫu đều theo $x$ thì điểm dày ở chỗ thoải, thưa ở chỗ dốc. Ngoài ra $\sqrt{\cdot}$ và số thực ở mỗi bước làm tăng độ phức tạp, trái với yêu cầu ``độ phức tạp thấp'' của bài toán.
     \item \textbf{Phụ thuộc hệ trục, không bất biến với phép quay.} Quay một đồ thị hàm số đi một góc có thể làm nó không còn là đồ thị hàm số nữa (ví dụ quay parabol $y = x^2$ đi $90^\circ$ được $x = y^2$). Mọi thao tác biến đổi hình học đều phải tìm lại một hàm mới, trong khi biến đổi trên dạng tham số chỉ cần biến đổi các điểm.
     \item \textbf{Khó điều khiển hình dạng.} Thay đổi hệ số của $f$ làm thay đổi toàn bộ đường cong một cách khó lường; người thiết kế không thể ``kéo'' một điểm để uốn đường cong như với điểm điều khiển.
@@ -78,12 +78,12 @@ Các đại lượng $2r_y^2 x$ và $2r_x^2 y$ được cập nhật bằng phé
 \begin{equation}
 \mathbf{P}(u) = \sum_{k=0}^{n} \mathbf{p}_k\, BEZ_{k,n}(u), \qquad BEZ_{k,n}(u) = C(n, k)\, u^k (1 - u)^{n-k}, \quad 0 \le u \le 1,
 \end{equation}
-liên tục trong lân cận 8, với chi phí tính thấp. Khác với đoạn thẳng hay đường tròn, ta không có phương trình ẩn đơn giản để xét dấu tại điểm giữa, mà phải đi qua tham số $u$: lấy mẫu các giá trị $u_1 < u_2 < \dots < u_N$, tính điểm thực $\mathbf{P}(u_i)$, rồi ánh xạ về lưới nguyên (hình vẽ trên bảng: các mốc $u_1, u_2, \ldots$ trên trục tham số ứng với các hoành độ $x_1, x_2, \ldots$ trên lưới). Slide nêu ba phương pháp~\citep{dhmt_lec6}:
+liên tục trong lân cận 8, với chi phí tính thấp. Khác với đoạn thẳng hay đường tròn, ta không có phương trình ẩn đơn giản để xét dấu tại điểm giữa, mà phải đi qua tham số $u$: lấy mẫu các giá trị $u_1 < u_2 < \dots < u_N$, tính điểm thực $\mathbf{P}(u_i)$, rồi ánh xạ về lưới nguyên (các mốc $u_1, u_2, \ldots$ trên trục tham số ứng với các hoành độ $x_1, x_2, \ldots$ trên lưới). Có ba phương pháp~\citep{dhmt_lec6}:
 
 \begin{enumerate}
-    \item \textbf{Xấp xỉ bằng các đoạn thẳng (6.3.1).} Chia đều $u_i = i/N$, tính $\mathbf{P}(u_i)$, làm tròn về điểm nguyên rồi nối các điểm liên tiếp bằng thuật toán Bresenham của tuần 4. Muốn các đoạn đủ ngắn để không thấy gấp khúc, có thể chọn $N$ theo chiều dài đa giác điều khiển, ví dụ $N \approx \sum_k \|\mathbf{p}_{k+1} - \mathbf{p}_k\|$ (đường cong không dài hơn đa giác điều khiển do tính bao lồi).
-    \item \textbf{De Casteljau (6.3.2).} Tính $\mathbf{P}(u)$ bằng nội suy tuyến tính lặp (mục~\ref{subsec:w5_decasteljau}), ổn định số học hơn khai triển đa thức. Hơn nữa, tại $u = \frac12$ các điểm trung gian chia đường cong thành hai đường Bézier con: nửa trái có điểm điều khiển $\mathbf{p}_0^0, \mathbf{p}_0^1, \ldots, \mathbf{p}_0^n$, nửa phải có $\mathbf{p}_0^n, \mathbf{p}_1^{n-1}, \ldots, \mathbf{p}_n^0$. Chia đệ quy đến khi đa giác điều khiển của mỗi phần ``đủ phẳng'' (mọi điểm điều khiển cách dây cung nối hai mút dưới $0.5$ pixel) thì vẽ phần đó bằng một đoạn Bresenham. Số đoạn tự thích nghi: chỗ cong nhiều được chia nhiều, chỗ gần thẳng chia ít.
-    \item \textbf{Phương pháp kiểu Bresenham (6.3.3).} Slide chỉ nêu tên phương pháp. Theo tinh thần Bresenham (chỉ dùng phép cộng), ta tính các điểm liên tiếp bằng \emph{sai phân tiến} (forward differencing)~\citep{hughes2014computer}. Với một tọa độ dạng đa thức bậc ba $x(u) = a u^3 + b u^2 + c u + d$ và bước $h$, đặt
+    \item \textbf{Xấp xỉ bằng các đoạn thẳng.} Chia đều $u_i = i/N$, tính $\mathbf{P}(u_i)$, làm tròn về điểm nguyên rồi nối các điểm liên tiếp bằng thuật toán Bresenham (mục~\ref{subsec:w4_bres_vs_dda}). Muốn các đoạn đủ ngắn để không thấy gấp khúc, có thể chọn $N$ theo chiều dài đa giác điều khiển, ví dụ $N \approx \sum_k \|\mathbf{p}_{k+1} - \mathbf{p}_k\|$ (đường cong không dài hơn đa giác điều khiển do tính bao lồi).
+    \item \textbf{Phương pháp De Casteljau.} Tính $\mathbf{P}(u)$ bằng nội suy tuyến tính lặp (mục~\ref{subsec:w5_decasteljau}), ổn định số học hơn khai triển đa thức. Hơn nữa, tại $u = \frac12$ các điểm trung gian chia đường cong thành hai đường Bézier con: nửa trái có điểm điều khiển $\mathbf{p}_0^0, \mathbf{p}_0^1, \ldots, \mathbf{p}_0^n$, nửa phải có $\mathbf{p}_0^n, \mathbf{p}_1^{n-1}, \ldots, \mathbf{p}_n^0$. Chia đệ quy đến khi đa giác điều khiển của mỗi phần ``đủ phẳng'' (mọi điểm điều khiển cách dây cung nối hai mút dưới $0.5$ pixel) thì vẽ phần đó bằng một đoạn Bresenham. Số đoạn tự thích nghi: chỗ cong nhiều được chia nhiều, chỗ gần thẳng chia ít.
+    \item \textbf{Phương pháp kiểu Bresenham.} Theo tinh thần Bresenham (chỉ dùng phép cộng), ta tính các điểm liên tiếp bằng \emph{sai phân tiến} (forward differencing)~\citep{hughes2014computer}. Với một tọa độ dạng đa thức bậc ba $x(u) = a u^3 + b u^2 + c u + d$ và bước $h$, đặt
     \begin{equation}
     \Delta x_0 = a h^3 + b h^2 + c h, \qquad \Delta^2 x_0 = 6 a h^3 + 2 b h^2, \qquad \Delta^3 x = 6 a h^3 \ (\text{hằng số}).
     \end{equation}
@@ -92,7 +92,7 @@ liên tục trong lân cận 8, với chi phí tính thấp. Khác với đoạn
 
 \textbf{Ví dụ trên lưới nguyên.} Với $\mathbf{p}_0 = (0, 0)$, $\mathbf{p}_1 = (4, 12)$, $\mathbf{p}_2 = (16, 12)$, $\mathbf{p}_3 = (20, 0)$, lấy mẫu $N = 8$ ($u = 0, 0.125, \ldots, 1$) được các điểm thực $(0,0)$, $(1.84, 3.94)$, $(4.25, 6.75)$, $(7.03, 8.44)$, $(10, 9)$, \ldots{} Làm tròn và nối bằng Bresenham cho 27 điểm ảnh liên tục lân cận 8 như Hình~\ref{fig:w5_raster}. Mẫu đều theo $u$ thì thưa ở hai đầu (nơi $|\mathbf{P}'(u)| = 3\|\mathbf{p}_1 - \mathbf{p}_0\|$ lớn) và dày ở giữa, nên việc nối bằng Bresenham là cần thiết để không đứt nét.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=0.42]
     \draw[step=1, gray!25, very thin] (-0.5,-0.5) grid (20.5,12.5);
@@ -110,10 +110,10 @@ liên tục trong lân cận 8, với chi phí tính thấp. Khác với đoạn
 \end{figure}
 
 % =====================================================================
-\subsection{Đường cong Bézier bậc 1 nối hai đầu mút làm tiền đề cho điều gì}
+\subsection{Vai trò tiền đề của đường cong Bézier bậc 1}
 \label{subsec:w5_degree1}
 
-\textit{Câu hỏi: Đường cong Bézier bậc 1 nối hai đầu mút thì nó làm tiền đề gì cho các phần sau?}
+\textit{Câu hỏi: Đường cong Bézier bậc 1 (đoạn thẳng nối hai điểm mút) là tiền đề cho những nội dung nào của đường cong Bézier?}
 
 Với $n = 1$, $BEZ_{0,1}(u) = 1 - u$ và $BEZ_{1,1}(u) = u$, nên
 \begin{equation}
@@ -122,9 +122,9 @@ Với $n = 1$, $BEZ_{0,1}(u) = 1 - u$ và $BEZ_{1,1}(u) = u$, nên
 tức là đoạn thẳng nối hai đầu mút, cũng chính là phép nội suy tuyến tính (lerp). Phép toán đơn giản này là tiền đề cho bốn ý quan trọng:
 \begin{enumerate}
     \item \textbf{Viên gạch của thuật toán De Casteljau.} Mọi đường Bézier bậc $n$ được dựng bằng cách lặp lại phép Bézier bậc 1 trên các đoạn nối điểm điều khiển (mục~\ref{subsec:w5_decasteljau}). Hiểu bậc 1 là hiểu cách tính mọi bậc.
-    \item \textbf{Tính nội suy hai đầu mút.} Bậc 1 đi qua cả $\mathbf{p}_0$ và $\mathbf{p}_1$. Tính chất này được giữ cho mọi bậc: $\mathbf{P}(0) = \mathbf{p}_0$, $\mathbf{P}(1) = \mathbf{p}_n$ (slide 5), cho phép ghép nhiều đoạn cong thành một đường liên tục.
-    \item \textbf{Tiêu chuẩn dừng khi vẽ.} Khi các điểm điều khiển thẳng hàng, đường Bézier suy biến thành đoạn thẳng (tính chất f, slide 8). Thuật toán chia nhỏ lợi dụng điều này: khi một đoạn con đủ phẳng thì thay bằng Bézier bậc 1 và vẽ bằng Bresenham.
-    \item \textbf{Tổ hợp lồi.} Hai hệ số $1 - u$ và $u$ không âm và có tổng bằng $1$. Mọi bậc cao hơn đều kế thừa tính chất này (tổng các đa thức Bernstein bằng $1$), dẫn tới tính bao lồi (slide 6) và tính bất biến affine (slide 7).
+    \item \textbf{Tính nội suy hai đầu mút.} Bậc 1 đi qua cả $\mathbf{p}_0$ và $\mathbf{p}_1$. Tính chất này được giữ cho mọi bậc: $\mathbf{P}(0) = \mathbf{p}_0$, $\mathbf{P}(1) = \mathbf{p}_n$ (mục~\ref{subsec:w5_slide5}), cho phép ghép nhiều đoạn cong thành một đường liên tục.
+    \item \textbf{Tiêu chuẩn dừng khi vẽ.} Khi các điểm điều khiển thẳng hàng, đường Bézier suy biến thành đoạn thẳng. Thuật toán chia nhỏ lợi dụng điều này: khi một đoạn con đủ phẳng thì thay bằng Bézier bậc 1 và vẽ bằng Bresenham.
+    \item \textbf{Tổ hợp lồi.} Hai hệ số $1 - u$ và $u$ không âm và có tổng bằng $1$. Mọi bậc cao hơn đều kế thừa tính chất này (tổng các đa thức Bernstein bằng $1$), dẫn tới tính bao lồi và tính bất biến affine (mục~\ref{subsec:w5_affine}).
 \end{enumerate}
 
 % =====================================================================
@@ -144,12 +144,12 @@ Một đường Bézier đơn với $n + 1$ điểm điều khiển có bậc $n
 Bậc 3 là lựa chọn phổ biến vì là bậc thấp nhất cho phép điều khiển độc lập vị trí và tiếp tuyến ở cả hai đầu, và có thể đạt $C^2$ khi ghép. Một cách tổng quát hơn là đường B-spline: bậc được chọn độc lập với số điểm điều khiển, mỗi điểm điều khiển chỉ ảnh hưởng tới một số đoạn lân cận và độ trơn $C^{k-2}$ (với bậc $k-1$) được bảo đảm tự động~\citep{hearn2011computer}. Định dạng SVG, PostScript và font chữ OpenType đều lưu đường cong dưới dạng chuỗi đoạn Bézier bậc 2 hoặc 3~\citep{w3c2018svg2}. Các phương pháp AI sinh đồ họa vector cũng chọn biểu diễn này: DiffVG làm cho phép rời rạc hóa đường Bézier khả vi để tối ưu tọa độ điểm điều khiển bằng gradient~\citep{li2020diffvg}, và VectorFusion sinh ảnh SVG từ văn bản bằng cách tối ưu một tập đường Bézier bậc 3 ghép mảnh~\citep{jain2023vectorfusion}. Số điểm điều khiển lớn nhưng bậc thấp giúp quá trình tối ưu ổn định và mỗi tham số chỉ ảnh hưởng cục bộ.
 
 % =====================================================================
-\subsection{Ý nghĩa các biểu thức trong slide trang 5 (Bézier)}
+\subsection{Ý nghĩa của tính chất nội suy và tiếp tuyến tại hai điểm mút của đường cong Bézier}
 \label{subsec:w5_slide5}
 
-\textit{Câu hỏi: Các biểu thức trong slide trang 5 của bài Bézier nói lên điều gì?}
+\textit{Câu hỏi: Các biểu thức $\mathbf{P}(0) = \mathbf{p}_0$, $\mathbf{P}(1) = \mathbf{p}_n$, $\mathbf{P}'(0) = n(\mathbf{p}_1 - \mathbf{p}_0)$, $\mathbf{P}'(1) = n(\mathbf{p}_n - \mathbf{p}_{n-1})$ của đường cong Bézier bậc $n$ nói lên điều gì?}
 
-Slide trang 5~\citep{dhmt_lec6} nêu hai tính chất:
+Đường cong Bézier có hai tính chất tại hai điểm mút~\citep{dhmt_lec6}:
 \begin{equation}
 \text{(a)}\ \ \mathbf{P}(0) = \mathbf{p}_0, \quad \mathbf{P}(1) = \mathbf{p}_n; \qquad
 \text{(b)}\ \ \mathbf{P}'(0) = n(\mathbf{p}_1 - \mathbf{p}_0), \quad \mathbf{P}'(1) = n(\mathbf{p}_n - \mathbf{p}_{n-1}).
@@ -167,7 +167,7 @@ Slide trang 5~\citep{dhmt_lec6} nêu hai tính chất:
 \begin{itemize}
     \item (a) Đường cong \emph{đi qua} điểm điều khiển đầu và cuối nhưng nói chung \emph{không đi qua} các điểm điều khiển ở giữa. Hai điểm mút là nơi đường cong bị ``neo'', còn các điểm giữa chỉ ``kéo'' đường cong về phía chúng. Đây là cơ sở để ghép nhiều đoạn (mục~\ref{subsec:w5_piecewise}).
     \item (b) Tiếp tuyến tại điểm đầu nằm dọc cạnh $\mathbf{p}_0\mathbf{p}_1$, tiếp tuyến tại điểm cuối nằm dọc cạnh $\mathbf{p}_{n-1}\mathbf{p}_n$ của đa giác điều khiển. Vì vậy người dùng điều khiển hướng xuất phát và hướng kết thúc của đường cong chỉ bằng cách dời điểm điều khiển thứ hai và kế cuối (các ``tay nắm'' trong phần mềm vẽ vector).
-    \item Hai tính chất cùng nhau cho thấy hình dạng tại mỗi đầu mút chỉ phụ thuộc vào vài điểm điều khiển gần đầu mút đó: vị trí phụ thuộc 1 điểm, tiếp tuyến phụ thuộc 2 điểm, và đạo hàm bậc hai (slide 6) phụ thuộc 3 điểm.
+    \item Hai tính chất cùng nhau cho thấy hình dạng tại mỗi đầu mút chỉ phụ thuộc vào vài điểm điều khiển gần đầu mút đó: vị trí phụ thuộc 1 điểm, tiếp tuyến phụ thuộc 2 điểm, và đạo hàm bậc hai (mục~\ref{subsec:w5_second_deriv}) phụ thuộc 3 điểm.
 \end{itemize}
 
 % =====================================================================
@@ -192,19 +192,19 @@ Coi $\mathbf{P}(u)$ là quỹ đạo của một chất điểm khi ``thời gia
 \textbf{Không biến đổi từng điểm ảnh, mà biến đổi các điểm điều khiển.} Nhờ tính bất biến affine (mục~\ref{subsec:w5_affine}), ảnh của đường cong qua phép affine $\mathbf{x} \mapsto A\mathbf{x} + T$ chính là đường Bézier có điểm điều khiển $A\mathbf{p}_k + T$. Quy trình:
 \begin{enumerate}
     \item Lưu đường cong dưới dạng mảng điểm điều khiển số thực trong WCS (không lưu điểm ảnh).
-    \item Lập ma trận thuần nhất $3 \times 3$ của phép biến đổi (tịnh tiến, quay quanh tâm bất kỳ, tỉ lệ theo tâm, đối xứng\ldots{}, xem tuần 6) hoặc tích của nhiều phép.
+    \item Lập ma trận thuần nhất $3 \times 3$ của phép biến đổi (tịnh tiến, quay quanh tâm bất kỳ, tỉ lệ theo tâm, đối xứng\ldots{}, xem mục~\ref{subsec:w6_rot_pivot}--\ref{subsec:w6_reflect}) hoặc tích của nhiều phép.
     \item Nhân ma trận với $n + 1$ điểm điều khiển.
     \item Vẽ lại đường cong từ các điểm điều khiển mới bằng một trong các phương pháp ở mục~\ref{subsec:w5_bezier_grid}.
 \end{enumerate}
-\textbf{Lý do không biến đổi điểm ảnh:} (i) chi phí: chỉ $n + 1$ phép nhân ma trận thay vì hàng trăm, hàng nghìn điểm ảnh; (ii) chất lượng: biến đổi điểm ảnh rồi làm tròn lại gây lỗ hổng (khi phóng to) hoặc chồng điểm (khi thu nhỏ, quay), còn vẽ lại từ điểm điều khiển luôn cho đường liên tục lân cận 8; (iii) sai số không tích lũy qua nhiều lần biến đổi nếu luôn biến đổi từ dữ liệu gốc. \emph{Giới hạn:} tính bất biến chỉ đúng với phép affine. Với phép chiếu phối cảnh (tuần 6, mục~\ref{subsec:w6_3d_on_2d}), ảnh của một Bézier không còn là Bézier đa thức; khi đó phải dùng Bézier hữu tỉ (rational Bézier/NURBS) với trọng số, hoặc chiếu các điểm đã lấy mẫu~\citep{farin2002curves}.
+\textbf{Lý do không biến đổi điểm ảnh:} (i) chi phí: chỉ $n + 1$ phép nhân ma trận thay vì hàng trăm, hàng nghìn điểm ảnh; (ii) chất lượng: biến đổi điểm ảnh rồi làm tròn lại gây lỗ hổng (khi phóng to) hoặc chồng điểm (khi thu nhỏ, quay), còn vẽ lại từ điểm điều khiển luôn cho đường liên tục lân cận 8; (iii) sai số không tích lũy qua nhiều lần biến đổi nếu luôn biến đổi từ dữ liệu gốc. \emph{Giới hạn:} tính bất biến chỉ đúng với phép affine. Với phép chiếu phối cảnh (mục~\ref{subsec:w6_3d_on_2d}), ảnh của một Bézier không còn là Bézier đa thức; khi đó phải dùng Bézier hữu tỉ (rational Bézier/NURBS) với trọng số, hoặc chiếu các điểm đã lấy mẫu~\citep{farin2002curves}.
 
 % =====================================================================
-\subsection{Vế trái, vế phải trong slide trang 7 (tính bất biến affine) và kết luận}
+\subsection{Vế trái, vế phải của đẳng thức bất biến affine của đường cong Bézier và kết luận}
 \label{subsec:w5_affine}
 
-\textit{Câu hỏi: Giải thích vế trái và vế phải trong slide trang 7, từ đó rút ra kết luận gì?}
+\textit{Câu hỏi: Giải thích vế trái và vế phải của đẳng thức $A(\mathbf{P}(u)) + T = \sum_{k=0}^{n} \big(A(\mathbf{p}_k) + T\big) BEZ_{k,n}(u)$, trong đó $A$ là ma trận của phép biến đổi tuyến tính và $T$ là vector tịnh tiến. Từ đó rút ra kết luận gì?}
 
-Slide 7~\citep{dhmt_lec6} viết:
+Đẳng thức được chứng minh như sau~\citep{dhmt_lec6}:
 \begin{align}
 \underbrace{A(\mathbf{P}(u)) + T}_{\text{vế trái}}
 &= A\Big(\sum_{k=0}^{n} \mathbf{p}_k BEZ_{k,n}(u)\Big) + T
@@ -214,7 +214,7 @@ Slide 7~\citep{dhmt_lec6} viết:
 \begin{itemize}
     \item \textbf{Vế trái:} lấy \emph{từng điểm} $\mathbf{P}(u)$ của đường cong đã dựng xong rồi áp phép biến đổi affine (ma trận tuyến tính $A$ cho quay/tỉ lệ/biến dạng, vector $T$ cho tịnh tiến). Đây là ``biến đổi đường cong''.
     \item \textbf{Vế phải:} biến đổi trước $n + 1$ \emph{điểm điều khiển} thành $A(\mathbf{p}_k) + T$, rồi dựng đường Bézier mới từ các điểm này. Đây là ``đường cong của các điểm đã biến đổi''.
-    \item \textbf{Hai bước biến đổi ở giữa:} bước thứ nhất dùng tính tuyến tính của $A$ (đưa $A$ vào trong tổng: $A(\sum \mathbf{p}_k B_k) = \sum A(\mathbf{p}_k) B_k$). Bước thứ hai dùng tính chất phân hoạch đơn vị ở slide 6, $\sum_{k} BEZ_{k,n}(u) = [u + (1 - u)]^n = 1$, để viết $T = T\sum_k BEZ_{k,n}(u)$ rồi gộp $T$ vào từng số hạng. Nếu tổng các hàm cơ sở không bằng $1$, phép tịnh tiến sẽ không ``chui'' vào được và đẳng thức sai.
+    \item \textbf{Hai bước biến đổi ở giữa:} bước thứ nhất dùng tính tuyến tính của $A$ (đưa $A$ vào trong tổng: $A(\sum \mathbf{p}_k B_k) = \sum A(\mathbf{p}_k) B_k$). Bước thứ hai dùng tính chất phân hoạch đơn vị $\sum_{k} BEZ_{k,n}(u) = [u + (1 - u)]^n = 1$, để viết $T = T\sum_k BEZ_{k,n}(u)$ rồi gộp $T$ vào từng số hạng. Nếu tổng các hàm cơ sở không bằng $1$, phép tịnh tiến sẽ không ``chui'' vào được và đẳng thức sai.
 \end{itemize}
 \textbf{Kết luận.}
 \begin{enumerate}
@@ -229,7 +229,7 @@ Slide 7~\citep{dhmt_lec6} viết:
 
 \textit{Câu hỏi: Viết phương trình đường cong Bézier bậc 3 và vẽ minh họa.}
 
-Với 4 điểm điều khiển $\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2, \mathbf{p}_3$ (slide 9~\citep{dhmt_lec6}):
+Với 4 điểm điều khiển $\mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2, \mathbf{p}_3$ ~\citep{dhmt_lec6}:
 \begin{equation}
 \mathbf{P}(u) = (1 - u)^3\mathbf{p}_0 + 3u(1 - u)^2\mathbf{p}_1 + 3u^2(1 - u)\mathbf{p}_2 + u^3\mathbf{p}_3, \qquad 0 \le u \le 1,
 \end{equation}
@@ -253,9 +253,9 @@ $x(u)$ & $0$ & $1.0625$ & $2.5$ & $3.9375$ & $5$ \\
 $y(u)$ & $0$ & $1.6875$ & $2.25$ & $1.6875$ & $0$
 \end{tabular}
 \end{center}
-Kiểm tra tại $u = 0.5$ bằng De Casteljau: lần chia thứ nhất được $(0.5, 1.5)$, $(2.5, 3)$, $(4.5, 1.5)$; lần thứ hai được $(1.5, 2.25)$, $(3.5, 2.25)$; lần thứ ba được $(2.5, 2.25)$, trùng với kết quả khai triển. Hình~\ref{fig:w5_cubic} vẽ đường cong, đa giác điều khiển và các bước dựng De Casteljau tại $u = 0.5$. Quan sát hình thấy đủ các tính chất ở slide 5--6: đường cong đi qua $\mathbf{p}_0$, $\mathbf{p}_3$, tiếp xúc với $\mathbf{p}_0\mathbf{p}_1$ và $\mathbf{p}_2\mathbf{p}_3$ ở hai đầu, nằm trong bao lồi của 4 điểm và không đi qua $\mathbf{p}_1$, $\mathbf{p}_2$ (đỉnh cao nhất chỉ đạt $y = 2.25 < 3$).
+Kiểm tra tại $u = 0.5$ bằng De Casteljau: lần chia thứ nhất được $(0.5, 1.5)$, $(2.5, 3)$, $(4.5, 1.5)$; lần thứ hai được $(1.5, 2.25)$, $(3.5, 2.25)$; lần thứ ba được $(2.5, 2.25)$, trùng với kết quả khai triển. Hình~\ref{fig:w5_cubic} vẽ đường cong, đa giác điều khiển và các bước dựng De Casteljau tại $u = 0.5$. Quan sát hình thấy đủ các tính chất đã nêu: đường cong đi qua $\mathbf{p}_0$, $\mathbf{p}_3$, tiếp xúc với $\mathbf{p}_0\mathbf{p}_1$ và $\mathbf{p}_2\mathbf{p}_3$ ở hai đầu, nằm trong bao lồi của 4 điểm và không đi qua $\mathbf{p}_1$, $\mathbf{p}_2$ (đỉnh cao nhất chỉ đạt $y = 2.25 < 3$).
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=1.25]
     \draw[->, gray] (-0.3,0) -- (5.6,0) node[right] {$x$};
@@ -285,14 +285,14 @@ Kiểm tra tại $u = 0.5$ bằng De Casteljau: lần chia thứ nhất được
 \subsection{Kiểm tra đạo hàm bậc 2 của đường cong Bézier bậc 3}
 \label{subsec:w5_second_deriv}
 
-\textit{Câu hỏi: Kiểm tra công thức đạo hàm bậc 2 tại hai đầu mút của đường cong Bézier bậc 3 (slide 10).}
+\textit{Câu hỏi: Kiểm tra công thức đạo hàm bậc 2 tại hai điểm mút của đường cong Bézier bậc 3: $\mathbf{P}''(0) = 6(\mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2)$ và $\mathbf{P}''(1) = 6(\mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3)$.}
 
 \textbf{Đạo hàm bậc nhất.} Đạo hàm từng hàm cơ sở:
 \begin{align}
 \mathbf{P}'(u) &= -3(1-u)^2\mathbf{p}_0 + [3(1-u)^2 - 6u(1-u)]\mathbf{p}_1 + [6u(1-u) - 3u^2]\mathbf{p}_2 + 3u^2\mathbf{p}_3 \nonumber\\
 &= 3(1-u)^2(\mathbf{p}_1 - \mathbf{p}_0) + 6u(1-u)(\mathbf{p}_2 - \mathbf{p}_1) + 3u^2(\mathbf{p}_3 - \mathbf{p}_2).
 \end{align}
-Suy ra $\mathbf{P}'(0) = 3(\mathbf{p}_1 - \mathbf{p}_0)$, $\mathbf{P}'(1) = 3(\mathbf{p}_3 - \mathbf{p}_2)$, khớp với slide 10.
+Suy ra $\mathbf{P}'(0) = 3(\mathbf{p}_1 - \mathbf{p}_0)$, $\mathbf{P}'(1) = 3(\mathbf{p}_3 - \mathbf{p}_2)$, đúng với tính chất tiếp tuyến tại hai điểm mút (mục~\ref{subsec:w5_slide5}).
 
 \textbf{Đạo hàm bậc hai.} Đạo hàm tiếp:
 \begin{align}
@@ -303,7 +303,7 @@ Do đó
 \begin{equation}
 \mathbf{P}''(0) = 6(\mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2), \qquad \mathbf{P}''(1) = 6(\mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3),
 \end{equation}
-khớp với slide 10. Đối chiếu với công thức tổng quát ở slide 6 với $n = 3$: $n(n-1) = 6$ và $[(\mathbf{p}_2 - \mathbf{p}_1) - (\mathbf{p}_1 - \mathbf{p}_0)] = \mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2$; ở đầu cuối $[(\mathbf{p}_{n-2} - \mathbf{p}_{n-1}) - (\mathbf{p}_{n-1} - \mathbf{p}_n)] = \mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3$. Hai cách tính cho cùng kết quả.
+đúng với công thức cần kiểm tra. Đối chiếu với công thức tổng quát cho bậc $n$, $\mathbf{P}''(0) = n(n-1)[(\mathbf{p}_2 - \mathbf{p}_1) - (\mathbf{p}_1 - \mathbf{p}_0)]$ và $\mathbf{P}''(1) = n(n-1)[(\mathbf{p}_{n-2} - \mathbf{p}_{n-1}) - (\mathbf{p}_{n-1} - \mathbf{p}_n)]$~\citep{dhmt_lec6}, với $n = 3$: $n(n-1) = 6$ và $[(\mathbf{p}_2 - \mathbf{p}_1) - (\mathbf{p}_1 - \mathbf{p}_0)] = \mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2$; ở đầu cuối $[(\mathbf{p}_{n-2} - \mathbf{p}_{n-1}) - (\mathbf{p}_{n-1} - \mathbf{p}_n)] = \mathbf{p}_1 - 2\mathbf{p}_2 + \mathbf{p}_3$. Hai cách tính cho cùng kết quả.
 
 \textbf{Kiểm tra bằng số} với ví dụ ở mục~\ref{subsec:w5_cubic}: $x''(u) = 12 - 24u$, $y''(u) = -18$, nên $\mathbf{P}''(0) = (12, -18)$, $\mathbf{P}''(1) = (-12, -18)$. Theo công thức: $6[(0,0) - 2(1,3) + (4,3)] = 6(2, -3) = (12, -18)$ và $6[(1,3) - 2(4,3) + (5,0)] = 6(-2, -3) = (-12, -18)$. Khớp.
 
@@ -325,9 +325,9 @@ tức là $x(t) = x_0 + t(x_1 - x_0)$, $y(t) = y_0 + t(y_1 - y_0)$. Tham số $t
 \subsection{Chứng minh điểm De Casteljau \texorpdfstring{$\mathbf{p}_0^2(t)$}{p0\^{}2(t)} trùng với đường cong Bézier}
 \label{subsec:w5_decasteljau}
 
-\textit{Câu hỏi: Hãy chứng minh $\mathbf{p}_0^2(t)$ (của De Casteljau) trùng khớp với đường cong Bézier bậc 2; chứng minh thêm cho trường hợp bậc 3.}
+\textit{Câu hỏi: Chứng minh điểm $\mathbf{p}_0^2(t)$ dựng bằng thuật toán De Casteljau từ 3 điểm điều khiển nằm trên đường cong Bézier bậc 2; chứng minh tương tự cho trường hợp 4 điểm điều khiển (bậc 3).}
 
-\textbf{Bậc 2 (3 điểm điều khiển).} Theo slide 13--14~\citep{dhmt_lec6}:
+\textbf{Bậc 2 (3 điểm điều khiển).} Theo thuật toán De Casteljau~\citep{dhmt_lec6}:
 \begin{align}
 \mathbf{p}_0^1(t) &= (1 - t)\mathbf{p}_0 + t\,\mathbf{p}_1, \qquad \mathbf{p}_1^1(t) = (1 - t)\mathbf{p}_1 + t\,\mathbf{p}_2, \\
 \mathbf{p}_0^2(t) &= (1 - t)\mathbf{p}_0^1(t) + t\,\mathbf{p}_1^1(t)
@@ -352,12 +352,12 @@ Lưu ý với 4 điểm, $\mathbf{p}_0^2(t)$ chỉ là Bézier bậc 2 của $\m
 \begin{equation}
 \mathbf{p}_i^r(t) = \sum_{j=0}^{r} \mathbf{p}_{i+j}\, BEZ_{j,r}(t).
 \end{equation}
-Với $r = 0$ đúng vì $\mathbf{p}_i^0 = \mathbf{p}_i$. Giả sử đúng với $r - 1$. Thay vào $\mathbf{p}_i^r = (1-t)\mathbf{p}_i^{r-1} + t\,\mathbf{p}_{i+1}^{r-1}$ (slide 18):
+Với $r = 0$ đúng vì $\mathbf{p}_i^0 = \mathbf{p}_i$. Giả sử đúng với $r - 1$. Thay vào $\mathbf{p}_i^r = (1-t)\mathbf{p}_i^{r-1} + t\,\mathbf{p}_{i+1}^{r-1}$:
 \begin{align}
 \mathbf{p}_i^r(t) &= \sum_{j=0}^{r-1}\mathbf{p}_{i+j}(1-t)BEZ_{j,r-1}(t) + \sum_{j=1}^{r}\mathbf{p}_{i+j}\,t\,BEZ_{j-1,r-1}(t) \nonumber\\
 &= \sum_{j=0}^{r}\mathbf{p}_{i+j}\big[(1-t)BEZ_{j,r-1}(t) + t\,BEZ_{j-1,r-1}(t)\big] \qquad (BEZ_{r,r-1} = BEZ_{-1,r-1} = 0).
 \end{align}
-Biểu thức trong ngoặc chính là công thức truy hồi (4) ở slide 4, bằng $BEZ_{j,r}(t)$. Lấy $i = 0$, $r = n$ được $\mathbf{p}_0^n(t) = \mathbf{P}(t)$. Như vậy De Casteljau và công thức Bernstein là hai cách tính cùng một đường cong: De Casteljau chỉ dùng phép lerp (tổ hợp lồi) nên ổn định số học, còn công thức Bernstein thuận tiện cho chứng minh tính chất.
+Biểu thức trong ngoặc chính là công thức truy hồi của đa thức Bernstein $BEZ_{k,n}(u) = (1-u)BEZ_{k,n-1}(u) + u\,BEZ_{k-1,n-1}(u)$~\citep{dhmt_lec6}, nên bằng $BEZ_{j,r}(t)$. Lấy $i = 0$, $r = n$ được $\mathbf{p}_0^n(t) = \mathbf{P}(t)$. Như vậy De Casteljau và công thức Bernstein là hai cách tính cùng một đường cong: De Casteljau chỉ dùng phép lerp (tổ hợp lồi) nên ổn định số học, còn công thức Bernstein thuận tiện cho chứng minh tính chất.
 
 % =====================================================================
 \subsection{Thiết kế giao diện người dùng để vẽ đường cong Bézier bậc 3}
@@ -380,12 +380,12 @@ Một giao diện vẽ Bézier là một hệ thống đồ họa nhỏ gồm ba
     \item \emph{Thêm đường:} ở chế độ tạo, mỗi lần nhấp thêm một điểm; đủ 4 điểm thì tạo một \texttt{CubicSegment}. Các đoạn sau chỉ cần thêm 3 điểm (điểm đầu là điểm cuối của đoạn trước). Cách phổ biến hơn trong phần mềm vẽ (Pen tool): nhấp để đặt điểm neo, nhấn--kéo để kéo tay nắm $\mathbf{p}_1$/$\mathbf{p}_2$.
     \item \emph{Chọn điểm (hit-test):} khi nhấn chuột tại $\mathbf{m}$, tìm điểm điều khiển gần nhất với $\|\mathbf{p}_k - \mathbf{m}\| \le \varepsilon$ ($\varepsilon$ khoảng 5 pixel, đổi sang WCS). Để chọn chính đường cong, tìm $u$ có $\|\mathbf{P}(u) - \mathbf{m}\|$ nhỏ nhất trên các mẫu đã tính.
     \item \emph{Kéo điểm:} khi di chuột với điểm đang chọn, gán $\mathbf{p}_k \leftarrow \mathbf{m}$. Nếu điểm neo có kiểu $G^1$/$C^1$, cập nhật luôn tay nắm đối diện: với $C^1$ thì $\mathbf{q}_1 = 2\mathbf{p}_3 - \mathbf{p}_2$ (đối xứng tâm); với $G^1$ thì giữ độ dài cũ của $\mathbf{q}_1 - \mathbf{q}_0$ nhưng đổi hướng thành ngược hướng $\mathbf{p}_2 - \mathbf{p}_3$. Kéo điểm neo thì tịnh tiến cả hai tay nắm đi kèm.
-    \item \emph{Phóng to, cuộn:} thay đổi cửa sổ (zoom, pan ở tuần 6), không thay đổi điểm điều khiển.
+    \item \emph{Phóng to, cuộn:} thay đổi cửa sổ (zoom, pan; mục~\ref{subsec:w6_zoom}), không thay đổi điểm điều khiển.
 \end{itemize}
 
 \textbf{3. Vòng vẽ lại.} Sau mỗi sự kiện làm thay đổi dữ liệu: xóa vùng vẽ, với mỗi đoạn tính các điểm bằng De Casteljau hoặc sai phân tiến, đổi sang DCS bằng window-to-viewport, nối bằng Bresenham; sau đó vẽ đa giác điều khiển (nét đứt), tay nắm (đoạn $\mathbf{p}_0\mathbf{p}_1$, $\mathbf{p}_2\mathbf{p}_3$) và các ô vuông nhỏ đánh dấu điểm điều khiển, tô màu khác cho điểm đang chọn. Để mượt khi kéo, có thể chỉ vẽ lại các đoạn chứa điểm vừa thay đổi (nhờ tính cục bộ của đường ghép) và dùng bộ đệm kép (double buffering) để tránh nhấp nháy.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
 \caption{Xử lý kéo một điểm điều khiển trong giao diện Bézier bậc 3}
 \label{alg:w5_ui}
 \begin{algorithmic}[1]
@@ -436,7 +436,7 @@ ngược lại $\mathbf{p}_1 = \mathbf{P}_0 + \mathbf{D}_0/3$, $\mathbf{p}_2 = \
 \end{equation}
 với $M_B$ là ma trận Bézier ở mục~\ref{subsec:w5_cubic}.
 
-\textbf{So sánh tính chất của hai phương trình.} Lấy các tính chất (a)--(f) của Bézier trên slide 5--8~\citep{dhmt_lec6} làm chuẩn và kiểm tra lần lượt trên phương trình Hermite:
+\textbf{So sánh tính chất của hai phương trình.} Lấy sáu tính chất (a)--(f) của đường cong Bézier~\citep{dhmt_lec6} làm chuẩn và kiểm tra lần lượt trên phương trình Hermite:
 \begin{center}
 \small
 \renewcommand{\arraystretch}{1.3}
@@ -457,7 +457,7 @@ Thuật toán tính & Đa thức, sai phân tiến & Thêm De Casteljau và chia
 \end{center}
 Kiểm tra (c): thay $\mathbf{D}_0 = 3(\mathbf{p}_1 - \mathbf{p}_0)$, $\mathbf{D}_1 = 3(\mathbf{p}_3 - \mathbf{p}_2)$, $\mathbf{P}_1 - \mathbf{P}_0 = \mathbf{p}_3 - \mathbf{p}_0$ vào công thức Hermite được $6(\mathbf{p}_3 - \mathbf{p}_0) - 12(\mathbf{p}_1 - \mathbf{p}_0) - 6(\mathbf{p}_3 - \mathbf{p}_2) = 6(\mathbf{p}_0 - 2\mathbf{p}_1 + \mathbf{p}_2)$, trùng với Bézier. Vậy hai phương trình cho cùng đường cong, chỉ khác cách ``đặt tham số điều khiển''.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=3.2]
     \begin{scope}
@@ -517,16 +517,16 @@ Hệ quả hình học & Không có tính bao lồi; đường cong có thể v�
 \end{itemize}
 
 % =====================================================================
-\subsection{Xác định một điểm nằm trong hay ngoài đa giác (góc độ máy tính)}
+\subsection{Xác định một điểm nằm trong hay ngoài đa giác}
 \label{subsec:w5_inside}
 
-\textit{Câu hỏi: Làm sao để máy tính xác định một điểm nằm bên trong hay bên ngoài một đa giác? (định lý Jordan)}
+\textit{Câu hỏi: Dựa trên định lý Jordan, máy tính xác định một điểm nằm bên trong hay bên ngoài một đa giác như thế nào?}
 
 Đa giác được lưu dưới dạng dãy đỉnh $V_0, V_1, \ldots, V_{m-1}$ (cạnh $V_iV_{i+1}$, chỉ số lấy theo mod $m$). Có ba cách tiêu chuẩn~\citep{hearn2011computer,hughes2014computer}.
 
 \textbf{1. Phép thử tia -- quy tắc chẵn lẻ (odd-even / ray casting)}~\citep{shimrat1962algorithm}. Từ điểm $Q(x_q, y_q)$ phóng tia nằm ngang về phía $+x$, đếm số cạnh bị tia cắt. Số lẻ thì $Q$ ở trong, số chẵn thì $Q$ ở ngoài. Cơ sở là định lý Jordan (mục~\ref{subsec:w5_jordan}). Cài đặt cần xử lý trường hợp tia đi qua đỉnh. Cách gọn là quy ước \emph{nửa mở}: cạnh $V_iV_j$ chỉ được tính khi $(y_i > y_q) \ne (y_j > y_q)$, tức là một đầu ở trên tia, đầu kia ở dưới hoặc trên tia. Với quy ước này, đỉnh không cực trị được đếm đúng một lần và đỉnh cực trị được đếm $0$ hoặc $2$ lần, đúng như phân tích ở mục~\ref{subsec:w5_shorten}.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
 \caption{Kiểm tra điểm trong đa giác bằng quy tắc chẵn lẻ}
 \label{alg:w5_pip}
 \begin{algorithmic}[1]
@@ -569,12 +569,12 @@ Hệ quả hình học & Không có tính bao lồi; đường cong có thể v�
 Kết hợp ba bước: $\mathbb{R}^2 \setminus C$ có đúng hai miền, phân biệt bởi $\pi$. Đây cũng chính là lý do phép thử tia ở mục~\ref{subsec:w5_inside} đúng: $Q$ ở trong khi và chỉ khi $\pi(Q) = 1$, bất kể chọn hướng tia nào.
 
 % =====================================================================
-\subsection{Vì sao lấp đầy các cặp giao điểm lẻ--chẵn ở bước L4 thì lấp được miền trong}
+\subsection{Vì sao tô các cặp giao điểm lẻ--chẵn thì lấp đầy được miền trong của đa giác}
 \label{subsec:w5_l4}
 
-\textit{Câu hỏi: Tại sao ở bước L4 (tô các đoạn nằm giữa từng cặp giao điểm thứ lẻ và thứ chẵn) thì ta lấp đầy được miền trong của đa giác? Liên hệ với định lý Jordan.}
+\textit{Câu hỏi: Trong phương pháp tô màu đa giác theo dòng quét, tại sao việc tô các điểm ảnh nằm giữa từng cặp giao điểm thứ lẻ và thứ chẵn trên mỗi dòng quét lại lấp đầy được miền trong của đa giác? Liên hệ với định lý Jordan.}
 
-Phương pháp tô màu theo dòng quét trên slide (mục 7.3.2)~\citep{dhmt_lec7} giả thiết dòng quét nằm ngang, hai dòng cách nhau 1 điểm ảnh, và \emph{miền trong được xác định theo định lý Jordan}:
+Phương pháp tô màu theo dòng quét~\citep{dhmt_lec7} giả thiết dòng quét nằm ngang, hai dòng cách nhau 1 điểm ảnh, và \emph{miền trong được xác định theo định lý Jordan}:
 \begin{enumerate}[label=L\arabic*.]
     \item Với mỗi dòng quét;
     \item xác định giao điểm của dòng quét với các cạnh của $S$;
@@ -591,23 +591,23 @@ Q \text{ ở trong} \iff 2k - j \text{ lẻ} \iff j \text{ lẻ}.
 Vậy các khoảng $(x_1, x_2), (x_3, x_4), \ldots$ (từ giao điểm thứ lẻ đến giao điểm thứ chẵn kế tiếp) nằm trong đa giác, còn các khoảng $(x_2, x_3), (x_4, x_5), \ldots$ và hai phía ngoài cùng nằm ngoài. Nói cách khác, khi đi dọc dòng quét từ trái sang phải, mỗi giao điểm là một lần ``vượt biên'' đổi trạng thái ngoài $\to$ trong $\to$ ngoài; bước L4 chỉ là áp dụng phép thử tia cho \emph{tất cả} điểm ảnh của dòng cùng lúc, với chi phí $O(k)$ thay vì kiểm tra từng điểm. Lặp lại cho mọi dòng quét từ $y_{\min}$ đến $y_{\max}$ là lấp kín miền trong. Điều kiện để lập luận đúng là mỗi lần vượt biên chỉ được đếm đúng một giao điểm, và đó là lý do phải xử lý đỉnh (mục~\ref{subsec:w5_shorten}).
 
 % =====================================================================
-\subsection{Trường hợp dòng quét \texorpdfstring{$i = 7$}{i = 7} trong ví dụ của slide}
+\subsection{Trường hợp dòng quét \texorpdfstring{$y = 7$}{y = 7} trong ví dụ tô màu đa giác}
 \label{subsec:w5_scan7}
 
-\textit{Câu hỏi: Trong ví dụ tô màu đa giác theo dòng quét (slide 7.3.4), nếu dòng quét $i = 7$ thì gặp trường hợp gì?}
+\textit{Câu hỏi: Cho đa giác có các đỉnh $P_1(6,8)$, $P_2(9,5)$, $P_3(9,1)$, $P_4(5,5)$, $P_5(1,2)$, $P_6(2,7)$, $P_7(4,8)$. Khi tô màu đa giác bằng phương pháp dòng quét, dòng quét $y = 7$ gặp trường hợp gì và được xử lý như thế nào?}
 
-\textbf{Dữ liệu ví dụ~\citep{dhmt_lec7}.} Đa giác $S$ có 7 đỉnh $P_1(6,8)$, $P_2(9,5)$, $P_3(9,1)$, $P_4(5,5)$, $P_5(1,2)$, $P_6(2,7)$, $P_7(4,8)$ và các cạnh $e_1 = P_1P_2$, $e_2 = P_2P_3$, \ldots, $e_7 = P_7P_1$ (Hình~\ref{fig:w5_example}). Trên slide, hai dòng quét được tô đỏ là $y = 5$ và $y = 7$: đó là hai dòng đi qua đỉnh và rơi vào các điểm yếu W1, W2 của phương pháp.
+\textbf{Dữ liệu}~\citep{dhmt_lec7}. Đa giác $S$ có 7 đỉnh $P_1(6,8)$, $P_2(9,5)$, $P_3(9,1)$, $P_4(5,5)$, $P_5(1,2)$, $P_6(2,7)$, $P_7(4,8)$ và các cạnh $e_1 = P_1P_2$, $e_2 = P_2P_3$, \ldots, $e_7 = P_7P_1$ (Hình~\ref{fig:w5_example}). Hai dòng quét $y = 5$ và $y = 7$ là hai dòng đặc biệt vì đi qua đỉnh của đa giác, rơi vào điểm yếu của phương pháp dòng quét cơ bản.
 
-\textbf{Dòng quét $y = 7$ đi qua đỉnh $P_6(2, 7)$}, gặp điểm yếu W2. $P_6$ nằm giữa $P_5(1,2)$ và $P_7(4,8)$, có $\Delta y_6 = 7 - 2 = 5 > 0$ và $\Delta y_7 = 8 - 7 = 1 > 0$, nên $\Delta y_6 \cdot \Delta y_7 > 0$: $P_6$ là \textbf{đỉnh không cực trị}, thuộc tình huống \emph{biên đi lên}. Dòng quét thực sự đi xuyên qua biên tại $P_6$ (cạnh $e_5$ ở dưới, cạnh $e_6$ ở trên).
+\textbf{Dòng quét $y = 7$ đi qua đỉnh $P_6(2, 7)$}, tức là gặp trường hợp dòng quét đi qua đỉnh của đa giác. $P_6$ nằm giữa $P_5(1,2)$ và $P_7(4,8)$, có $\Delta y_6 = 7 - 2 = 5 > 0$ và $\Delta y_7 = 8 - 7 = 1 > 0$, nên $\Delta y_6 \cdot \Delta y_7 > 0$: $P_6$ là \textbf{đỉnh không cực trị}, thuộc tình huống \emph{biên đi lên}. Dòng quét thực sự đi xuyên qua biên tại $P_6$ (cạnh $e_5$ ở dưới, cạnh $e_6$ ở trên).
 \begin{itemize}
     \item \emph{Nếu không xử lý:} cả $e_5$ và $e_6$ đều cắt dòng 7 tại $x = 2$, cùng với $e_1$ cắt tại $x = 7$, được 3 giao điểm $\{2, 2, 7\}$. Ghép cặp lẻ--chẵn cho đoạn $[2, 2]$ và giao điểm $7$ không có cặp: đoạn $(2, 7]$ nằm trong đa giác bị bỏ trống.
-    \item \emph{Sau khi tinh chỉnh dữ liệu (C2):} cạnh $e_5$ được rút ngắn từ $(1,2) \to (2,7)$ thành $(1,2) \to (2,6)$, tức \texttt{y\_upper} $= 6$, nên $e_5$ đã bị loại khỏi AEL ở dòng 6. Tại dòng 7, ET[7] thêm $e_6$ vào AEL; AEL sau khi sắp xếp là $e_6$ (\texttt{x\_int} $= 2$), $e_1$ (\texttt{x\_int} $= 7$). Đúng 2 giao điểm, tô đoạn $[2, 7]$ (mũi tên đỏ trên slide). Sau đó cập nhật $e_6$: $x = 2 + 2 = 4$, $e_1$: $x = 7 - 1 = 6$, cho dòng 8 đoạn $[4, 6]$.
+    \item \emph{Sau khi tinh chỉnh dữ liệu đầu vào} (bỏ cạnh nằm ngang, rút ngắn cạnh tại đỉnh không cực trị): cạnh $e_5$ được rút ngắn từ $(1,2) \to (2,7)$ thành $(1,2) \to (2,6)$, tức \texttt{y\_upper} $= 6$, nên $e_5$ đã bị loại khỏi AEL ở dòng 6. Tại dòng 7, ET[7] thêm $e_6$ vào AEL; AEL sau khi sắp xếp là $e_6$ (\texttt{x\_int} $= 2$), $e_1$ (\texttt{x\_int} $= 7$). Đúng 2 giao điểm, tô đoạn $[2, 7]$. Sau đó cập nhật $e_6$: $x = 2 + 2 = 4$, $e_1$: $x = 7 - 1 = 6$, cho dòng 8 đoạn $[4, 6]$.
 \end{itemize}
-\textbf{Cạnh nằm ngang ở dòng 8.} Ngay phía trên, dòng 8 chứa cạnh nằm ngang $e_7 = P_7P_1$ (điểm yếu W1). Cạnh này đã bị loại khỏi dữ liệu; hai đầu $P_7$, $P_1$ cùng với $e_6$, $e_1$ tạo một đỉnh cực đại ``phẳng'' nên không rút ngắn, và dòng 8 được tô bằng cặp $(e_6, e_1)$ là $[4, 6]$, phủ đúng cạnh $e_7$.
+\textbf{Cạnh nằm ngang ở dòng 8.} Ngay phía trên, dòng 8 chứa cạnh nằm ngang $e_7 = P_7P_1$, là trường hợp dòng quét trùng với cạnh song song với $Ox$. Cạnh này đã bị loại khỏi dữ liệu; hai đầu $P_7$, $P_1$ cùng với $e_6$, $e_1$ tạo một đỉnh cực đại ``phẳng'' nên không rút ngắn, và dòng 8 được tô bằng cặp $(e_6, e_1)$ là $[4, 6]$, phủ đúng cạnh $e_7$.
 
-\textbf{So sánh với dòng $y = 5$} (dòng đỏ còn lại trên slide): dòng này đi qua hai đỉnh cùng lúc. $P_2(9,5)$ có $\Delta y = 5 - 8 < 0$ và $1 - 5 < 0$: không cực trị, biên đi xuống, nên $e_2$ được rút ngắn thành $(9,4) \to (9,1)$ và tại dòng 5 chỉ còn $e_1$ cho giao điểm $x = 9$. $P_4(5,5)$ có $\Delta y = 5 - 1 > 0$ và $2 - 5 < 0$: là \emph{đỉnh cực đại}, giữ nguyên hai giao điểm $x = 5$ của $e_3$ và $e_4$. AEL dòng 5 cho $\{1.6, 5, 5, 9\}$, tô $[2, 5]$ và $[5, 9]$, tức là liền một đoạn $[2, 9]$, đúng vì $P_4$ nằm bên trong miền tô ở dòng đó. Như vậy dòng 5 minh họa đủ hai loại đỉnh, còn dòng 7 minh họa đỉnh không cực trị đi lên.
+\textbf{So sánh với dòng $y = 5$:} dòng này đi qua hai đỉnh cùng lúc. $P_2(9,5)$ có $\Delta y = 5 - 8 < 0$ và $1 - 5 < 0$: không cực trị, biên đi xuống, nên $e_2$ được rút ngắn thành $(9,4) \to (9,1)$ và tại dòng 5 chỉ còn $e_1$ cho giao điểm $x = 9$. $P_4(5,5)$ có $\Delta y = 5 - 1 > 0$ và $2 - 5 < 0$: là \emph{đỉnh cực đại}, giữ nguyên hai giao điểm $x = 5$ của $e_3$ và $e_4$. AEL dòng 5 cho $\{1.6, 5, 5, 9\}$, tô $[2, 5]$ và $[5, 9]$, tức là liền một đoạn $[2, 9]$, đúng vì $P_4$ nằm bên trong miền tô ở dòng đó. Như vậy dòng 5 minh họa đủ hai loại đỉnh, còn dòng 7 minh họa đỉnh không cực trị đi lên.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=0.62]
     \foreach \px/\py/\qx/\qy in {9/1/9/1, 1/2/1/2, 8/2/9/2, 2/3/2/3, 7/3/9/3, 2/4/3/4, 6/4/9/4, 2/5/9/5, 2/6/8/6, 2/7/7/7, 4/8/6/8}
@@ -626,11 +626,11 @@ Vậy các khoảng $(x_1, x_2), (x_3, x_4), \ldots$ (từ giao điểm thứ l�
     \foreach \x/\y/\n in {7.8/6.8/e_1, 9.5/2.6/e_2, 7.2/2.7/e_3, 3.1/3.0/e_4, 1.1/4.6/e_5, 2.9/7.9/e_6, 5/8.4/e_7}
         \node[font=\scriptsize, fill=white, inner sep=1pt] at (\x,\y) {$\n$};
 \end{tikzpicture}
-\caption{Ví dụ trên slide 7.3.4: đa giác $P_1 \ldots P_7$, các điểm ảnh được tô (ô xanh, với đoạn $[\lceil x_{2j-1}\rceil, \lfloor x_{2j}\rfloor]$), hai cạnh sau khi rút ngắn $e_5$, $e_2$ (nét xanh đậm) và hai dòng quét đặc biệt $y = 5$, $y = 7$}
+\caption{Ví dụ tô màu đa giác theo dòng quét: đa giác $P_1 \ldots P_7$, các điểm ảnh được tô (ô xanh, với đoạn $[\lceil x_{2j-1}\rceil, \lfloor x_{2j}\rfloor]$), hai cạnh sau khi rút ngắn $e_5$, $e_2$ (nét xanh đậm) và hai dòng quét đặc biệt $y = 5$, $y = 7$}
 \label{fig:w5_example}
 \end{figure}
 
-\textbf{Toàn bộ quá trình tô} theo giải thuật ET--AEL (mục~\ref{subsec:w5_ael}) với bảng cạnh ET[1] $= \{e_2: (4, 9, 0),\ e_3: (5, 9, -1)\}$, ET[2] $= \{e_4: (5, 1, \tfrac43),\ e_5: (6, 1, \tfrac15)\}$, ET[5] $= \{e_1: (8, 9, -1)\}$, ET[7] $= \{e_6: (8, 2, 2)\}$ (bộ ba \texttt{y\_upper}, \texttt{x\_int}, \texttt{reci\_slope}, khớp với slide):
+\textbf{Toàn bộ quá trình tô} theo giải thuật ET--AEL (mục~\ref{subsec:w5_ael}) với bảng cạnh ET[1] $= \{e_2: (4, 9, 0),\ e_3: (5, 9, -1)\}$, ET[2] $= \{e_4: (5, 1, \tfrac43),\ e_5: (6, 1, \tfrac15)\}$, ET[5] $= \{e_1: (8, 9, -1)\}$, ET[7] $= \{e_6: (8, 2, 2)\}$ (bộ ba \texttt{y\_upper}, \texttt{x\_int}, \texttt{reci\_slope})~\citep{dhmt_lec7}:
 \begin{center}
 \small
 \renewcommand{\arraystretch}{1.2}
@@ -654,7 +654,7 @@ $y$ & \textbf{AEL đã sắp xếp (\texttt{x\_int})} & \textbf{Đoạn tô} & \
 
 \textit{Câu hỏi: Nêu cách rút ngắn cạnh trong trường hợp đỉnh không cực trị (chia ra 2 tình huống). Rút ngắn để làm gì?}
 
-Theo hình vẽ trên bảng, với đỉnh $P_i$ và hai đỉnh kề $P_{i-1}, P_{i+1}$, đặt $\Delta y_i = y_i - y_{i-1}$, $\Delta y_{i+1} = y_{i+1} - y_i$. Đỉnh $P_i$ \emph{không cực trị} khi $\Delta y_i \cdot \Delta y_{i+1} > 0$, gồm hai tình huống (Hình~\ref{fig:w5_vertex}):
+Với đỉnh $P_i$ và hai đỉnh kề $P_{i-1}, P_{i+1}$, đặt $\Delta y_i = y_i - y_{i-1}$, $\Delta y_{i+1} = y_{i+1} - y_i$. Đỉnh $P_i$ \emph{không cực trị} khi $\Delta y_i \cdot \Delta y_{i+1} > 0$, gồm hai tình huống (Hình~\ref{fig:w5_vertex}):
 
 \begin{enumerate}
     \item \textbf{Biên đi lên} ($\Delta y_i > 0$ và $\Delta y_{i+1} > 0$): $P_{i-1}$ ở dưới, $P_{i+1}$ ở trên. Cạnh nằm dưới đỉnh là $P_{i-1}P_i$ (cạnh đang xét). Rút ngắn đầu trên của nó một đơn vị: $y_{\text{upper}}(P_{i-1}P_i) = y_i - 1$.
@@ -662,9 +662,9 @@ Theo hình vẽ trên bảng, với đỉnh $P_i$ và hai đỉnh kề $P_{i-1},
 \end{enumerate}
 Trong cả hai tình huống ta rút ngắn \emph{cạnh nằm dưới đỉnh} ở đầu trên của nó, đúng như quy ước của Hearn \& Baker: duyệt cạnh theo thứ tự quanh đa giác, nếu tung độ tăng đơn điệu thì giảm đầu trên của cạnh hiện tại, nếu giảm đơn điệu thì giảm đầu trên của cạnh kế tiếp~\citep{hearn2011computer}. Cách tương đương là tăng đầu dưới của cạnh nằm trên đỉnh thêm 1 (khi đó phải cập nhật luôn $x$ tại đầu dưới: $x \mathrel{+}= 1/m$).
 
-\textbf{Trong ví dụ của slide}~\citep{dhmt_lec7} (Hình~\ref{fig:w5_example}), bước tinh chỉnh dữ liệu C2 cho đúng hai trường hợp: tại $P_2(9,5)$ biên đi xuống, cạnh dưới $e_2: (9,5) \to (9,1)$ thành $(9,4) \to (9,1)$; tại $P_6(2,7)$ biên đi lên, cạnh dưới $e_5: (1,2) \to (2,7)$ thành $(1,2) \to (2,6)$. Slide giữ nguyên hoành độ $2$ ở đầu mút mới của $e_5$ (giá trị đúng trên cạnh là $1.8$); điều này không ảnh hưởng kết quả vì AEL chỉ dùng \texttt{y\_upper} của đầu trên, còn \texttt{x\_int} xuất phát từ đầu dưới. Các đỉnh $P_1, P_3, P_4, P_5, P_7$ đều là cực trị (sau khi bỏ cạnh ngang $e_7$) nên giữ nguyên.
+\textbf{Trong ví dụ ở mục~\ref{subsec:w5_scan7}} (Hình~\ref{fig:w5_example}), bước tinh chỉnh dữ liệu đầu vào cho đúng hai trường hợp: tại $P_2(9,5)$ biên đi xuống, cạnh dưới $e_2: (9,5) \to (9,1)$ thành $(9,4) \to (9,1)$; tại $P_6(2,7)$ biên đi lên, cạnh dưới $e_5: (1,2) \to (2,7)$ thành $(1,2) \to (2,6)$. Tài liệu~\citep{dhmt_lec7} giữ nguyên hoành độ $2$ ở đầu mút mới của $e_5$ (giá trị đúng trên cạnh là $1.8$); điều này không ảnh hưởng kết quả vì AEL chỉ dùng \texttt{y\_upper} của đầu trên, còn \texttt{x\_int} xuất phát từ đầu dưới. Các đỉnh $P_1, P_3, P_4, P_5, P_7$ đều là cực trị (sau khi bỏ cạnh ngang $e_7$) nên giữ nguyên.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=0.85, >=stealth]
     % local min
@@ -722,7 +722,7 @@ Vì với đỉnh cực trị, việc đếm 2 giao điểm \emph{đã đúng s�
     \item Với đỉnh cực trị nằm ở ngoài (ví dụ đỉnh nhọn thấp nhất), cặp giao điểm $(x_i, x_i)$ cho một đoạn tô dài $0$, tức là chỉ tô đúng điểm đỉnh, là kết quả mong muốn. Với đỉnh cực trị lõm vào trong (đỉnh của chữ V ngược bên trong đa giác), hai giao điểm trùng nhau tách một đoạn tô thành hai đoạn liền kề, cũng không sai.
     \item Nếu rút ngắn ở đỉnh cực trị thì sẽ còn 1 giao điểm (khi rút một cạnh) hoặc 0 giao điểm (khi rút cả hai). Trường hợp 1 giao điểm làm sai tính chẵn lẻ, giống lỗi ta đang tránh. Trường hợp 0 giao điểm vẫn đúng tính chẵn lẻ nhưng làm mất điểm ảnh ở đỉnh.
 \end{itemize}
-Tóm lại, mục tiêu là \emph{số giao điểm phản ánh đúng số lần vượt biên}: đỉnh cực trị có 2 cạnh cho 2 giao điểm khớp với 0/2 lần vượt biên nên giữ nguyên; đỉnh không cực trị có 2 cạnh nhưng chỉ 1 lần vượt biên nên phải bớt 1. Ngoài ra, việc kiểm tra cực trị chỉ cần dấu của tích $\Delta y_i \cdot \Delta y_{i+1}$ (hình vẽ trên bảng), thực hiện một lần khi lập bảng cạnh, không tốn chi phí trong vòng quét.
+Tóm lại, mục tiêu là \emph{số giao điểm phản ánh đúng số lần vượt biên}: đỉnh cực trị có 2 cạnh cho 2 giao điểm khớp với 0/2 lần vượt biên nên giữ nguyên; đỉnh không cực trị có 2 cạnh nhưng chỉ 1 lần vượt biên nên phải bớt 1. Ngoài ra, việc kiểm tra cực trị chỉ cần dấu của tích $\Delta y_i \cdot \Delta y_{i+1}$, thực hiện một lần khi lập bảng cạnh, không tốn chi phí trong vòng quét.
 
 % =====================================================================
 \subsection{Ý nghĩa từng trường trong cấu trúc AEL}
@@ -730,7 +730,7 @@ Tóm lại, mục tiêu là \emph{số giao điểm phản ánh đúng số lầ
 
 \textit{Câu hỏi: Giải thích mỗi trường trong cấu trúc dữ liệu AEL (Active Edge List) của thuật toán tô màu theo dòng quét.}
 
-Theo slide 7.3.3~\citep{dhmt_lec7} (bản tiếng Việt chiếu trên lớp là mục 3.2.2, 3.1):
+Cấu trúc AEL được định nghĩa như sau~\citep{dhmt_lec7}:
 \begin{verbatim}
 struct AEL {
     int   y_upper;     // tung do lon nhat cua canh (sau khi da rut ngan)
@@ -742,17 +742,17 @@ struct AEL {
 \begin{itemize}
     \item \texttt{y\_upper}: dòng quét cuối cùng mà cạnh còn cắt. Khi dòng quét $y$ vượt quá \texttt{y\_upper}, cạnh bị loại khỏi danh sách. Đây là trường nhận kết quả của việc rút ngắn cạnh ($y_i - 1$) ở mục~\ref{subsec:w5_shorten}. Lưu dạng số nguyên vì dòng quét là số nguyên.
     \item \texttt{x\_int}: hoành độ giao điểm (intersection) của cạnh với dòng quét đang xử lý. Khi cạnh được đưa vào AEL, giá trị khởi tạo là hoành độ đầu dưới của cạnh. Sau mỗi dòng quét được cập nhật tăng dần. Lưu số thực vì giao điểm thường không nguyên; khi tô thì làm tròn (đầu trái làm tròn lên, đầu phải làm tròn xuống) để không tô ra ngoài biên.
-    \item \texttt{reci\_slope}: $1/m = \Delta x / \Delta y$. Khi dòng quét tăng $1$ thì $x$ trên cạnh tăng đúng $1/m$, nên \texttt{x\_int += reci\_slope}: tính giao điểm mới chỉ bằng một phép cộng, không cần giải lại phương trình đường thẳng (cùng tư tưởng gia số như DDA ở tuần 4). Dùng nghịch đảo hệ số góc thay vì $m$ vì cạnh thẳng đứng có $1/m = 0$ hợp lệ, còn cạnh nằm ngang ($m = 0$) đã bị loại khỏi danh sách.
+    \item \texttt{reci\_slope}: $1/m = \Delta x / \Delta y$. Khi dòng quét tăng $1$ thì $x$ trên cạnh tăng đúng $1/m$, nên \texttt{x\_int += reci\_slope}: tính giao điểm mới chỉ bằng một phép cộng, không cần giải lại phương trình đường thẳng (cùng tư tưởng gia số như phương pháp gia số ở mục~\ref{subsec:w4_dda}). Dùng nghịch đảo hệ số góc thay vì $m$ vì cạnh thẳng đứng có $1/m = 0$ hợp lệ, còn cạnh nằm ngang ($m = 0$) đã bị loại khỏi danh sách.
     \item \texttt{next}: danh sách liên kết, vì số cạnh hoạt động thay đổi liên tục (thêm cạnh mới khi dòng quét chạm đầu dưới, xóa khi vượt đầu trên). Danh sách được giữ \emph{sắp xếp theo} \texttt{x\_int} tăng dần để bước L4 ghép cặp lẻ--chẵn trực tiếp. Do các cạnh trong đa giác đơn không cắt nhau, thứ tự này ít thay đổi giữa hai dòng liên tiếp, nên sắp xếp chèn (insertion sort) gần như $O(k)$.
 \end{itemize}
 
-\textbf{AEL trong toàn bộ thuật toán.} AEL đi kèm bảng cạnh ET (Edge Table), khai báo trên slide là \texttt{struct AEL *ET[MAX\_LINES]}: phần tử $ET[y]$ trỏ tới danh sách các cạnh có \emph{đỉnh thấp} (đầu dưới) nằm trên dòng quét $y$; mỗi phần tử dùng cùng cấu trúc trên, với \texttt{x\_int} khởi tạo bằng hoành độ đầu dưới. ET được lập sau bước tinh chỉnh dữ liệu (bỏ cạnh song song $Ox$, rút ngắn cạnh tại đỉnh không cực trị). Giải thuật trên slide~\citep{dhmt_lec7}, con trỏ \texttt{Beglist} trỏ tới đầu danh sách AEL:
+\textbf{AEL trong toàn bộ thuật toán.} AEL đi kèm bảng cạnh ET (Edge Table), được khai báo là \texttt{struct AEL *ET[MAX\_LINES]}: phần tử $ET[y]$ trỏ tới danh sách các cạnh có \emph{đỉnh thấp} (đầu dưới) nằm trên dòng quét $y$; mỗi phần tử dùng cùng cấu trúc trên, với \texttt{x\_int} khởi tạo bằng hoành độ đầu dưới. ET được lập sau bước tinh chỉnh dữ liệu (bỏ cạnh song song $Ox$, rút ngắn cạnh tại đỉnh không cực trị). Giải thuật tô màu dựa trên ET và AEL~\citep{dhmt_lec7}, với con trỏ \texttt{Beglist} trỏ tới đầu danh sách AEL:
 \begin{enumerate}[label=L\arabic*.]
     \item Lặp với mỗi dòng quét $y$ từ \texttt{MIN\_Y} đến \texttt{MAX\_Y}:
     \item \quad nếu $ET[y] \ne$ \texttt{NIL} thì
     \item \quad\quad thêm các cạnh do $ET[y]$ trỏ tới vào AEL (\texttt{Beglist});
     \item \quad nếu \texttt{Beglist} $\ne$ \texttt{NIL} thì: sắp xếp AEL theo \texttt{x\_int} tăng dần; tô các điểm ảnh giữa từng cặp giao điểm lẻ--chẵn trên dòng $y$; xóa khỏi AEL các cạnh có \texttt{y\_upper} $= y$; cập nhật \texttt{x\_int += reci\_slope} cho các cạnh còn lại.
 \end{enumerate}
-(Slide đánh số dòng kết thúc vòng lặp cũng là L4.) Bảng ở mục~\ref{subsec:w5_scan7} cho thấy trạng thái AEL qua từng dòng của ví dụ trên slide. Thứ tự ``xóa rồi mới cập nhật'' quan trọng: cạnh có \texttt{y\_upper} $= y$ vẫn tham gia tô ở dòng $y$, rồi mới bị loại, nên đầu trên của cạnh không bị mất.
+Bảng ở mục~\ref{subsec:w5_scan7} cho thấy trạng thái AEL qua từng dòng quét của ví dụ. Thứ tự ``xóa rồi mới cập nhật'' quan trọng: cạnh có \texttt{y\_upper} $= y$ vẫn tham gia tô ở dòng $y$, rồi mới bị loại, nên đầu trên của cạnh không bị mất.
 
-\textbf{Nhận xét (chuẩn G5).} ET là cấu trúc sắp xếp theo thùng (bucket sort) theo $y$, AEL là danh sách động theo $x$. Hai cấu trúc này biến bài toán ``tìm giao điểm của mọi cạnh với mọi dòng quét'' ($O(\text{số cạnh} \times \text{số dòng})$) thành chỉ xử lý các cạnh đang hoạt động, mỗi bước một phép cộng. Đây là ví dụ điển hình của việc khai thác \emph{tính liên kết} (coherence) giữa các dòng quét liên tiếp trong hệ thống đồ họa.
+\textbf{Nhận xét.} ET là cấu trúc sắp xếp theo thùng (bucket sort) theo $y$, AEL là danh sách động theo $x$. Hai cấu trúc này biến bài toán ``tìm giao điểm của mọi cạnh với mọi dòng quét'' ($O(\text{số cạnh} \times \text{số dòng})$) thành chỉ xử lý các cạnh đang hoạt động, mỗi bước một phép cộng. Đây là ví dụ điển hình của việc khai thác \emph{tính liên kết} (coherence) giữa các dòng quét liên tiếp trong hệ thống đồ họa.

@@ -1,7 +1,6 @@
 \section{Tuần 6: Cải tiến Tô màu theo Dòng quét và Các phép Biến đổi Hình học 2D, 3D}
 \label{sec:week6}
 
-% Các trang slide được nhắc tới (6, 10, 15, 28, 29) là của Lecture 9: Geometric Transformations.
 
 % =====================================================================
 \subsection{Tô màu theo dòng quét nghiêng một góc \texorpdfstring{$\alpha$}{alpha}, khoảng cách giữa hai dòng là \texorpdfstring{$a$}{a} điểm ảnh}
@@ -9,7 +8,7 @@
 
 \textit{Câu hỏi: Cải tiến thuật toán tô màu theo dòng quét khi các dòng quét nghiêng một góc $\alpha$ so với trục $Ox$ và khoảng cách giữa hai dòng quét liên tiếp là $a$ điểm ảnh (tô gạch chéo -- hatching).}
 
-Phương pháp gốc trên slide 7.3.1~\citep{dhmt_lec7} giả thiết \emph{dòng quét nằm ngang} và \emph{hai dòng quét cách nhau 1 điểm ảnh}; câu hỏi này bỏ cả hai giả thiết.
+Phương pháp tô màu theo dòng quét cơ bản~\citep{dhmt_lec7} giả thiết \emph{dòng quét nằm ngang} và \emph{hai dòng quét cách nhau 1 điểm ảnh}; câu hỏi này bỏ cả hai giả thiết.
 
 \textbf{Ý tưởng: đổi hệ tọa độ để dòng quét nghiêng trở thành dòng quét ngang.} Gọi $\mathbf{d} = (\cos\alpha, \sin\alpha)$ là vector chỉ phương của dòng quét và $\mathbf{n} = (-\sin\alpha, \cos\alpha)$ là pháp tuyến đơn vị. Với mỗi điểm $P(x, y)$ đặt
 \begin{equation}
@@ -20,12 +19,12 @@ tức là $(t, s)$ là ảnh của $(x, y)$ qua phép quay $R(-\alpha)$ (mục~\
 \textbf{Thuật toán.}
 \begin{enumerate}
     \item Quay mọi đỉnh: $(t_i, s_i) = R(-\alpha)(x_i, y_i)$.
-    \item Chạy thuật toán dòng quét của tuần 5 trong hệ $(t, s)$ với các thay đổi: dòng quét là $s_k = s_{\min} + k\,a$, $k = 0, 1, \ldots$ (bước $a$ thay vì $1$); bảng cạnh ET phân thùng theo chỉ số dòng $k = \lceil (s_{\text{lower}} - s_{\min}) / a \rceil$; trong AEL, \texttt{y\_upper} thay bằng $s_{\text{upper}}$ (số thực) hoặc chỉ số dòng cuối cùng, \texttt{x\_int} thay bằng $t_{\text{int}}$, và \texttt{reci\_slope} thay bằng $a \cdot \frac{\Delta t}{\Delta s}$ (vì mỗi bước $s$ tăng $a$). Quy tắc xử lý đỉnh và ghép cặp lẻ--chẵn giữ nguyên.
+    \item Chạy thuật toán dòng quét (mục~\ref{subsec:w5_ael}) trong hệ $(t, s)$ với các thay đổi: dòng quét là $s_k = s_{\min} + k\,a$, $k = 0, 1, \ldots$ (bước $a$ thay vì $1$); bảng cạnh ET phân thùng theo chỉ số dòng $k = \lceil (s_{\text{lower}} - s_{\min}) / a \rceil$; trong AEL, \texttt{y\_upper} thay bằng $s_{\text{upper}}$ (số thực) hoặc chỉ số dòng cuối cùng, \texttt{x\_int} thay bằng $t_{\text{int}}$, và \texttt{reci\_slope} thay bằng $a \cdot \frac{\Delta t}{\Delta s}$ (vì mỗi bước $s$ tăng $a$). Quy tắc xử lý đỉnh và ghép cặp lẻ--chẵn giữ nguyên.
     \item Mỗi đoạn tô $[t_{2j-1}, t_{2j}]$ trên dòng $s_k$ được quay ngược về $(x, y)$ bằng $R(\alpha)$:
     \begin{equation}
     (x, y) = (t\cos\alpha - s_k\sin\alpha,\ t\sin\alpha + s_k\cos\alpha),
     \end{equation}
-    rồi vẽ đoạn thẳng nối hai đầu bằng Bresenham (tuần 4), vì sau khi quay ngược, đoạn tô là một đoạn thẳng nghiêng chứ không còn là dãy điểm ảnh liên tiếp trên một hàng.
+    rồi vẽ đoạn thẳng nối hai đầu bằng Bresenham (mục~\ref{subsec:w4_bres_vs_dda}), vì sau khi quay ngược, đoạn tô là một đoạn thẳng nghiêng chứ không còn là dãy điểm ảnh liên tiếp trên một hàng.
 \end{enumerate}
 
 \textbf{Nhận xét.} Với $\alpha = 0$, $a = 1$ thuật toán trở về dạng chuẩn. Chỉ có $2m$ phép quay cho $m$ đỉnh và hai phép quay cho mỗi đoạn tô; phần còn lại vẫn là gia số cộng như cũ. Không nên quay ảnh điểm ảnh sau khi tô ngang, vì phép quay ảnh rời rạc gây lỗ hổng và răng cưa. Kết hợp hai họ đường với $\alpha$ và $\alpha + 90^\circ$ được mẫu tô ô lưới chéo (cross-hatching), thường gặp trong bản vẽ kỹ thuật để ký hiệu mặt cắt vật liệu.
@@ -58,15 +57,15 @@ x \in \left[x_c - r_x\sqrt{1 - \tfrac{(y - y_c)^2}{r_y^2}},\ x_c + r_x\sqrt{1 - 
 
 \textit{Câu hỏi: Phép biến đổi hình học có vai trò gì trong đồ họa máy tính?}
 
-Phép biến đổi hình học là ánh xạ $\mathbf{P} \mapsto \mathbf{P}'$ thay đổi vị trí, hướng, kích thước, hình dạng của đối tượng. Trong tọa độ thuần nhất, mọi phép affine 2D được viết thành ma trận $3 \times 3$ (3D thành $4 \times 4$), nên một chuỗi phép biến đổi được gộp thành một ma trận duy nhất~\citep{hearn2011computer}. Slide 9.1~\citep{dhmt_lec9} định nghĩa phép affine 2D $w(X) = AX + T$ và nêu hai tính chất: biến đường thẳng song song thành đường thẳng song song, biến điểm hữu hạn thành điểm hữu hạn; mọi phép affine được sinh ra từ các phép cơ bản (quay, tỉ lệ, đối xứng, biến dạng -- shear, tịnh tiến). Vai trò:
+Phép biến đổi hình học là ánh xạ $\mathbf{P} \mapsto \mathbf{P}'$ thay đổi vị trí, hướng, kích thước, hình dạng của đối tượng. Trong tọa độ thuần nhất, mọi phép affine 2D được viết thành ma trận $3 \times 3$ (3D thành $4 \times 4$), nên một chuỗi phép biến đổi được gộp thành một ma trận duy nhất~\citep{hearn2011computer}. Phép affine 2D được định nghĩa là $w(X) = AX + T$~\citep{dhmt_lec9}, có hai tính chất: biến đường thẳng song song thành đường thẳng song song, biến điểm hữu hạn thành điểm hữu hạn; mọi phép affine được sinh ra từ các phép cơ bản (quay, tỉ lệ, đối xứng, biến dạng -- shear, tịnh tiến). Vai trò:
 \begin{enumerate}
-    \item \textbf{Mô hình hóa (modeling):} mô tả mỗi đối tượng một lần trong UCS rồi đặt vào WCS ở nhiều vị trí, hướng, kích thước khác nhau (instancing; nối với mục~\ref{subsec:w4_coord} của tuần 4). Đối tượng phân cấp (cánh tay robot, hệ Mặt Trời) được xây bằng tích các ma trận theo cây phân cấp.
+    \item \textbf{Mô hình hóa (modeling):} mô tả mỗi đối tượng một lần trong UCS rồi đặt vào WCS ở nhiều vị trí, hướng, kích thước khác nhau (instancing; xem mục~\ref{subsec:w4_coord}). Đối tượng phân cấp (cánh tay robot, hệ Mặt Trời) được xây bằng tích các ma trận theo cây phân cấp.
     \item \textbf{Quan sát (viewing):} chuyển cảnh từ WCS sang hệ tọa độ camera, chiếu xuống mặt phẳng, rồi ánh xạ cửa sổ -- khung nhìn sang DCS. Toàn bộ chuỗi chuyển đổi hệ tọa độ đã học đều là phép biến đổi.
     \item \textbf{Hoạt hình và mô phỏng:} chuyển động của vật thể chính là phép biến đổi phụ thuộc thời gian $M(t)$; ví dụ bánh xe vừa quay vừa tịnh tiến.
     \item \textbf{Tương tác:} kéo, xoay, phóng to đối tượng; zoom, pan khung nhìn (mục~\ref{subsec:w6_zoom}).
     \item \textbf{Hiệu quả tính toán:} biến đổi các điểm điều khiển thay vì từng điểm ảnh (tính bất biến affine, mục~\ref{subsec:w5_affine}); phần cứng GPU được thiết kế để nhân ma trận $4 \times 4$ với hàng triệu đỉnh mỗi khung hình.
 \end{enumerate}
-\textbf{Liên hệ AI (G4).} Tăng cường dữ liệu (data augmentation) cho mạng thị giác máy tính dùng chính các phép tịnh tiến, quay, tỉ lệ, lật, biến dạng ngẫu nhiên. Spatial Transformer Network học trực tiếp một ma trận affine $2 \times 3$ từ ảnh đầu vào để ``nắn thẳng'' đối tượng trước khi phân loại~\citep{jaderberg2015spatial}. NeRF dùng ma trận tư thế camera $4 \times 4$ để biến đổi tia từ hệ camera sang hệ thế giới khi tổng hợp ảnh từ góc nhìn mới~\citep{mildenhall2020nerf}.
+\textbf{Ứng dụng trong trí tuệ nhân tạo.} Tăng cường dữ liệu (data augmentation) cho mạng thị giác máy tính dùng chính các phép tịnh tiến, quay, tỉ lệ, lật, biến dạng ngẫu nhiên. Spatial Transformer Network học trực tiếp một ma trận affine $2 \times 3$ từ ảnh đầu vào để ``nắn thẳng'' đối tượng trước khi phân loại~\citep{jaderberg2015spatial}. NeRF dùng ma trận tư thế camera $4 \times 4$ để biến đổi tia từ hệ camera sang hệ thế giới khi tổng hợp ảnh từ góc nhìn mới~\citep{mildenhall2020nerf}.
 
 % =====================================================================
 \subsection{Phép tịnh tiến 2D: ý nghĩa và ứng dụng}
@@ -94,14 +93,14 @@ Phép biến đổi hình học là ánh xạ $\mathbf{P} \mapsto \mathbf{P}'$ t
 \subsection{Phép quay quanh một tâm bất kỳ}
 \label{subsec:w6_rot_pivot}
 
-\textit{Câu hỏi: Khi có phép quay quanh tâm $O$ thì dùng công thức ở slide 6; còn phép quay quanh một tâm bất kỳ thì phải làm sao?}
+\textit{Câu hỏi: Phép quay một góc $\theta$ quanh gốc tọa độ $O$ có ma trận $R(\theta)$. Làm thế nào để thực hiện phép quay một góc $\theta$ quanh một tâm $C(x_c, y_c)$ bất kỳ?}
 
-\textbf{Quay quanh gốc $O$ góc $\theta$} (ngược chiều kim đồng hồ), slide 6~\citep{dhmt_lec9}:
+\textbf{Quay quanh gốc $O$ góc $\theta$} (ngược chiều kim đồng hồ)~\citep{dhmt_lec9}:
 \begin{equation}
 R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix}.
 \end{equation}
 
-\textbf{Quay quanh tâm $C(x_c, y_c)$ bất kỳ} thực hiện bằng ba bước (đúng như lời giải trên bảng):
+\textbf{Quay quanh tâm $C(x_c, y_c)$ bất kỳ} thực hiện bằng ba bước:
 \begin{enumerate}
     \item Tịnh tiến $C$ về gốc: $T(-x_c, -y_c)$.
     \item Quay quanh gốc: $R(\theta)$.
@@ -134,15 +133,15 @@ S_C(s_x, s_y) &= T(x_c, y_c)\,S(s_x, s_y)\,T(-x_c, -y_c)
 &= \begin{bmatrix} s_x & 0 & x_c - s_x x_c \\ 0 & s_y & y_c - s_y y_c \\ 0 & 0 & 1 \end{bmatrix}
 = \begin{bmatrix} s_x & 0 & x_c(1 - s_x) \\ 0 & s_y & y_c(1 - s_y) \\ 0 & 0 & 1 \end{bmatrix},
 \end{align}
-khớp với kết quả trên bảng. Tức là $x' = x_c + s_x(x - x_c)$, $y' = y_c + s_y(y - y_c)$: khoảng cách tới $C$ theo mỗi trục được nhân với hệ số tương ứng. $|s| < 1$ là co, $|s| > 1$ là giãn, $s_x = s_y$ là phép vị tự (giữ hình dạng), $s < 0$ thêm phép lật. Tâm $C$ thường được chọn là tâm của đối tượng (để phóng to tại chỗ) hoặc là vị trí con trỏ chuột (zoom theo con trỏ, mục~\ref{subsec:w6_zoom}). Nếu muốn co giãn theo hai trục nghiêng góc $\varphi$, ghép thêm phép quay: $T(C)\,R(\varphi)\,S(s_x, s_y)\,R(-\varphi)\,T(-C)$.
+tức là $x' = x_c + s_x(x - x_c)$, $y' = y_c + s_y(y - y_c)$: khoảng cách tới $C$ theo mỗi trục được nhân với hệ số tương ứng. $|s| < 1$ là co, $|s| > 1$ là giãn, $s_x = s_y$ là phép vị tự (giữ hình dạng), $s < 0$ thêm phép lật. Tâm $C$ thường được chọn là tâm của đối tượng (để phóng to tại chỗ) hoặc là vị trí con trỏ chuột (zoom theo con trỏ, mục~\ref{subsec:w6_zoom}). Nếu muốn co giãn theo hai trục nghiêng góc $\varphi$, ghép thêm phép quay: $T(C)\,R(\varphi)\,S(s_x, s_y)\,R(-\varphi)\,T(-C)$.
 
 % =====================================================================
 \subsection{Phép đối xứng qua một trục bất kỳ}
 \label{subsec:w6_reflect}
 
-\textit{Câu hỏi: Slide 8--10 cho phép đối xứng qua $Ox$, $Oy$ và qua tâm $O$ (slide 10). Hãy tìm phép đối xứng qua một trục bất kỳ.}
+\textit{Câu hỏi: Từ các phép đối xứng qua trục $Ox$, trục $Oy$ và qua tâm $O$, hãy tìm ma trận của phép đối xứng qua một trục bất kỳ.}
 
-\textbf{Các phép đối xứng cơ bản trên slide~\citep{dhmt_lec9}:} qua trục $Ox$: $MIR(Ox) = \operatorname{diag}(1, -1, 1)$ (slide 8); qua trục $Oy$: $MIR(Oy) = \operatorname{diag}(-1, 1, 1)$ (slide 9); qua tâm $O$: $MIR(O) = \operatorname{diag}(-1, -1, 1)$ (slide 10), cũng chính là phép quay $180^\circ$ quanh $O$ và bằng $MIR(Ox)\,MIR(Oy)$. Các trục và tâm này đều đi qua gốc. Muốn đối xứng qua trục hay tâm bất kỳ, ta dùng cùng kỹ thuật như quay quanh tâm bất kỳ: \emph{đưa trục (tâm) về vị trí chuẩn, đối xứng, rồi đưa trả về}.
+\textbf{Các phép đối xứng cơ bản}~\citep{dhmt_lec9}: qua trục $Ox$: $MIR(Ox) = \operatorname{diag}(1, -1, 1)$; qua trục $Oy$: $MIR(Oy) = \operatorname{diag}(-1, 1, 1)$; qua tâm $O$: $MIR(O) = \operatorname{diag}(-1, -1, 1)$, cũng chính là phép quay $180^\circ$ quanh $O$ và bằng $MIR(Ox)\,MIR(Oy)$. Các trục và tâm này đều đi qua gốc. Muốn đối xứng qua trục hay tâm bất kỳ, ta dùng cùng kỹ thuật như quay quanh tâm bất kỳ: \emph{đưa trục (tâm) về vị trí chuẩn, đối xứng, rồi đưa trả về}.
 
 \textbf{Đối xứng qua tâm $C(x_c, y_c)$ bất kỳ:} $MIR(C) = T(x_c, y_c)\,MIR(O)\,T(-x_c, -y_c)$, tức $x' = 2x_c - x$, $y' = 2y_c - y$.
 
@@ -169,21 +168,21 @@ M = \frac{1}{a^2 + b^2}\begin{bmatrix} b^2 - a^2 & -2ab & -2ac \\ -2ab & a^2 - b
 Công thức này chỉ cần tích vô hướng, không cần hàm lượng giác (một ví dụ cho mục~\ref{subsec:w6_dot_cross}). Thay $a = m$, $b = -1$, $c = b_L$ (hệ số tự do của $L$) được lại $M_L$ ở trên.
 
 % =====================================================================
-\subsection{Vai trò của phép biến đổi trong slide trang 15}
+\subsection{Phép biến đổi từ hệ tọa độ thế giới thực sang hệ tọa độ hiển thị (WTV) và vai trò}
 \label{subsec:w6_slide15}
 
-\textit{Câu hỏi: Vai trò của phép biến đổi trong slide trang 15 (ma trận WTV -- biến đổi tọa độ thế giới thực sang tọa độ hiển thị).}
+\textit{Câu hỏi: Phép biến đổi từ hệ tọa độ thế giới thực sang hệ tọa độ hiển thị (window-to-viewport, WTV) được xây dựng như thế nào và có vai trò gì?}
 
 \textbf{Phép biến đổi cửa sổ -- khung nhìn (window-to-viewport, w2v).} Cửa sổ $[x_{w\min}, x_{w\max}] \times [y_{w\min}, y_{w\max}]$ là vùng của WCS mà ta muốn xem; khung nhìn $[x_{v\min}, x_{v\max}] \times [y_{v\min}, y_{v\max}]$ là vùng trên thiết bị nơi hiển thị. Yêu cầu: điểm ở cùng vị trí tương đối trong cửa sổ thì nằm ở cùng vị trí tương đối trong khung nhìn:
 \begin{equation}
 \frac{x_v - x_{v\min}}{x_{v\max} - x_{v\min}} = \frac{x_w - x_{w\min}}{x_{w\max} - x_{w\min}}, \qquad
 \frac{y_v - y_{v\min}}{y_{v\max} - y_{v\min}} = \frac{y_w - y_{w\min}}{y_{w\max} - y_{w\min}}.
 \end{equation}
-Slide 14--15~\citep{dhmt_lec9} xây dựng ma trận này bằng hai bước: (1) tịnh tiến $T(t_x, t_y)$ với $t_x = v_{\min}.x - w_{\min}.x$, $t_y = v_{\min}.y - w_{\min}.y$, đưa góc dưới trái của cửa sổ trùng góc dưới trái của khung nhìn; (2) co giãn $S(v_{\min}, s_x, s_y)$ \emph{với tâm} $v_{\min}$ (công thức ở mục~\ref{subsec:w6_scale_center}), với
+Ma trận này được xây dựng bằng hai bước~\citep{dhmt_lec9}: (1) tịnh tiến $T(t_x, t_y)$ với $t_x = v_{\min}.x - w_{\min}.x$, $t_y = v_{\min}.y - w_{\min}.y$, đưa góc dưới trái của cửa sổ trùng góc dưới trái của khung nhìn; (2) co giãn $S(v_{\min}, s_x, s_y)$ \emph{với tâm} $v_{\min}$ (công thức ở mục~\ref{subsec:w6_scale_center}), với
 \begin{equation}
 s_x = \frac{v_{\max}.x - v_{\min}.x}{w_{\max}.x - w_{\min}.x}, \qquad s_y = \frac{v_{\max}.y - v_{\min}.y}{w_{\max}.y - w_{\min}.y}.
 \end{equation}
-Nhân hai ma trận (slide 15):
+Nhân hai ma trận:
 \begin{align}
 WTV &= S(v_{\min}, s_x, s_y)\,T(t_x, t_y) \nonumber\\
 &= \begin{bmatrix} s_x & 0 & v_{\min}.x - s_x v_{\min}.x \\ 0 & s_y & v_{\min}.y - s_y v_{\min}.y \\ 0 & 0 & 1 \end{bmatrix}
@@ -195,7 +194,7 @@ Nếu DCS có trục $y$ hướng xuống (gốc ở góc trên trái), thay $y_
 
 \textbf{Vai trò.}
 \begin{itemize}
-    \item Cầu nối giữa thế giới thực số thực, không bị chặn (WCS) và thiết bị số nguyên, bị chặn (DCS), giải đáp câu hỏi ``làm sao hiển thị thế giới rất lớn trên màn hình hữu hạn'' của tuần 4.
+    \item Cầu nối giữa thế giới thực số thực, không bị chặn (WCS) và thiết bị số nguyên, bị chặn (DCS), giải đáp câu hỏi ``làm sao hiển thị thế giới rất lớn trên màn hình hữu hạn'' (mục~\ref{subsec:w4_display}).
     \item Làm chương trình \emph{độc lập thiết bị}: mô hình chỉ viết trong WCS, đổi kích thước cửa sổ ứng dụng hay đổi màn hình chỉ cần thay khung nhìn.
     \item Là nền tảng của mọi thao tác quan sát: thay đổi cửa sổ là zoom/pan, nhiều khung nhìn cho nhiều cửa sổ là bố cục chia màn hình (ví dụ bốn hình chiếu trong phần mềm CAD).
     \item Giữ tỉ lệ: nếu $s_x \ne s_y$ hình bị méo (đường tròn thành ellipse); muốn giữ hình dạng phải chọn cửa sổ và khung nhìn có cùng tỉ lệ khung hình.
@@ -210,7 +209,7 @@ Nếu DCS có trục $y$ hướng xuống (gốc ở góc trên trái), thay $y_
 Hệ thống đồ họa tương tác có hai luồng dữ liệu ngược chiều nhau:
 \begin{itemize}
     \item \textbf{Luồng xuất (w2v):} đối tượng trong WCS $\to$ điểm ảnh trên khung nhìn. Dùng khi vẽ.
-    \item \textbf{Luồng nhập (v2w):} tọa độ chuột, cảm ứng trong DCS $\to$ điểm trong WCS. Dùng khi người dùng chọn, tạo, kéo đối tượng (ví dụ hit-test điểm điều khiển Bézier ở mục~\ref{subsec:w5_ui}). Slide 16--17~\citep{dhmt_lec9} xây dựng $VTW = S(w_{\min}, s'_x, s'_y)\,T(w_{\min} - v_{\min})$ với $s'_x = \frac{w_{\max}.x - w_{\min}.x}{v_{\max}.x - v_{\min}.x} = 1/s_x$ (tương tự cho $y$), đối xứng hoàn toàn với WTV:
+    \item \textbf{Luồng nhập (v2w):} tọa độ chuột, cảm ứng trong DCS $\to$ điểm trong WCS. Dùng khi người dùng chọn, tạo, kéo đối tượng (ví dụ hit-test điểm điều khiển Bézier ở mục~\ref{subsec:w5_ui}). Tương tự, phép biến đổi ngược được xây dựng là $VTW = S(w_{\min}, s'_x, s'_y)\,T(w_{\min} - v_{\min})$ với $s'_x = \frac{w_{\max}.x - w_{\min}.x}{v_{\max}.x - v_{\min}.x} = 1/s_x$ (tương tự cho $y$)~\citep{dhmt_lec9}, đối xứng hoàn toàn với WTV:
     \begin{equation}
     VTW = \begin{bmatrix} s'_x & 0 & w_{\min}.x - s'_x v_{\min}.x \\ 0 & s'_y & w_{\min}.y - s'_y v_{\min}.y \\ 0 & 0 & 1 \end{bmatrix} = WTV^{-1}.
     \end{equation}
@@ -231,7 +230,7 @@ Ngoài ra v2w và w2v phải dùng cùng quy ước (trục $y$ của DCS hướ
 
 Zoom không thay đổi mô hình hay khung nhìn, mà chỉ \emph{thay đổi cửa sổ} rồi tính lại w2v. Cửa sổ nhỏ đi thì vật hiện ra to hơn (phóng to) và ngược lại.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
 \caption{Toán tử \textsc{Zoom}}
 \label{alg:w6_zoom}
 \begin{algorithmic}[1]
@@ -276,13 +275,13 @@ Zoom & Thay đổi mức chi tiết quan sát (tỉ lệ cửa sổ) & Kích th�
 Pan & Thay đổi vùng quan sát ở cùng mức chi tiết & Vị trí cửa sổ (tịnh tiến) \\ \hline
 \end{tabularx}
 \end{center}
-Nhờ tách \emph{mô hình} (WCS) khỏi \emph{góc nhìn} (cửa sổ, khung nhìn), dữ liệu được lưu chính xác bằng số thực và không bị suy giảm khi người dùng zoom/pan nhiều lần; còn zoom và pan chỉ là phép tỉ lệ và tịnh tiến trên bốn số của cửa sổ, rất rẻ. Zoom cũng gắn với mức chi tiết (Level of Detail): ở mức thu nhỏ có thể vẽ đường cong với ít đoạn thẳng hơn, ở mức phóng to thì chia mịn hơn (mục~\ref{subsec:w5_bezier_grid}). Về cấu trúc dữ liệu (G5), toàn bộ trạng thái góc nhìn gói gọn trong một cấu trúc \texttt{View \{ Rect window; Rect viewport; Mat3 w2v, v2w; \}}.
+Nhờ tách \emph{mô hình} (WCS) khỏi \emph{góc nhìn} (cửa sổ, khung nhìn), dữ liệu được lưu chính xác bằng số thực và không bị suy giảm khi người dùng zoom/pan nhiều lần; còn zoom và pan chỉ là phép tỉ lệ và tịnh tiến trên bốn số của cửa sổ, rất rẻ. Zoom cũng gắn với mức chi tiết (Level of Detail): ở mức thu nhỏ có thể vẽ đường cong với ít đoạn thẳng hơn, ở mức phóng to thì chia mịn hơn (mục~\ref{subsec:w5_bezier_grid}). Về cấu trúc dữ liệu, toàn bộ trạng thái góc nhìn gói gọn trong một cấu trúc \texttt{View \{ Rect window; Rect viewport; Mat3 w2v, v2w; \}}.
 
 % =====================================================================
 \subsection{Vai trò của các phép biến đổi 3D}
 \label{subsec:w6_3d_role}
 
-\textit{Câu hỏi: Vai trò của các phép biến đổi 3D.}
+\textit{Câu hỏi: Các phép biến đổi hình học 3D có vai trò gì trong đồ họa máy tính?}
 
 Các phép biến đổi 3D (tịnh tiến, tỉ lệ, quay quanh $Ox$, $Oy$, $Oz$ hoặc quanh trục bất kỳ, đối xứng qua mặt phẳng) được biểu diễn bằng ma trận $4 \times 4$ trong tọa độ thuần nhất $(x, y, z, 1)$~\citep{hearn2011computer}. Chúng đảm nhận:
 \begin{itemize}
@@ -292,13 +291,12 @@ Các phép biến đổi 3D (tịnh tiến, tỉ lệ, quay quanh $Ox$, $Oy$, $O
     \item \textbf{Hoạt hình, mô phỏng vật lý, thực tế ảo:} chuyển động của vật rắn là tích của phép quay và tịnh tiến; theo dõi đầu người dùng trong VR là cập nhật ma trận quan sát mỗi khung hình.
     \item \textbf{Biến đổi vector pháp tuyến} cho chiếu sáng: pháp tuyến phải được biến đổi bằng $(M^{-1})^{T}$ để còn vuông góc với bề mặt khi $M$ có tỉ lệ không đều.
 \end{itemize}
-\textbf{Liên hệ AI (G4):} tái tạo 3D từ ảnh (Structure from Motion, NeRF) chính là bài toán ước lượng ma trận biến đổi $[R \mid \mathbf{t}]$ của từng camera~\citep{mildenhall2020nerf}; các mô hình sinh nội dung 3D cũng dùng các ma trận này để kết xuất vật thể từ nhiều góc nhìn khi huấn luyện.
 
 % =====================================================================
-\subsection{Màn hình là 2 chiều thì biến đổi 3D như thế nào}
+\subsection{Thực hiện và hiển thị phép biến đổi 3D trên màn hình hai chiều}
 \label{subsec:w6_3d_on_2d}
 
-\textit{Câu hỏi: Màn hình chỉ có 2 chiều thì phép biến đổi 3D được thực hiện (và hiển thị) như thế nào?}
+\textit{Câu hỏi: Màn hình chỉ có hai chiều, vậy phép biến đổi 3D được thực hiện và hiển thị như thế nào?}
 
 Mọi phép biến đổi 3D được thực hiện \emph{trong không gian 3D} trên dữ liệu số thực (tọa độ $(x, y, z)$ của các đỉnh); màn hình 2D chỉ xuất hiện ở bước cuối qua \textbf{phép chiếu}. Đường ống hiển thị 3D:
 \begin{equation}
@@ -324,7 +322,7 @@ Trục quay đi qua $P_1(x_1, y_1, z_1)$ và $P_2(x_2, y_2, z_2)$. Vector đơn 
 \begin{equation}
 \mathbf{u} = \frac{P_2 - P_1}{\|P_2 - P_1\|} = (a, b, c), \qquad a^2 + b^2 + c^2 = 1, \qquad d = \sqrt{b^2 + c^2}.
 \end{equation}
-Ý tưởng (slide 22--34~\citep{dhmt_lec9}, theo Hearn \& Baker~\citep{hearn2011computer}): đưa trục về trùng $Oz$, quay quanh $Oz$, rồi đưa trả về. Các bước:
+Ý tưởng~\citep{dhmt_lec9,hearn2011computer}: đưa trục về trùng $Oz$, quay quanh $Oz$, rồi đưa trả về. Các bước:
 \begin{enumerate}
     \item Tịnh tiến $P_1$ về gốc: $T(-x_1, -y_1, -z_1)$.
     \item Quay quanh $Ox$ góc $\alpha$ để $\mathbf{u}$ nằm trong mặt phẳng $xz$: $R_x(\alpha)$ với $\cos\alpha = c/d$, $\sin\alpha = b/d$ (mục~\ref{subsec:w6_alpha}).
@@ -332,15 +330,15 @@ Trục quay đi qua $P_1(x_1, y_1, z_1)$ và $P_2(x_2, y_2, z_2)$. Vector đơn 
     \item Quay quanh $Oz$ góc $\theta$: $R_z(\theta)$.
     \item Thực hiện ngược các bước 3, 2, 1.
 \end{enumerate}
-Theo ký hiệu slide 23:
+Viết gọn dưới dạng tích ma trận:
 \begin{equation}
 R(\vec V, \theta) = T^{-1}(\vec{P_1O})\,A(\vec V)^{-1}\,R(Oz, \theta)\,A(\vec V)\,T(\vec{P_1O}),
 \end{equation}
-trong đó $T(\vec{P_1O}) = T(-x_1, -y_1, -z_1)$ (slide 25) và $A(\vec V)$ là phép quay đưa $\vec V$ về trùng $Oz$, gồm quay quanh $Ox$ góc $\alpha$ rồi quay quanh $Oy$ góc $\beta$. Với quy ước nhân ma trận vào vector cột (như toàn bộ slide, $P' = M\cdot P$), phép áp dụng trước đứng bên phải nên
+trong đó $T(\vec{P_1O}) = T(-x_1, -y_1, -z_1)$ và $A(\vec V)$ là phép quay đưa $\vec V$ về trùng $Oz$, gồm quay quanh $Ox$ góc $\alpha$ rồi quay quanh $Oy$ góc $\beta$. Với quy ước nhân ma trận vào vector cột ($P' = M\cdot P$), phép áp dụng trước đứng bên phải nên
 \begin{equation}
 A(\vec V) = R(Oy, \beta)\,R(Ox, \alpha), \qquad A(\vec V)^{-1} = R(Ox, \alpha)^{-1}\,R(Oy, \beta)^{-1}.
 \end{equation}
-Slide 23 viết $A(\vec V) = R(Ox, \alpha)R(Oy, \beta)$, tức là liệt kê theo thứ tự thực hiện; khi nhân ma trận cần đảo lại như trên (công thức $A^{-1}$ trên slide đã đúng thứ tự). Các ma trận thành phần (slide 30, 33), với $R_x^{-1}(\alpha) = R_x^{T}(\alpha)$ vì là ma trận quay trực chuẩn:
+Lưu ý: tài liệu~\citep{dhmt_lec9} viết $A(\vec V) = R(Ox, \alpha)R(Oy, \beta)$ theo thứ tự thực hiện các phép quay; khi nhân ma trận cần đảo lại như trên. Các ma trận thành phần, với $R_x^{-1}(\alpha) = R_x^{T}(\alpha)$ vì là ma trận quay trực chuẩn:
 \begin{equation}
 R_x(\alpha) = \begin{bmatrix} 1 & 0 & 0 & 0 \\ 0 & \frac{c}{d} & -\frac{b}{d} & 0 \\ 0 & \frac{b}{d} & \frac{c}{d} & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}, \qquad
 R_y(\beta) = \begin{bmatrix} d & 0 & -a & 0 \\ 0 & 1 & 0 & 0 \\ a & 0 & d & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}.
@@ -373,12 +371,12 @@ M = R_y(\beta)\,R_x(\alpha) =
 \textbf{Nhận xét:} hàng thứ ba của $M$ chính là $\mathbf{u}$, và ba hàng của $M$ là ba vector đơn vị đôi một vuông góc. Điều này cho một cách xây dựng nhanh: bất kỳ ma trận nào có ba hàng là một bộ trực chuẩn thuận $(\mathbf{r}_1, \mathbf{r}_2, \mathbf{u})$ đều quay $\mathbf{u}$ về $Oz$, với $\mathbf{r}_1, \mathbf{r}_2$ tìm bằng tích có hướng. Đây chính là cách xây ma trận quan sát ``look-at'' của camera: lấy $\mathbf{u}$ là hướng nhìn, $\mathbf{r}_1 = \frac{\mathbf{up}\times\mathbf{u}}{\|\mathbf{up}\times\mathbf{u}\|}$, $\mathbf{r}_2 = \mathbf{u}\times\mathbf{r}_1$.
 
 % =====================================================================
-\subsection{Chứng minh hai góc \texorpdfstring{$\alpha$}{alpha} trong hình trang 28 bằng nhau}
+\subsection{Góc giữa hình chiếu của trục quay và trục \texorpdfstring{$Oz$}{Oz} bằng góc quay quanh trục \texorpdfstring{$Ox$}{Ox}}
 \label{subsec:w6_alpha}
 
-\textit{Câu hỏi: Chứng minh hai góc $\alpha$ trong hình ở slide trang 28 là như nhau.}
+\textit{Câu hỏi: Trong phép quay quanh một trục bất kỳ, cho $\mathbf{u} = (a, b, c)$ là vector đơn vị chỉ phương của trục quay và $\mathbf{u}' = (0, b, c)$ là hình chiếu của $\mathbf{u}$ lên mặt phẳng $yz$. Chứng minh rằng góc $\alpha$ giữa $\mathbf{u}'$ và trục $Oz$ bằng góc $\alpha$ cần quay quanh trục $Ox$ để đưa $\mathbf{u}$ vào mặt phẳng $xz$.}
 
-Slide 28~\citep{dhmt_lec9} có hai hình. Hình trái: $\alpha$ là \emph{góc giữa hình chiếu} $\mathbf{u}'$ của $\mathbf{u}$ lên mặt phẳng $yz$ và vector $\mathbf{u}_z = (0, 0, 1)$. Hình phải (a): $\alpha$ là \emph{góc quay quanh trục $Ox$} để đưa $\mathbf{u}$ vào mặt phẳng $xz$ (bước 2 của phép quay quanh trục bất kỳ). Cần chứng minh hai góc này bằng nhau, để có thể tính góc quay từ hình chiếu.
+Ở bước 2 của phép quay quanh trục bất kỳ (mục~\ref{subsec:w6_rot_axis}), ký hiệu $\alpha$ được dùng cho hai góc~\citep{dhmt_lec9}: (1) \emph{góc giữa hình chiếu} $\mathbf{u}'$ và vector $\mathbf{u}_z = (0, 0, 1)$; (2) \emph{góc quay quanh trục $Ox$} để đưa $\mathbf{u}$ vào mặt phẳng $xz$. Chứng minh hai góc này bằng nhau cho phép tính góc quay chỉ từ hình chiếu.
 
 \textbf{Thiết lập.} $\mathbf{u} = (a, b, c)$, hình chiếu lên mặt phẳng $yz$ là $\mathbf{u}' = (0, b, c)$ với $\|\mathbf{u}'\| = d$.
 
@@ -412,32 +410,31 @@ y' = y\cos\alpha_2 - z\sin\alpha_2, \qquad z' = y\sin\alpha_2 + z\cos\alpha_2.
 \begin{itemize}
     \item \emph{Tích vô hướng:} góc giữa hai vector; hình chiếu điểm lên trục (khoảng cách điểm -- đường thẳng, điểm -- mặt phẳng, phép đối xứng ở mục~\ref{subsec:w6_reflect}); khử mặt sau (back-face culling: $\mathbf{N}\cdot\mathbf{V} > 0$ thì mặt quay lưng); chiếu sáng khuếch tán Lambert $I = k_d I_l\max(0, \mathbf{N}\cdot\mathbf{L})$ và phản xạ Phong $(\mathbf{R}\cdot\mathbf{V})^n$; tìm giao tia -- mặt phẳng $t = \frac{(\mathbf{P}_0 - \mathbf{O})\cdot\mathbf{N}}{\mathbf{D}\cdot\mathbf{N}}$; tính $\cos\alpha$ trong phép quay quanh trục.
     \item \emph{Tích có hướng:} pháp tuyến mặt tam giác $\mathbf{N} = (\mathbf{V}_1 - \mathbf{V}_0)\times(\mathbf{V}_2 - \mathbf{V}_0)$; diện tích tam giác, đa giác; phép thử điểm bên trái/phải đường thẳng (tính lồi, điểm trong tam giác, điểm trong cung tròn ở mục~\ref{subsec:w5_arc}, điểm trong đa giác lồi ở mục~\ref{subsec:w5_inside}); chiều duyệt đỉnh (CW/CCW); dựng hệ trục trực chuẩn cho camera (look-at, mục~\ref{subsec:w6_v_to_z}); tính $\sin\alpha$, $\sin\beta$ trong phép quay quanh trục bất kỳ.
-    \item \emph{Liên hệ AI (G4):} độ tương đồng cosin giữa các vector nhúng (embedding) trong tìm kiếm ảnh, CLIP chính là tích vô hướng của hai vector đã chuẩn hóa; cơ chế attention trong Transformer tính điểm tương quan $QK^T/\sqrt{d_k}$, tức là một ma trận các tích vô hướng~\citep{vaswani2017attention}; ước lượng pháp tuyến cho đám mây điểm 3D dùng tích có hướng của các vector lân cận.
 \end{itemize}
 
 % =====================================================================
-\subsection{Nguồn gốc dòng 2 của tích có hướng trong slide trang 29}
+\subsection{Nguồn gốc đẳng thức \texorpdfstring{$\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha$}{u' x uz = ux |u'| |uz| sin(alpha)} khi tính góc quay}
 \label{subsec:w6_cross_line2}
 
-\textit{Câu hỏi: Tích có hướng ở dòng 2 của slide trang 29, $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha$, ở đâu ra?}
+\textit{Câu hỏi: Khi xác định góc quay $\alpha$ quanh trục $Ox$ trong phép quay quanh một trục bất kỳ, đẳng thức tích có hướng $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha$ ở đâu ra và được dùng như thế nào?}
 
-Slide 29~\citep{dhmt_lec9} có ba dòng: (1) $\cos\alpha = \frac{\mathbf{u}'\cdot\mathbf{u}_z}{|\mathbf{u}'|\,|\mathbf{u}_z|} = \frac{c}{d}$; (2) $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha$; (3) $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\cdot b$, suy ra $\sin\alpha = \frac{b}{d}$. Dòng 2 và dòng 3 là cùng một tích có hướng $\mathbf{u}'\times\mathbf{u}_z$ (với $\mathbf{u}' = (0, b, c)$, $\mathbf{u}_z = (0, 0, 1)$) được tính theo hai cách.
+Việc tính $\cos\alpha$ và $\sin\alpha$ gồm ba đẳng thức~\citep{dhmt_lec9}: (1) $\cos\alpha = \frac{\mathbf{u}'\cdot\mathbf{u}_z}{|\mathbf{u}'|\,|\mathbf{u}_z|} = \frac{c}{d}$; (2) $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha$; (3) $\mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\cdot b$, suy ra $\sin\alpha = \frac{b}{d}$. Đẳng thức (2) và (3) là cùng một tích có hướng $\mathbf{u}'\times\mathbf{u}_z$ (với $\mathbf{u}' = (0, b, c)$, $\mathbf{u}_z = (0, 0, 1)$) được tính theo hai cách.
 
-\textbf{Dòng 2 -- định nghĩa hình học của tích có hướng:} với hai vector $\mathbf{a}, \mathbf{b}$ hợp góc $\varphi$, $\mathbf{a}\times\mathbf{b} = \mathbf{n}\,|\mathbf{a}|\,|\mathbf{b}|\sin\varphi$, trong đó $\mathbf{n}$ là vector đơn vị vuông góc với mặt phẳng chứa $\mathbf{a}, \mathbf{b}$, chiều theo quy tắc bàn tay phải. Ở đây $\mathbf{u}'$ và $\mathbf{u}_z$ cùng nằm trong mặt phẳng $yz$, nên vector đơn vị vuông góc với mặt phẳng đó là $\mathbf{u}_x = (1, 0, 0)$ (bàn tay phải quay từ $\mathbf{u}'$ về $\mathbf{u}_z$, chiều này chính là chiều dương của góc quay quanh $Ox$). Thay $\mathbf{n} = \mathbf{u}_x$, $\varphi = \alpha$, $|\mathbf{u}'| = d$, $|\mathbf{u}_z| = 1$:
+\textbf{Đẳng thức (2) -- định nghĩa hình học của tích có hướng:} với hai vector $\mathbf{a}, \mathbf{b}$ hợp góc $\varphi$, $\mathbf{a}\times\mathbf{b} = \mathbf{n}\,|\mathbf{a}|\,|\mathbf{b}|\sin\varphi$, trong đó $\mathbf{n}$ là vector đơn vị vuông góc với mặt phẳng chứa $\mathbf{a}, \mathbf{b}$, chiều theo quy tắc bàn tay phải. Ở đây $\mathbf{u}'$ và $\mathbf{u}_z$ cùng nằm trong mặt phẳng $yz$, nên vector đơn vị vuông góc với mặt phẳng đó là $\mathbf{u}_x = (1, 0, 0)$ (bàn tay phải quay từ $\mathbf{u}'$ về $\mathbf{u}_z$, chiều này chính là chiều dương của góc quay quanh $Ox$). Thay $\mathbf{n} = \mathbf{u}_x$, $\varphi = \alpha$, $|\mathbf{u}'| = d$, $|\mathbf{u}_z| = 1$:
 \begin{equation}
 \mathbf{u}'\times\mathbf{u}_z = \mathbf{u}_x\,|\mathbf{u}'|\,|\mathbf{u}_z|\sin\alpha = \mathbf{u}_x\, d\sin\alpha.
 \end{equation}
 
-\textbf{Dòng 3 -- định thức theo tọa độ} (đúng như lời giải trên bảng):
+\textbf{Đẳng thức (3) -- định thức theo tọa độ:}
 \begin{equation}
 \mathbf{u}'\times\mathbf{u}_z =
 \begin{vmatrix} \mathbf{u}_x & \mathbf{u}_y & \mathbf{u}_z \\ 0 & b & c \\ 0 & 0 & 1 \end{vmatrix}
 = \mathbf{u}_x(b\cdot 1 - c\cdot 0) - \mathbf{u}_y(0\cdot 1 - c\cdot 0) + \mathbf{u}_z(0\cdot 0 - b\cdot 0) = \mathbf{u}_x\, b.
 \end{equation}
-Trên bảng, đường chéo vẽ trong định thức chính là phép nhân chéo $b\cdot 1 - c\cdot 0$ của định thức con ứng với $\mathbf{u}_x$; hai định thức con còn lại bằng $0$ vì cột đầu toàn số $0$.
+Phép nhân chéo $b\cdot 1 - c\cdot 0$ chính là định thức con ứng với $\mathbf{u}_x$; hai định thức con còn lại bằng $0$ vì cột đầu toàn số $0$.
 
-\textbf{So sánh dòng 2 và dòng 3:} $d\sin\alpha = b$, suy ra
+\textbf{So sánh (2) và (3):} $d\sin\alpha = b$, suy ra
 \begin{equation}
 \sin\alpha = \frac{b}{d}.
 \end{equation}
-Kết hợp với dòng 1, $\cos\alpha = \frac{\mathbf{u}'\cdot\mathbf{u}_z}{d} = \frac{c}{d}$, ta có đủ hai phần tử để viết $R_x(\alpha)$ trong mục~\ref{subsec:w6_rot_axis} mà không cần tính góc $\alpha$ bằng hàm lượng giác ngược. Tích vô hướng chỉ cho $\cos\alpha$, không phân biệt được $\alpha$ với $-\alpha$; tích có hướng cho thêm $\sin\alpha$ có dấu, xác định đúng chiều quay. Slide 32 làm tương tự cho góc $\beta$: $\mathbf{u}''\times\mathbf{u}_z = \mathbf{u}_y\,|\mathbf{u}''|\,|\mathbf{u}_z|\sin\beta$ và $\mathbf{u}''\times\mathbf{u}_z = \mathbf{u}_y(-a)$, cho $\sin\beta = -a$.
+Kết hợp với đẳng thức (1), $\cos\alpha = \frac{\mathbf{u}'\cdot\mathbf{u}_z}{d} = \frac{c}{d}$, ta có đủ hai phần tử để viết $R_x(\alpha)$ trong mục~\ref{subsec:w6_rot_axis} mà không cần tính góc $\alpha$ bằng hàm lượng giác ngược. Tích vô hướng chỉ cho $\cos\alpha$, không phân biệt được $\alpha$ với $-\alpha$; tích có hướng cho thêm $\sin\alpha$ có dấu, xác định đúng chiều quay. Làm tương tự cho góc $\beta$: $\mathbf{u}''\times\mathbf{u}_z = \mathbf{u}_y\,|\mathbf{u}''|\,|\mathbf{u}_z|\sin\beta$ và $\mathbf{u}''\times\mathbf{u}_z = \mathbf{u}_y(-a)$, cho $\sin\beta = -a$.

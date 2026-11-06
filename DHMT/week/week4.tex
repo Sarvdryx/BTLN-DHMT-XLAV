@@ -21,7 +21,7 @@ Nhờ đó một mô hình chỉ cần mô tả một lần trong UCS rồi có 
 
 Bảng~\ref{tab:w4_coord} tổng hợp sự khác biệt giữa ba hệ tọa độ.
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \small
 \caption{So sánh ba hệ tọa độ WCS, UCS và DCS}
@@ -50,7 +50,7 @@ Bảng~\ref{tab:w4_coord} tổng hợp sự khác biệt giữa ba hệ tọa đ
 \subsection{Vì sao mô phỏng được thế giới thực bằng các vector có kích thước nhỏ}
 \label{subsec:w4_simulate}
 
-\textit{Câu hỏi: Tại sao lại nói chúng ta mô phỏng được thế giới trong khi kích thước vector rất nhỏ so với đời thực rất lớn?}
+\textit{Câu hỏi: Tại sao có thể mô phỏng thế giới thực bằng các vector tọa độ có giá trị nhỏ, trong khi kích thước của thế giới thực rất lớn?}
 
 Đồ họa máy tính không sao chép thế giới theo đúng kích thước vật lý của nó, mà xây dựng một \textbf{mô hình toán học} của thế giới: tập các đối tượng hình học được mô tả bằng tọa độ trong các hệ quy chiếu và liên kết với nhau bằng các phép biến đổi~\citep{hearn2011computer,hughes2014computer}. Điều cần giữ đúng là \textbf{hình dạng} và \textbf{quan hệ không gian} của các đối tượng, không phải độ lớn tuyệt đối của các con số. Có bốn lý do khiến điều này khả thi.
 
@@ -84,7 +84,7 @@ Tóm lại, mô phỏng được thế giới không đòi hỏi các con số l
 \subsection{Hiển thị thế giới thực rất lớn trên màn hình 2D hữu hạn}
 \label{subsec:w4_display}
 
-\textit{Câu hỏi: Thế giới thực rất lớn mà màn hình 2D thì nhỏ, vậy làm thế nào để hiển thị?}
+\textit{Câu hỏi: Thế giới thực rất lớn trong khi màn hình 2D có kích thước hữu hạn, vậy làm thế nào để hiển thị thế giới thực lên màn hình?}
 
 Màn hình chỉ có $W \times H$ điểm ảnh nguyên, trong khi WCS là không gian thực ba chiều không bị chặn. Khoảng cách này được giải quyết bằng \textbf{đường ống quan sát} (Viewing Pipeline): một chuỗi phép biến đổi và lựa chọn đưa tọa độ đi qua các hệ quy chiếu~\citep{hearn2011computer,hughes2014computer}:
 \begin{align*}
@@ -130,16 +130,16 @@ tức là đưa góc cửa sổ về gốc, co giãn theo tỉ lệ khung nhìn/
 Tóm lại, thế giới lớn được hiển thị trên màn hình nhỏ nhờ ba cơ chế: \textbf{chọn lọc} (chỉ hiển thị phần nằm trong cửa sổ/thể tích quan sát), \textbf{thu nhỏ có kiểm soát} (phép chiếu phối cảnh và phép tỉ lệ cửa sổ -- khung nhìn bảo toàn vị trí tương đối) và \textbf{rời rạc hóa} (chuyển hình học liên tục thành pixel).
 
 % =====================================================================
-\subsection{Giải thuật vẽ đoạn thẳng theo phương pháp trên bảng (tổng quát cho mọi hệ số góc)}
+\subsection{Giải thuật vẽ đoạn thẳng theo phương pháp gia số (tổng quát cho mọi hệ số góc)}
 \label{subsec:w4_dda}
 
-\textit{Câu hỏi: Viết giải thuật để vẽ đoạn thẳng theo phương pháp trên bảng (viết chương trình cho tổng quát).}
+\textit{Câu hỏi: Viết giải thuật tổng quát (cho mọi hệ số góc) để vẽ đoạn thẳng theo phương pháp gia số.}
 
 \textbf{Bài toán.} Cho tọa độ hai đầu mút của đoạn thẳng, cần xác định tập điểm trên lưới nguyên sao cho: các điểm xấp xỉ tốt nhất đoạn thẳng, liên tục trong lân cận 8 và được tính với độ phức tạp thấp \citep[slide~3]{dhmt_lec3}.
 
 \textbf{Cách 1 -- tính trực tiếp.} Với mỗi giá trị nguyên của $x$, tính $y = mx + b$ rồi vẽ điểm $\big(x, \mathrm{Round}(y)\big)$. Mỗi điểm tốn một phép nhân số thực, một phép cộng số thực và một phép làm tròn.
 
-\textbf{Cách 2 -- phương pháp gia số (phương pháp trên bảng).} Xét hai điểm liên tiếp $(x_k, y_k)$ và $(x_{k+1}, y_{k+1})$ của đường thẳng $y = mx + b$. Lấy hiệu hai phương trình:
+\textbf{Cách 2 -- phương pháp gia số.} Xét hai điểm liên tiếp $(x_k, y_k)$ và $(x_{k+1}, y_{k+1})$ của đường thẳng $y = mx + b$. Lấy hiệu hai phương trình:
 \begin{equation}
 y_{k+1} - y_k = m\,(x_{k+1} - x_k) \iff \Delta y = m\,\Delta x \;\Longrightarrow\; |\Delta y| = |m|\,|\Delta x|.
 \end{equation}
@@ -171,7 +171,7 @@ Do đó $\big|\mathrm{Round}(t + \delta) - \mathrm{Round}(t)\big| \le 1$: hai đ
 
 \textbf{Mã giả.} Giải thuật~\ref{alg:w4_dda} trình bày phương pháp gia số tổng quát cho mọi hệ số góc và mọi hướng vẽ.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
 \caption{Vẽ đoạn thẳng tổng quát theo phương pháp gia số (Cách 2 -- DDA)}
 \label{alg:w4_dda}
 \begin{algorithmic}[1]
@@ -198,7 +198,7 @@ Mỗi vòng lặp chỉ còn hai phép cộng và hai phép làm tròn số th�
 \subsection{Vì sao giới hạn bài toán trong giả thiết $0 < m < 1$, $x_a < x_b$ và cách suy diễn các trường hợp còn lại}
 \label{subsec:w4_assumption}
 
-\textit{Câu hỏi: Giải thích vì sao chúng ta giới hạn bài toán chỉ nằm trong giả thiết (assumption), các trường hợp còn lại được suy diễn từ giới hạn đó như thế nào?}
+\textit{Câu hỏi: Vì sao bài toán vẽ đoạn thẳng được giới hạn trong giả thiết $0 < m < 1$, $x_a < x_b$? Các trường hợp còn lại được suy ra từ giả thiết đó như thế nào?}
 
 Bài giảng giả thiết đường thẳng $y = mx + b$ đi qua $A(x_a, y_a)$, $B(x_b, y_b)$ với $0 < m < 1$ và $x_a < x_b$; các trường hợp còn lại được suy ra dễ dàng từ trường hợp này \citep[slide~4]{dhmt_lec3}.
 
@@ -229,10 +229,10 @@ Ghép các trường hợp lại ta có thuật toán Bresenham tổng quát (th
 \textit{Lưu ý:} khi trục chính là $y$, giá trị khởi tạo là $p_0 = 2|\Delta x| - |\Delta y|$ (đổi vai trò $x \leftrightarrow y$ trong công thức $p_0 = 2\Delta y - \Delta x$), không phải $2|\Delta y| - |\Delta x|$.
 
 % =====================================================================
-\subsection{So sánh Bresenham với Cách 2: vì sao Bresenham khử được phép cộng số thực}
+\subsection{So sánh Bresenham với phương pháp gia số: vì sao Bresenham khử được phép cộng số thực}
 \label{subsec:w4_bres_vs_dda}
 
-\textit{Câu hỏi: Giải thích vì sao làm theo Bresenham khử được các số thực mà phương pháp 2 trước đó không khử được phép cộng với số thực.}
+\textit{Câu hỏi: Giải thích vì sao phương pháp Bresenham khử được số thực, trong khi phương pháp gia số (Cách 2) không khử được phép cộng với số thực.}
 
 \textbf{Bản chất số thực của Cách 2.} Trong Cách 2 (mục~\ref{subsec:w4_dda}), đại lượng được lưu và cập nhật là \textbf{chính tung độ thực} của đường thẳng:
 \begin{equation}
@@ -267,7 +267,7 @@ Cách 2 chọn $y_{k+1} = \mathrm{Round}(y^*) = y_k + 1$ khi và chỉ khi $y^* 
 
 Bảng~\ref{tab:w4_line_cmp} so sánh chi phí tính toán của ba cách.
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \small
 \caption{So sánh chi phí mỗi bước lặp giữa Cách 1, Cách 2 và Bresenham}
@@ -294,7 +294,7 @@ Bảng~\ref{tab:w4_line_cmp} so sánh chi phí tính toán của ba cách.
 \subsection{Tính giá trị khởi tạo $p_0$}
 \label{subsec:w4_p0}
 
-\textit{Câu hỏi: Tính $p_0$ xem bằng bao nhiêu.}
+\textit{Câu hỏi: Tính giá trị khởi tạo $p_0$ của tham số quyết định trong thuật toán Bresenham.}
 
 Để công thức truy hồi được trọn vẹn, cần tính $p_0$ \citep[slide~9]{dhmt_lec3}. Thay $k = 0$ vào~(\ref{eq:w4_pk}):
 \begin{equation}
@@ -329,10 +329,10 @@ Theo giả thiết, $x_{k+1} - x_k = 1$ và $y_{k+1} - y_k \in \{0, 1\}$. Do đ�
 Đồng thời $x_{k+1} = x_k + 1$ và $y_{k+1} \in \{y_k, y_k + 1\}$ đều nguyên. Vậy toàn bộ thuật toán chỉ dùng phép cộng, trừ số nguyên với hai hằng số \citep[slide~10]{dhmt_lec3}.
 
 % =====================================================================
-\subsection{Thuật toán vẽ đường tròn cho kết quả ``nham nhở'' thì có được áp dụng hay không}
+\subsection{Thuật toán vẽ đường tròn cho kết quả có răng cưa thì có được áp dụng hay không}
 \label{subsec:w4_circle_apply}
 
-\textit{Câu hỏi: Thuật toán vẽ đường tròn cho ra hình nham nhở như vậy thì có được áp dụng hay không?}
+\textit{Câu hỏi: Thuật toán vẽ đường tròn cho ra hình có răng cưa (không trơn) thì có được áp dụng trong thực tế hay không?}
 
 \textbf{Có, vẫn được áp dụng}, vì hiện tượng răng cưa (aliasing, staircase effect) không phải là lỗi của thuật toán mà là giới hạn tất yếu của việc rời rạc hóa: đường tròn là đường cong liên tục, còn màn hình chỉ có các điểm ảnh tại tọa độ nguyên. \textbf{Mọi} thuật toán vẽ trên lưới nguyên đều cho kết quả bậc thang. Câu hỏi đúng là thuật toán có đáp ứng ba yêu cầu của bài toán \citep[slide~3]{dhmt_lec4} hay không:
 \begin{enumerate}
@@ -350,7 +350,7 @@ Theo giả thiết, $x_{k+1} - x_k = 1$ và $y_{k+1} - y_k \in \{0, 1\}$. Do đ�
 \subsection{Chọn pixel để đảm bảo liên tục trong lân cận 8 khi vẽ đường tròn}
 \label{subsec:w4_circle_8conn}
 
-\textit{Câu hỏi: Chọn pixel như thế nào để liên tục trong lân cận 8 trong phép vẽ đường tròn?}
+\textit{Câu hỏi: Khi vẽ đường tròn, cần chọn điểm ảnh như thế nào để bảo đảm tính liên tục trong lân cận 8?}
 
 Trong lân cận 8 của pixel hiện tại $(x_k, y_k)$ có tám ứng viên. Bài giảng chỉ xét cung $1/8$ từ $90^\circ$ đến $45^\circ$, tâm $O(0,0)$ \citep[slide~4]{dhmt_lec4}, và tại bước $k+1$ chỉ chọn giữa hai pixel $(x_k + 1, y_k)$ và $(x_k + 1, y_k - 1)$ \citep[slide~6]{dhmt_lec4}. Ta chứng minh lựa chọn này đủ để đảm bảo liên tục.
 
@@ -392,7 +392,7 @@ Khi đó khoảng cách đến ứng viên trên là $d_{\text{trên}} = y_k - y
 \subsection{Khử phân số $5/4$ trong $p_0$ của thuật toán vẽ đường tròn}
 \label{subsec:w4_circle_p0}
 
-\textit{Câu hỏi: Với $p_0$ trong thuật toán vẽ đường tròn vướng phân số $5/4$, có cách nào đưa nó về hoàn toàn số nguyên không? Chứng minh điều này không ảnh hưởng đến kết quả (thay $p_0$ bằng $p_0'$).}
+\textit{Câu hỏi: Giá trị khởi tạo $p_0 = \frac{5}{4} - r$ trong thuật toán vẽ đường tròn chứa phân số. Có cách nào đưa $p_0$ về số nguyên không? Chứng minh việc thay $p_0$ bằng giá trị nguyên $p_0'$ không ảnh hưởng đến kết quả.}
 
 \textbf{Công thức gốc.} Từ (1), (2) của bài giảng \citep[slide~8, 9]{dhmt_lec4}, với $x_{k+1} = x_k + 1$:
 \begin{align}
@@ -437,13 +437,13 @@ Theo nguyên lý quy nạp, hai thuật toán cho cùng kết quả ở mọi b�
 \subsection{Tọa độ 7 điểm đối xứng còn lại trong thuật toán vẽ đường tròn}
 \label{subsec:w4_circle_sym}
 
-\textit{Câu hỏi: Tọa độ 7 điểm còn lại trong thuật toán vẽ đường tròn được tính như thế nào?}
+\textit{Câu hỏi: Trong thuật toán vẽ đường tròn, từ một điểm $(x, y)$ tính được trên cung $1/8$, tọa độ 7 điểm đối xứng còn lại được xác định như thế nào?}
 
 Thuật toán chỉ tính các điểm $(x, y)$ trên cung từ $90^\circ$ đến $45^\circ$ của đường tròn tâm $O(0, 0)$, nhờ tính đối xứng của đường tròn qua các trục $x = 0$, $y = 0$, $y = \pm x$ \citep[slide~4, 5]{dhmt_lec4}. Bước B8 xác định 7 điểm đối xứng, bước B9 tịnh tiến theo tâm \citep[slide~12]{dhmt_lec4}.
 
 \textbf{Chứng minh.} Điểm $(x, y)$ thuộc đường tròn khi và chỉ khi $x^2 + y^2 = r^2$. Vì $(-x)^2 = x^2$, $(-y)^2 = y^2$ và $x^2 + y^2 = y^2 + x^2$, nên khi đổi dấu một tọa độ hoặc đổi chỗ hai tọa độ, đẳng thức vẫn đúng. Do đó cả tám điểm $(\pm x, \pm y)$ và $(\pm y, \pm x)$ đều thuộc đường tròn. Về mặt hình học, đổi dấu $x$ là đối xứng qua trục $Oy$, đổi dấu $y$ là đối xứng qua trục $Ox$, đổi chỗ $x, y$ là đối xứng qua đường $y = x$. Hình~\ref{fig:w4_octant} và Bảng~\ref{tab:w4_octant} cho vị trí của tám điểm.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=1.6]
     \draw[->] (-2.1,0) -- (2.2,0) node[right] {$x$};
@@ -460,7 +460,7 @@ Thuật toán chỉ tính các điểm $(x, y)$ trên cung từ $90^\circ$ đế
 \label{fig:w4_octant}
 \end{figure}
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \small
 \caption{Tọa độ 8 điểm đối xứng (tâm $O$) và sau khi tịnh tiến theo tâm $C(x_c, y_c)$}
@@ -487,10 +487,10 @@ $135^\circ \to 90^\circ$ & Qua $Oy$ & $(-x, y)$ & $(x_c - x, y_c + y)$ \\
 \textbf{Lưu ý:} khi $x = 0$ (điểm đầu $(0, r)$) hoặc $x = y$ (điểm trên đường $45^\circ$), một số điểm trong tám điểm trùng nhau và có thể bỏ bớt để không vẽ một pixel hai lần.
 
 % =====================================================================
-\subsection{Mô tả quá trình Text-to-Vector (theo bài đăng text2vector)}
+\subsection{Mô tả quá trình sinh đồ họa vector từ văn bản (Text-to-Vector)}
 \label{subsec:w4_text2vector}
 
-\textit{Câu hỏi: Xem bài đăng text2vector rồi mô tả quá trình.}
+\textit{Câu hỏi: Mô tả quá trình sinh đồ họa vector từ mô tả văn bản (Text-to-Vector).}
 
 \textbf{Bài toán.} Text-to-Vector Graphics Generation (Text-to-SVG) là bài toán chuyển một câu mô tả bằng ngôn ngữ tự nhiên thành hình đồ họa vector, thường ở định dạng SVG (Scalable Vector Graphics)~\citep{w3c2018svg2}. Ví dụ, với đầu vào \textit{``Một con chim màu đỏ đang đậu trên cành cây, nền trắng, phong cách hoạt hình đơn giản''}, đầu ra là một tệp SVG gồm các đối tượng hình học như thân, đầu, cánh, mắt, mỏ chim và cành cây; mỗi đối tượng được biểu diễn bằng đường cong Bézier, màu tô và các thuộc tính hình học. Khác với ảnh raster lưu giá trị từng pixel, SVG lưu các đối tượng và tham số hình học để dựng hình, nên phóng to tùy ý mà không vỡ hạt và chỉnh sửa được từng thành phần.
 
@@ -544,7 +544,7 @@ trong đó $A_{ji}$ là mức liên quan giữa primitive $j$ và token $i$. Li�
 \subsection{Ý nghĩa của góc $\alpha$ trong hệ tọa độ cực khi vẽ đường elip}
 \label{subsec:w4_ellipse_alpha}
 
-\textit{Câu hỏi: Góc $\alpha$ trong hệ tọa độ cực đối với hình elip có ý nghĩa gì? (gợi ý: slide trang 5 bài vẽ elip)}
+\textit{Câu hỏi: Khi dựng elip bằng phương pháp hai đường tròn đồng tâm, góc $\alpha$ trong hệ tọa độ cực có ý nghĩa gì?}
 
 \textbf{Dựng elip bằng phương pháp hai đường tròn đồng tâm (Concentric Circles Method).} Xét elip tâm $O(0, 0)$ với bán trục lớn $a$ (theo $Ox$) và bán trục nhỏ $b$ (theo $Oy$):
 \begin{equation}
@@ -567,7 +567,7 @@ Cách dựng như sau (Hình~\ref{fig:w4_ellipse}):
 \end{equation}
 Ngược lại, với mọi điểm $(x, y)$ trên elip, $\left(\frac{x}{a}\right)^2 + \left(\frac{y}{b}\right)^2 = 1$ nên tồn tại duy nhất $\theta \in [0, 2\pi)$ với $\cos\theta = x/a$, $\sin\theta = y/b$. Vậy phép dựng cho đúng và đủ các điểm của elip.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=1.15]
     \def\a{2.4} \def\b{1.4} \def\th{50}
