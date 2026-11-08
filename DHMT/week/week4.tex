@@ -2,6 +2,7 @@
 \label{sec:week4}
 
 \subsection{Bản chất và Phân định Ba Hệ Tọa độ trong Đồ họa Máy tính (WCS, UCS, DCS)}
+\label{subsec:w4_coord}
 
 Trong quy trình kết xuất và xử lý đồ họa máy tính, việc quản lý không gian hình học được phân định thông qua ba hệ tọa độ nền tảng, phản ánh các giai đoạn chuyển hóa dữ liệu từ mô hình trừu tượng sang màn hình hiển thị vật lý:
 
@@ -43,6 +44,7 @@ Mô hình toán học hoàn toàn độc lập với kích thước vật lý c�
 hệ thống đồ họa có thể co giãn thế giới mô phỏng về bất kỳ thang đo kích thước nào. Cùng một công thức vector, hệ thống có thể phóng to hàng triệu lần để quan sát cấu trúc tinh thể vi mô của phân tử nano, hoặc thu nhỏ hàng tỷ lần để mô phỏng quỹ đạo chuyển động của các thiên thể trong hệ ngân hà trên màn hình máy tính có kích thước chỉ vài chục inch.
 
 \subsection{Cơ chế Mô phỏng Đối tượng Thực 3 Chiều trên Màn hình Hiển thị 2 Chiều}
+\label{subsec:w4_display}
 
 Màn hình máy tính về bản chất vật lý là một bề mặt phẳng hai chiều. Để tái tạo chân thực cảm giác không gian ba chiều có chiều sâu cho mắt người, đồ họa máy tính triển khai một chuỗi kỹ thuật kết xuất liên hoàn (Viewing Pipeline)~\citep{hearn2004computer}:
 
@@ -70,6 +72,7 @@ trong đó $I_a k_a$ là thành phần ánh sáng môi trường (Ambient), $I_d
 Dán các bức ảnh 2D (Textures) lên bề mặt các đa giác 3D kết hợp với kỹ thuật Bump Mapping hoặc Normal Mapping để mô phỏng độ nhám, nếp nhăn và kết cấu chi tiết của vật liệu (gỗ, đá, da, kim loại) mà không làm tăng số lượng đa giác hình học cần xử lý.
 
 \subsection{Phân tích Toàn diện Giải thuật Vẽ Đoạn thẳng và Khảo sát Độ dốc}
+\label{subsec:w4_dda}
 
 Bài toán vẽ đoạn thẳng trên lưới điểm ảnh số yêu cầu xác định tập hợp các pixel nguyên $(x_k, y_k)$ sao cho đường gấp khúc nối các pixel này xấp xỉ tốt nhất đoạn thẳng giải tích nối hai điểm mút $A(x_a, y_a)$ và $B(x_b, y_b)$, đồng thời đảm bảo tính liên tục không gian trong lân cận 8 pixel.
 
@@ -142,6 +145,7 @@ Mọi đoạn thẳng bất kỳ trong không gian 2D đều có thể quy về 
 \end{enumerate}
 
 \subsection{Cơ chế Khử Phép tính Số thực của Thuật toán Bresenham Đoạn thẳng}
+\label{subsec:w4_bres_vs_dda}
 
 Năm 1965, Jack E. Bresenham đã đề xuất giải thuật kinh điển mang tên ông~\citep{bresenham1965algorithm}, loại bỏ hoàn toàn các phép toán số thực và hàm làm tròn của thuật toán DDA, chuyển toàn bộ quá trình tính toán về các phép cộng và trừ số nguyên thuần túy.
 
@@ -173,7 +177,7 @@ d_1 - d_2 = 2 \frac{\Delta y}{\Delta x}(x_k + 1) - 2y_k + 2b - 1
 
 Đại lượng này vẫn chứa phép chia số thực $\frac{\Delta y}{\Delta x}$. Nhận thấy rằng $\Delta x > 0$, Bresenham đã nhân toàn bộ biểu thức trên với $\Delta x$ để định nghĩa hàm tham số quyết định (Decision Parameter) $p_k$:
 \begin{equation}
-p_k = \Delta x (d_1 - d_2) = 2\Delta y \cdot x_k - 2\Delta x \cdot y_k + C
+p_k = \Delta x (d_1 - d_2) = 2\Delta y \cdot x_k - 2\Delta x \cdot y_k + C \label{eq:w4_pk}
 \end{equation}
 trong đó hằng số $C = 2\Delta y + \Delta x(2b - 1)$.
 
@@ -232,12 +236,34 @@ p_0 &= \Delta x \left[ 2 \frac{\Delta y}{\Delta x}(x_0 + 1) - 2y_0 + 2\left(y_0 
 \end{align}
 Nhân phân phối $\Delta x$ vào bên trong dấu ngoặc vuông:
 \begin{equation}
-p_0 = 2\Delta y - \Delta x
+p_0 = 2\Delta y - \Delta x \label{eq:w4_p0}
 \end{equation}
 
 Đây là công thức khởi tạo chuẩn xác của thuật toán vẽ đoạn thẳng Bresenham, chứng minh rằng $p_0$ luôn luôn là một giá trị nguyên.
 
+% ===== added from week04-huy =====
+\subsection{Vì sao phương pháp Bresenham loại được phép nhân và số thực}
+\label{subsec:w4_bres_int}
+
+\textit{Câu hỏi: Giải thích vì sao phương pháp Bresenham loại được phép nhân và số thực.}
+
+\textbf{Loại phép nhân: nhờ công thức truy hồi.} Biểu thức trực tiếp~(\ref{eq:w4_pk}) chứa các phép nhân $2\Delta y \cdot x_k$ và $2\Delta x \cdot y_k$. Bresenham không tính trực tiếp mà tính hiệu hai bước liên tiếp \citep[slide~8]{dhmt_lec3}:
+\begin{equation}
+p_{k+1} - p_k = 2\Delta y\,(x_{k+1} - x_k) - 2\Delta x\,(y_{k+1} - y_k).
+\end{equation}
+Theo giả thiết, $x_{k+1} - x_k = 1$ và $y_{k+1} - y_k \in \{0, 1\}$. Do đó hiệu này chỉ nhận đúng \textbf{hai giá trị hằng số}: $2\Delta y$ hoặc $2\Delta y - 2\Delta x$. Hai hằng số này được tính \textbf{một lần duy nhất} trước vòng lặp (bước B3 \citep[slide~11]{dhmt_lec3}); phép nhân với $2$ cũng chỉ là phép dịch bit. Trong vòng lặp chỉ còn một phép so sánh dấu và một phép cộng.
+
+\textbf{Loại số thực: nhờ chỉ quan tâm đến dấu.} Như đã chứng minh ở mục~\ref{subsec:w4_bres_vs_dda}, quyết định chọn pixel chỉ phụ thuộc vào dấu của $d_1 - d_2$. Nhân với $\Delta x > 0$ không đổi dấu nhưng triệt tiêu mẫu số của $m$, đưa mọi đại lượng về số nguyên.
+
+\textbf{Chứng minh quy nạp: $p_k \in \mathbb{Z}$ với mọi $k$.}
+\begin{itemize}
+    \item \textit{Cơ sở:} $p_0 = 2\Delta y - \Delta x \in \mathbb{Z}$ theo~(\ref{eq:w4_p0}).
+    \item \textit{Bước quy nạp:} giả sử $p_k \in \mathbb{Z}$. Khi đó $p_{k+1} = p_k + 2\Delta y$ hoặc $p_{k+1} = p_k + 2\Delta y - 2\Delta x$, là tổng của các số nguyên, nên $p_{k+1} \in \mathbb{Z}$.
+\end{itemize}
+Đồng thời $x_{k+1} = x_k + 1$ và $y_{k+1} \in \{y_k, y_k + 1\}$ đều nguyên. Vậy toàn bộ thuật toán chỉ dùng phép cộng, trừ số nguyên với hai hằng số \citep[slide~10]{dhmt_lec3}.
+
 \subsection{Cơ sở Vẽ Hình tròn trên Lưới Tọa độ Nguyên và Tính Đối xứng 8 Phần}
+\label{subsec:w4_circle_sym}
 
 Phương trình đại số của đường tròn tâm tại gốc tọa độ $O(0, 0)$ với bán kính $r$ có dạng:
 \begin{equation}
@@ -265,7 +291,26 @@ Nếu thuật toán tính toán được tập hợp các pixel trên cung bát 
 \end{equation}
 Sau đó, nếu đường tròn có tâm thực tế tại $C(x_c, y_c)$, ta chỉ cần thực hiện phép tịnh tiến bằng cách cộng thêm $(x_c, y_c)$ vào từng tọa độ đã tính.
 
+% ===== added from week04-huy =====
+\subsection{Thuật toán vẽ đường tròn cho kết quả có răng cưa thì có được áp dụng hay không}
+\label{subsec:w4_circle_apply}
+
+\textit{Câu hỏi: Thuật toán vẽ đường tròn cho ra hình có răng cưa (không trơn) thì có được áp dụng trong thực tế hay không?}
+
+\textbf{Có, vẫn được áp dụng}, vì hiện tượng răng cưa (aliasing, staircase effect) không phải là lỗi của thuật toán mà là giới hạn tất yếu của việc rời rạc hóa: đường tròn là đường cong liên tục, còn màn hình chỉ có các điểm ảnh tại tọa độ nguyên. \textbf{Mọi} thuật toán vẽ trên lưới nguyên đều cho kết quả bậc thang. Câu hỏi đúng là thuật toán có đáp ứng ba yêu cầu của bài toán \citep[slide~3]{dhmt_lec4} hay không:
+\begin{enumerate}
+    \item \textbf{Xấp xỉ tốt nhất:} tại mỗi cột $x_k + 1$, đường tròn cắt cột tại $y^* = \sqrt{r^2 - (x_k + 1)^2}$. Vì $y_k - \tfrac12 > 0$, ta có
+    \begin{equation}
+    p_k < 0 \iff (x_k + 1)^2 + \left(y_k - \tfrac12\right)^2 < r^2 \iff y_k - \tfrac12 < y^*,
+    \end{equation}
+    tức là thuật toán chọn $y_k$ khi và chỉ khi $y^*$ gần $y_k$ hơn $y_k - 1$. Vậy pixel được chọn luôn là ứng viên gần đường tròn thật nhất theo phương thẳng đứng, và sai lệch không quá nửa pixel (chứng minh chi tiết ở mục~\ref{subsec:w4_midpoint}). Không thuật toán nào trên cùng lưới làm tốt hơn.
+    \item \textbf{Liên tục lân cận 8:} được chứng minh ở mục~\ref{subsec:w4_circle_8conn}.
+    \item \textbf{Độ phức tạp thấp:} chỉ dùng cộng, trừ số nguyên (mục~\ref{subsec:w4_circle_p0}); chỉ tính $1/8$ đường tròn, phần còn lại suy ra bằng đối xứng (mục~\ref{subsec:w4_circle_sym}).
+\end{enumerate}
+Độ ``nham nhở'' giảm khi độ phân giải tăng: sai lệch tuyệt đối luôn $\le 0.5$ pixel, nên khi pixel càng nhỏ so với bán kính thì mắt người càng khó nhận ra bậc thang. Nếu cần mịn hơn nữa, người ta bổ sung các kỹ thuật khử răng cưa (anti-aliasing) như lấy mẫu dày (supersampling) hoặc tô cường độ pixel theo khoảng cách đến đường cong (thuật toán Xiaolin Wu). Các kỹ thuật này được đặt \emph{bên trên} thuật toán midpoint chứ không thay thế nó.
+
 \subsection{Phân tích Tính Liên tục 8-Lân cận: Vì sao \texorpdfstring{$x$}{x} phải Tăng đều trong Cung \texorpdfstring{$[90^\circ, 45^\circ]$}{[90, 45] độ}}
+\label{subsec:w4_circle_8conn}
 
 Trong cung bát phân khảo sát (từ điểm đỉnh $(0, r)$ đến điểm giao $x = y$), câu hỏi đặt ra là: \textit{Để đảm bảo đường cong liên tục không bị thủng lỗ trong lân cận 8 pixel, ta phải chọn biến $x$ hay $y$ tăng đều?}
 
@@ -292,6 +337,7 @@ x_{k+1} = x_k + 1
 Khi $x$ tăng đúng 1 pixel, tung độ thực tế $y$ giảm một khoảng nhỏ hơn hoặc bằng 1 pixel ($0 \le -\Delta y \le 1$). Vì vậy, pixel kế tiếp chỉ có đúng hai khả năng lựa chọn: giữ nguyên tung độ ($y_{k+1} = y_k$) hoặc giảm đúng 1 đơn vị ($y_{k+1} = y_k - 1$). Điều này đảm bảo đường cong tròn hoàn toàn liên tục và kết dính trong lân cận 8 pixel.
 
 \subsection{Chứng minh Hình học và Đại số của Thuật toán Điểm Giữa (Midpoint Circle Algorithm)}
+\label{subsec:w4_midpoint}
 
 Thuật toán Điểm Giữa (Midpoint Circle Algorithm) do Jack E. Bresenham phát triển~\citep{bresenham1977linear} giải quyết bài toán chọn pixel tối ưu bằng cách đánh giá vị trí hình học của điểm chính giữa hai pixel ứng viên:
 
@@ -358,6 +404,7 @@ Từ đây, ta thu được hai công thức cập nhật tương ứng:
 \end{itemize}
 
 \subsection{Chứng minh Thay thế Khử Số thực: \texorpdfstring{$p_0 = \frac{5}{4} - r$}{p0 = 5/4 - r} bằng \texorpdfstring{$p_0' = 1 - r$}{p0' = 1 - r} khi \texorpdfstring{$r$}{r} Nguyên}
+\label{subsec:w4_circle_p0}
 
 Tại bước khởi tạo ban đầu, thuật toán bắt đầu từ đỉnh trên cùng của đường tròn:
 \begin{equation}
@@ -421,3 +468,80 @@ Dấu của $p_k$ và dấu của $p_k'$ hoàn toàn đồng nhất tại mọi 
 p_k \ge 0 \iff p_k' \ge 0 \quad \text{và} \quad p_k < 0 \iff p_k' < 0
 \end{equation}
 Do đó, ta hoàn toàn có thể thay thế khởi tạo $p_0 = \frac{5}{4} - r$ bằng $p_0' = 1 - r$. Toàn bộ thuật toán Midpoint Circle được thực thi $100\%$ bằng các phép toán số nguyên, khử sạch hoàn toàn sự hiện diện của số thực trên phần cứng.
+
+% ===== added from week04-huy =====
+\subsection{Ý nghĩa của góc $\alpha$ trong hệ tọa độ cực khi vẽ đường elip}
+\label{subsec:w4_ellipse_alpha}
+
+\textit{Câu hỏi: Khi dựng elip bằng phương pháp hai đường tròn đồng tâm, góc $\alpha$ trong hệ tọa độ cực có ý nghĩa gì?}
+
+\textbf{Dựng elip bằng phương pháp hai đường tròn đồng tâm (Concentric Circles Method).} Xét elip tâm $O(0, 0)$ với bán trục lớn $a$ (theo $Ox$) và bán trục nhỏ $b$ (theo $Oy$):
+\begin{equation}
+\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1.
+\end{equation}
+Cách dựng như sau (Hình~\ref{fig:w4_ellipse}):
+\begin{enumerate}
+    \item Vẽ hai đường tròn đồng tâm $O$: đường tròn lớn bán kính $a$ và đường tròn nhỏ bán kính $b$.
+    \item Quét một tia từ tâm $O$ hợp với trục $Ox$ góc $\theta$ (góc quét của đường tròn lớn). Tia cắt đường tròn lớn tại $A(a\cos\theta,\, a\sin\theta)$ và đường tròn nhỏ tại $B(b\cos\theta,\, b\sin\theta)$.
+    \item Từ $A$ kẻ đường thẳng song song với $Oy$, từ $B$ kẻ đường thẳng song song với $Ox$. Giao điểm $P$ của hai đường này lấy hoành độ của $A$ và tung độ của $B$:
+    \begin{equation}
+    P = (a\cos\theta,\; b\sin\theta).
+    \end{equation}
+    \item Cho $\theta$ chạy từ $0$ đến $2\pi$, điểm $P$ vạch nên toàn bộ elip.
+\end{enumerate}
+
+\textbf{Chứng minh $P$ nằm trên elip.}
+\begin{equation}
+\frac{(a\cos\theta)^2}{a^2} + \frac{(b\sin\theta)^2}{b^2} = \cos^2\theta + \sin^2\theta = 1.
+\end{equation}
+Ngược lại, với mọi điểm $(x, y)$ trên elip, $\left(\frac{x}{a}\right)^2 + \left(\frac{y}{b}\right)^2 = 1$ nên tồn tại duy nhất $\theta \in [0, 2\pi)$ với $\cos\theta = x/a$, $\sin\theta = y/b$. Vậy phép dựng cho đúng và đủ các điểm của elip.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.15]
+    \def\a{2.4} \def\b{1.4} \def\th{50}
+    \draw[->] (-2.8,0) -- (2.9,0) node[right] {$x$};
+    \draw[->] (0,-2.7) -- (0,2.8) node[above] {$y$};
+    \draw[gray] (0,0) circle (\a);
+    \draw[gray] (0,0) circle (\b);
+    \draw[very thick, blue] (0,0) ellipse ({\a} and {\b});
+    \coordinate (A) at (\th:\a);
+    \coordinate (B) at (\th:\b);
+    \coordinate (P) at ({\a*cos(\th)},{\b*sin(\th)});
+    \draw (0,0) -- (A);
+    \draw[dashed] (A) -- (P);
+    \draw[dashed] (B) -- (P);
+    \draw[red, thick] (0,0) -- (P);
+    \fill (A) circle (1.5pt) node[above right] {$A$};
+    \fill (B) circle (1.5pt) node[above left] {$B$};
+    \fill[red] (P) circle (1.8pt) node[below right] {$P(a\cos\theta,\, b\sin\theta)$};
+    \draw (0.55,0) arc (0:\th:0.55);
+    \node at (28:0.8) {$\theta$};
+    \draw[red] (0.95,0) arc (0:{atan(\b/\a*tan(\th))}:0.95);
+    \node[red] at (12:1.22) {$\alpha$};
+    \node[below] at (\a,0) {$a$};
+    \node[below left] at (\b,0) {$b$};
+\end{tikzpicture}
+\caption{Dựng elip bằng hai đường tròn đồng tâm bán kính $a$ và $b$: $\theta$ là góc quét của đường tròn lớn (tia $OA$), $\alpha$ là góc quét của elip (tia $OP$)}
+\label{fig:w4_ellipse}
+\end{figure}
+
+\textbf{Ý nghĩa của góc $\alpha$.}
+\begin{itemize}
+    \item \textbf{$\alpha$ là góc quét của elip trong hệ tọa độ cực:} $\alpha$ là góc hợp bởi tia $OP$ (nối tâm với điểm $P$ đang vẽ trên elip) và trục $Ox$. Trong hệ tọa độ cực tâm $O$, mỗi điểm của elip được xác định bởi cặp $(r, \alpha)$ với $x = r\cos\alpha$, $y = r\sin\alpha$. Thay vào phương trình elip:
+    \begin{equation}
+    r^2\left(\frac{\cos^2\alpha}{a^2} + \frac{\sin^2\alpha}{b^2}\right) = 1 \;\Longrightarrow\; r(\alpha) = \frac{ab}{\sqrt{b^2\cos^2\alpha + a^2\sin^2\alpha}}.
+    \end{equation}
+    Như vậy khi quét $\alpha$ từ $0$ đến $2\pi$, khoảng cách từ tâm đến điểm vẽ thay đổi theo $r(\alpha)$: lớn nhất bằng $a$ tại $\alpha = 0, \pi$ (hai đỉnh trục lớn) và nhỏ nhất bằng $b$ tại $\alpha = \pm\frac{\pi}{2}$ (hai đỉnh trục nhỏ). Đây là điểm khác với đường tròn, nơi $r$ không đổi.
+    \item \textbf{Quan hệ giữa góc quét của elip $\alpha$ và góc quét của đường tròn lớn $\theta$:} vì $\tan\alpha = \dfrac{y_P}{x_P} = \dfrac{b\sin\theta}{a\cos\theta}$ nên
+    \begin{equation}
+    \tan\alpha = \frac{b}{a}\tan\theta.
+    \end{equation}
+    Do đó $\alpha = \theta$ chỉ khi $\theta$ là bội của $90^\circ$ (tại các đỉnh của elip) hoặc khi $a = b$. Với $a > b$, trong góc phần tư thứ nhất luôn có $\alpha \le \theta$: điểm $P$ trên elip ``chậm'' hơn điểm $A$ trên đường tròn lớn và lệch về phía trục lớn.
+    \item \textbf{Elip là ảnh của đường tròn lớn qua phép co:} phép co theo trục $Oy$ với hệ số $b/a$, $(x, y) \mapsto \left(x, \frac{b}{a}y\right)$, biến điểm $A$ trên đường tròn lớn thành điểm $P$ trên elip. Phép co giữ nguyên hoành độ nhưng ép tung độ, nên góc quét $\theta$ của đường tròn biến thành góc quét $\alpha$ nhỏ hơn của elip. Khi $a = b$, elip trở thành đường tròn và hai góc trùng nhau.
+    \item \textbf{Ý nghĩa khi vẽ:} khi quét đều theo $\theta$ với bước $\Delta\theta$, độ dài cung giữa hai điểm liên tiếp xấp xỉ
+    \begin{equation}
+    \Delta s \approx \sqrt{a^2\sin^2\theta + b^2\cos^2\theta}\;\Delta\theta.
+    \end{equation}
+    Gần đỉnh trục lớn ($\theta \approx 0$) có $\Delta s \approx b\,\Delta\theta$, gần đỉnh trục nhỏ ($\theta \approx 90^\circ$) có $\Delta s \approx a\,\Delta\theta$: các điểm dày ở hai đầu trục lớn và thưa ở hai đầu trục nhỏ. Để các điểm liên tiếp không cách nhau quá một pixel (liên tục lân cận 8), cần chọn $\Delta\theta \le 1/\max(a, b)$. Ngoài ra elip đối xứng qua $Ox$ và $Oy$, nên chỉ cần quét trong góc phần tư thứ nhất ($0 \le \alpha, \theta \le 90^\circ$) rồi suy ra ba điểm $(\pm x, \pm y)$ còn lại.
+\end{itemize}

@@ -1,0 +1,113 @@
+\documentclass{article} % For LaTeX2e
+
+% Lưu lại định nghĩa gốc của \addcontentsline trước khi style file vô hiệu hoá nó
+\makeatletter
+\let\orig@addcontentsline\addcontentsline
+\makeatother
+
+\usepackage{iclr2026_conference,times}
+
+% Khôi phục lại \addcontentsline chuẩn cho mục lục
+\makeatletter
+\let\addcontentsline\orig@addcontentsline
+\makeatother
+
+\usepackage[utf8]{vietnam}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Việt hóa môi trường mã giả
+\floatname{algorithm}{Giải thuật}
+\algrenewcommand\algorithmicrequire{\textbf{Đầu vào:}}
+\algrenewcommand\algorithmicensure{\textbf{Đầu ra:}}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\setcounter{tocdepth}{2}
+
+\title{Bài Tập Lớp Nhà: Nhóm GitRemoveAll}
+
+\author{
+  Tô Thành Đạt -- 24127153 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127153@student.hcmus.edu.vn} \\
+  \And
+  Lương Hưng Phát -- 24127298 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127298@student.hcmus.edu.vn} \\
+  \And
+  Nguyễn Nhựt Huy -- 24127398 \\
+  Khoa Công nghệ Thông tin \\
+  Trường ĐH Khoa học Tự nhiên \\
+  \texttt{24127398@student.hcmus.edu.vn} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+% Ghi chú các câu hỏi cần nhóm làm rõ thêm
+\newcommand{\clarify}[1]{\textcolor{red}{\textbf{[Cần làm rõ:} #1\textbf{]}}}
+
+\iclrfinalcopy % Uncommented for full header display
+
+\begin{document}
+
+% -------------------------------
+% Trang bìa
+% -------------------------------
+\input{cover}
+\clearpage
+
+\maketitle
+
+\begin{abstract}
+Báo cáo này tổng hợp toàn bộ nội dung bài học, câu hỏi lý thuyết và bài tập môn Xử lý Ảnh số và Video số (Digital Image and Video Processing) theo lộ trình 12 tuần học.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% --- 12 Tuần học ---
+\input{week/week1.tex}
+\newpage
+\input{week/week2.tex}
+% \newpage
+% \input{week/week3.tex}
+\newpage
+\input{week/week4.tex}
+% \newpage
+% \input{week/week5.tex}
+% \newpage
+% \input{week/week6.tex}
+% \newpage
+% \input{week/week7.tex}
+% \newpage
+% \input{week/week8.tex}
+% \newpage
+% \input{week/week9.tex}
+% \newpage
+% \input{week/week10.tex}
+% \newpage
+% \input{week/week11.tex}
+% \newpage
+% \input{week/week12.tex}
+
+\bibliography{BTLN}
+\bibliographystyle{BTLN}
+
+\end{document}

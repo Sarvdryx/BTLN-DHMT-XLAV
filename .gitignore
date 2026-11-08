@@ -7,3 +7,11 @@
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+# compiled output / LaTeX build artifacts
+BTLN.pdf
+main.pdf
+*.bcf
+*.lof
+*.lot
+*.run.xml
+*.bbl-SAVE-ERROR
