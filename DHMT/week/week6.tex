@@ -1,14 +1,416 @@
-\section{Tuần 6: Kiến trúc Mạng Nơ-ron Tích chập (CNN) \& Phân loại Ảnh}
+\section{Tuần 6: Kỹ thuật Tô miền Nâng cao và Phép Biến đổi Hình học trong Không gian 2D và 3D}
 \label{sec:week6}
 
-\subsection{Tổng quan nội dung Tuần 6}
-Phần này dành cho mô hình mạng tích chập sâu và bài toán phân loại hình ảnh (Image Classification).
+\subsection{Thuật toán Dòng quét với Góc nghiêng \texorpdfstring{$\alpha$}{alpha} Bất kỳ và Bước nhảy \texorpdfstring{$A$}{A} Pixel}
+\label{subsec:scanline_arbitrary_angle}
 
+Trong thuật toán tô màu đa giác theo dòng quét chuẩn tắc, các dòng quét luôn được giả định nằm ngang, song song với trục hoành Ox ($\alpha = 0$), và khoảng cách giữa hai dòng quét liên tiếp được cố định bằng đúng 1 pixel ($\Delta y = 1$). Tuy nhiên, trong nhiều bài toán đồ họa kỹ thuật thực tế, tiêu biểu như kỹ thuật đánh bóng dạng sọc (Cross-hatching), quét ảnh raster chéo trong máy in laser, hoặc quét hiển thị theo hướng quét tùy biến, hệ thống cần triển khai các dòng quét nghiêng một góc $\alpha \in [0, \pi)$ so với trục hoành, với khoảng cách trực giao giữa hai dòng quét kề nhau là $A$ pixel ($A \ge 1$).
+
+Xét về mặt toán học, bài toán tổng quát này có thể được giải quyết triệt để thông qua hai hướng tiếp cận chính:
+
+\textbf{1. Hướng tiếp cận Biến đổi Tọa độ Affine:}
+Thay vì sửa đổi trực tiếp cấu trúc của thuật toán dòng quét kinh điển, ta thực hiện một phép đổi hệ quy chiếu. Giả sử đa giác ban đầu $S$ được định nghĩa bởi tập đỉnh $\{P_i(x_i, y_i)\}_{i=1}^n$ trong hệ tọa độ hiển thị chuẩn. Ta áp dụng phép quay không gian phẳng quanh gốc tọa độ một góc $-\alpha$:
+\begin{equation}
+\label{eq:scanline_rotate_points}
+\begin{bmatrix} x_i' \\ y_i' \\ 1 \end{bmatrix} = \mathbf{R}(-\alpha) \begin{bmatrix} x_i \\ y_i \\ 1 \end{bmatrix} = \begin{bmatrix} \cos\alpha & \sin\alpha & 0 \\ -\sin\alpha & \cos\alpha & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x_i \\ y_i \\ 1 \end{bmatrix}
+\end{equation}
+Sau phép biến đổi này, họ các đường quét nghiêng ban đầu trở thành họ các đường quét nằm ngang hoàn toàn song song với trục $Ox'$ trong hệ tọa độ mới $(x', y')$. Khoảng cách trực giao giữa hai dòng quét liên tiếp lúc này chính là bước nhảy tung độ $\Delta y' = A$.
+
+Thuật toán khi đó được tiến hành theo các bước tuần tự:
+\begin{enumerate}[label=\alph*)]
+    \item Xác định giới hạn tung độ cực tiểu và cực đại của đa giác đã quay: $y'_{\min} = \min_{i} y'_i$ và $y'_{\max} = \max_{i} y'_i$.
+    \item Khởi tạo các dòng quét tại các mức tung độ rời rạc $y'_k = y'_{\min} + k \cdot A$ với $k \in \mathbb{N}$ thỏa mãn $y'_k \le y'_{\max}$.
+    \item Sử dụng cấu trúc Bảng cạnh kích hoạt (Active Edge Table) để tìm tập các giao điểm hoành độ $x'_{k, 1} < x'_{k, 2} < \dots < x'_{k, 2m}$ trên từng dòng quét $y'_k$.
+    \item Áp dụng quy tắc Chẵn Lẻ (Odd-Even Rule) để xác định các đoạn thẳng bên trong đa giác nối từ $(x'_{k, 2j-1}, y'_k)$ đến $(x'_{k, 2j}, y'_k)$ với $j = 1, \dots, m$.
+    \item Áp dụng phép quay ngược $\mathbf{R}(\alpha)$ để chuyển tọa độ các điểm mút của từng đoạn quét trở lại hệ tọa độ ban đầu:
+    \begin{equation}
+    \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} = \mathbf{R}(\alpha) \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix}
+    \end{equation}
+    Sau đó, sử dụng giải thuật vẽ đoạn thẳng nguyên Bresenham để raster hóa trực tiếp từng đoạn quét lên bộ đệm khung hình.
+\end{enumerate}
+
+\textbf{2. Hướng tiếp cận Giải tích Trực tiếp:}
+Trong trường hợp không muốn biến đổi toàn bộ tọa độ đỉnh, ta mô hình hóa họ dòng quét song song dưới dạng phương trình đường thẳng tổng quát:
+\begin{equation}
+\label{eq:scanline_family_implicit}
+-x \sin\alpha + y \cos\alpha = C_k
+\end{equation}
+trong đó vector pháp tuyến đơn vị của dòng quét là $\mathbf{n} = (-\sin\alpha, \cos\alpha)^T$, và khoảng cách giữa hai đường liên tiếp là $\Delta C = C_{k+1} - C_k = A$. Với mỗi cạnh $P_i P_{i+1}$ của đa giác có phương trình tham số $P(t) = P_i + t(P_{i+1} - P_i)$ với $t \in [0, 1]$, giao điểm với dòng quét thứ $k$ được xác định khi tham số $t$ thỏa mãn:
+\begin{equation}
+t = \frac{C_k - (-x_i \sin\alpha + y_i \cos\alpha)}{-(x_{i+1} - x_i) \sin\alpha + (y_{i+1} - y_i) \cos\alpha}
+\end{equation}
+Nếu $t \in [0, 1]$, giao điểm tồn tại và được đưa vào danh sách giao điểm của dòng quét $C_k$. Các giao điểm sau đó được sắp xếp theo tọa độ chiếu dọc theo vector chỉ phương $\mathbf{u} = (\cos\alpha, \sin\alpha)^T$ và tiến hành tô màu từng cặp điểm tương ứng.
+
+\subsection{Thuật toán Tô màu Dòng quét cho Biên Dạng Đường tròn và Ellipse}
+\label{subsec:scanline_circle_ellipse}
+
+Việc tô màu miền trong của các đường cong bậc hai như đường tròn và ellipse sở hữu những đặc thù hình học vượt trội so với đa giác tổng quát. Nhờ tính chất lồi (Convexity) và tính đối xứng trục hoàn hảo, mỗi dòng quét ngang $y = y_{\text{scan}}$ khi cắt qua hình tròn hoặc hình ellipse sẽ luôn tạo ra tối đa hai giao điểm thực duy nhất, tương ứng với biên trái và biên phải của miền cần tô màu.
+
+\textbf{1. Tô Dòng quét cho Hình tròn:}
+Xét đường tròn tâm tại $I(x_c, y_c)$ và bán kính $R$. Dòng quét ngang tại tung độ nguyên $y$ cắt đường tròn khi và chỉ khi $|y - y_c| \le R$. Bằng phương pháp giải tích giải trực tiếp phương trình $(x - x_c)^2 + (y - y_c)^2 = R^2$, hoành độ của hai điểm biên trái và phải tại dòng quét $y$ được xác định:
+\begin{equation}
+\label{eq:circle_scanline_span}
+x_{\text{left}}(y) = x_c - \sqrt{R^2 - (y - y_c)^2}, \quad x_{\text{right}}(y) = x_c + \sqrt{R^2 - (y - y_c)^2}
+\end{equation}
+Quá trình tô màu cho dòng quét $y$ quy về việc kích hoạt toàn bộ các pixel nguyên $(x, y)$ thỏa mãn:
+\begin{equation}
+\lceil x_{\text{left}}(y) \rceil \le x \le \lfloor x_{\text{right}}(y) \rfloor
+\end{equation}
+
+Khác với việc tính căn bậc hai gây tốn kém thời gian CPU tại mỗi dòng, giải thuật tối ưu trong đồ họa tích hợp trực tiếp quá trình tô dòng quét vào thuật toán vẽ đường tròn Điểm Giữa (Midpoint Circle Algorithm). Khi biến nguyên $x$ tăng dần từ $0$ lên đến $y$, tại mỗi bước duyệt pixel biên $(x_k, y_k)$, tính đối xứng 8 phần cho phép ta đồng thời xuất ra 4 đoạn quét ngang hoàn chỉnh:
+\begin{align}
+\text{Dòng } y = y_c + y_k: & \quad x \in [x_c - x_k, x_c + x_k] \\
+\text{Dòng } y = y_c - y_k: & \quad x \in [x_c - x_k, x_c + x_k] \\
+\text{Dòng } y = y_c + x_k: & \quad x \in [x_c - y_k, x_c + y_k] \\
+\text{Dòng } y = y_c - x_k: & \quad x \in [x_c - y_k, x_c + y_k]
+\end{align}
+Nhờ đó, toàn bộ hình tròn được tô kín đặc bằng các phép toán cộng trừ số nguyên thuần túy với độ phức tạp thời gian đạt mức tối ưu $O(R)$.
+
+\textbf{2. Tô Dòng quét cho Hình Ellipse:}
+Đối với hình ellipse chuẩn có tâm tại $I(x_c, y_c)$, bán trục ngang $r_x$ và bán trục đứng $r_y$, phương trình biên có dạng:
+\begin{equation}
+\frac{(x - x_c)^2}{r_x^2} + \frac{(y - y_c)^2}{r_y^2} = 1
+\end{equation}
+Tại mỗi dòng quét ngang $y \in [y_c - r_y, y_c + r_y]$, bề rộng nửa khoảng quét được xác định chính xác theo công thức:
+\begin{equation}
+\Delta x(y) = r_x \sqrt{1 - \frac{(y - y_c)^2}{r_y^2}}
+\end{equation}
+và đoạn pixel cần tô là $[x_c - \lfloor \Delta x(y) \rfloor, x_c + \lfloor \Delta x(y) \rfloor]$. Tương tự như đường tròn, thuật toán Midpoint Ellipse phân tách góc phần tư thứ nhất thành hai miền dựa trên độ dốc tiếp tuyến. Trong quá trình sinh các điểm biên $(x_k, y_k)$, thuật toán áp dụng tính đối xứng 4 phần để đồng thời tô hai dải pixel đối xứng qua trục hoành tâm ellipse: dòng $y = y_c + y_k$ và dòng $y = y_c - y_k$, nối từ $x_c - x_k$ đến $x_c + x_k$. Cơ chế này loại bỏ hoàn toàn sự cần thiết của danh sách cạnh tích cực (AEL) và triệt tiêu mọi chi phí sắp xếp tọa độ giao điểm.
+
+\subsection{Bản chất và Vai trò Nền tảng của các Phép Biến đổi Hình học trong Đồ họa Máy tính}
+\label{subsec:role_geometric_transformations}
+
+Phép biến đổi hình học (Geometric Transformation) là nền tảng toán học cốt lõi chi phối toàn bộ quy trình xây dựng, thao tác và kết xuất đồ họa máy tính hiện đại~\citep{hearn2004computer,foley1996computer}. Về bản chất giải tích, phép biến đổi hình học là một ánh xạ $T: \mathbb{R}^n \to \mathbb{R}^n$ làm thay đổi vị trí, hướng, kích thước hoặc hình dạng của các đối tượng hình học trong không gian.
+
+Vai trò quyết định của các phép biến đổi hình học được thể hiện rõ nét qua năm khía cạnh nền tảng sau:
 \begin{itemize}
-    \item Các thành phần cơ bản của CNN: Convolution, Pooling, Activation (ReLU), Fully-Connected Layers.
-    \item Các kiến trúc kinh điển: AlexNet, VGG, ResNet, EfficientNet.
-    \item Kỹ thuật huấn luyện: Data Augmentation, Transfer Learning, Regularization.
+    \item \textit{Mô hình hóa Đối tượng Phức hợp (Hierarchical Modeling):} Trong thực tế, các thực thể 3D phức tạp (như cơ thể người, robot công nghiệp hay xe hơi) được cấu thành từ hàng trăm bộ phận cơ sở đơn giản. Mỗi bộ phận được thiết kế độc lập trong hệ tọa độ cục bộ (Local Object Coordinates). Nhờ các phép tịnh tiến, quay và co giãn, các bộ phận này được lắp ráp chính xác vào hệ tọa độ thế giới (World Coordinate System) theo quan hệ phân cấp cây động học (Kinematic Tree).
+    \item \textit{Điều hướng Camera và Tạo Khung nhìn (Viewing Pipeline):} Để hiển thị khung cảnh 3D lên màn hình 2D, đồ họa máy tính phải mô phỏng lại vị trí mắt nhìn và hướng quan sát. Phép biến đổi góc nhìn (Viewing Transformation) dịch chuyển toàn bộ thế giới sao cho camera đặt tại gốc tọa độ và trục ngắm trùng với trục tọa độ chuẩn, tạo tiền đề cho các phép chiếu phối cảnh (Perspective Projection) và chiếu trực giao (Orthographic Projection).
+    \item \textit{Diễn hoạt Chuyển động (Animation \& Kinematics):} Mọi chuyển động vật lý, từ chuyển động quay của bánh xe đến biến dạng mềm mại của cơ mặt nhân vật, đều được tính toán bằng cách biến thiên liên tục các tham số biến đổi hình học theo thời gian $t$.
+    \item \textit{Tương tác Người - Máy (Interactive Manipulation):} Các thao tác quen thuộc như phóng to (Zoom), thu nhỏ, xoay vật thể (Orbit), kéo trượt (Pan) trên các phần mềm đồ họa tương tác CAD/CAM hay engine đồ họa game thực chất là việc cập nhật ma trận biến đổi hình học tương ứng với dữ liệu đầu vào từ chuột và bàn phím.
+    \item \textit{Tối ưu hóa Tính toán thông qua Tọa độ Đồng nhất (Homogeneous Coordinates):} Bằng cách nhúng không gian Affine $n$ chiều vào không gian xạ ảnh $n+1$ chiều, mọi phép biến đổi hình học phi tuyến như tịnh tiến đều được tuyến tính hóa thành phép nhân ma trận. Điều này cho phép ghép nối (Concatenate) hàng loạt phép biến đổi liên hoàn thành một ma trận tổng hợp duy nhất kích thước $4 \times 4$, tối ưu hóa triệt để phần cứng tính toán song song trên GPU.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\subsection{Thiết lập Phép Quay và Co giãn 2D quanh Tâm Bất kỳ \texorpdfstring{$C(x_c, y_c)$}{C(xc, yc)}}
+\label{subsec:rotate_scale_arbitrary_pivot}
+
+Trong không gian hai chiều, các phép biến đổi quay chuẩn tắc $R(\theta)$ và co giãn chuẩn tắc $S(s_x, s_y)$ luôn lấy gốc tọa độ $O(0, 0)$ làm tâm điểm tham chiếu. Khi cần áp dụng phép quay hoặc co giãn đối tượng quanh một điểm tâm tùy ý $C(x_c, y_c) \neq O$, việc áp dụng trực tiếp ma trận chuẩn sẽ làm sai lệch hoàn toàn vị trí tương quan của vật thể trong không gian.
+
+Để giải quyết vấn đề này, nguyên lý tổng hợp phép biến đổi (Composite Transformation) được áp dụng thông qua một chuỗi ba bước liên hoàn:
+\begin{enumerate}
+    \item Tịnh tiến toàn bộ không gian sao cho điểm tâm $C(x_c, y_c)$ dịch chuyển về trùng khít với gốc tọa độ $O(0, 0)$, sử dụng ma trận tịnh tiến $\mathbf{T}(-x_c, -y_c)$.
+    \item Thực hiện phép biến đổi cơ sở (quay một góc $\theta$ hoặc co giãn với tỉ lệ $s_x, s_y$) lấy gốc tọa độ $O$ làm tâm.
+    \item Tịnh tiến ngược toàn bộ không gian để đưa điểm tâm trở lại vị trí ban đầu $C(x_c, y_c)$, sử dụng ma trận tịnh tiến ngược $\mathbf{T}(x_c, y_c)$.
+\end{enumerate}
+
+\textbf{1. Phép Quay quanh Tâm $C(x_c, y_c)$:}
+Ma trận biến đổi tổng hợp $\mathbf{M}_{\text{rot}}$ trong hệ tọa độ đồng nhất được biểu diễn bằng tích ma trận:
+\begin{align}
+\label{eq:rotate_pivot_composite}
+\mathbf{M}_{\text{rot}} &= \mathbf{T}(x_c, y_c) \cdot \mathbf{R}(\theta) \cdot \mathbf{T}(-x_c, -y_c) \nonumber \\
+&= \begin{bmatrix} 1 & 0 & x_c \\ 0 & 1 & y_c \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} 1 & 0 & -x_c \\ 0 & 1 & -y_c \\ 0 & 0 & 1 \end{bmatrix} \nonumber \\
+&= \begin{bmatrix} \cos\theta & -\sin\theta & x_c(1 - \cos\theta) + y_c\sin\theta \\ \sin\theta & \cos\theta & y_c(1 - \cos\theta) - x_c\sin\theta \\ 0 & 0 & 1 \end{bmatrix}
+\end{align}
+Khi nhân ma trận này với vector tọa độ điểm $P(x, y, 1)^T$, ta thu được tọa độ điểm sau khi quay $P'(x', y', 1)^T$:
+\begin{equation}
+\label{eq:rotate_pivot_explicit}
+\begin{cases}
+x' = x_c + (x - x_c)\cos\theta - (y - y_c)\sin\theta \\
+y' = y_c + (x - x_c)\sin\theta + (y - y_c)\cos\theta
+\end{cases}
+\end{equation}
+
+\textbf{2. Phép Co giãn quanh Tâm $C(x_c, y_c)$:}
+Hoàn toàn tương tự, ma trận biến đổi co giãn tổng hợp $\mathbf{M}_{\text{scale}}$ có dạng:
+\begin{align}
+\label{eq:scale_pivot_composite}
+\mathbf{M}_{\text{scale}} &= \mathbf{T}(x_c, y_c) \cdot \mathbf{S}(s_x, s_y) \cdot \mathbf{T}(-x_c, -y_c) \nonumber \\
+&= \begin{bmatrix} 1 & 0 & x_c \\ 0 & 1 & y_c \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} s_x & 0 & 0 \\ 0 & s_y & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} 1 & 0 & -x_c \\ 0 & 1 & -y_c \\ 0 & 0 & 1 \end{bmatrix} \nonumber \\
+&= \begin{bmatrix} s_x & 0 & x_c(1 - s_x) \\ 0 & s_y & y_c(1 - s_y) \\ 0 & 0 & 1 \end{bmatrix}
+\end{align}
+Hệ phương trình tọa độ tường minh tương ứng là:
+\begin{equation}
+\label{eq:scale_pivot_explicit}
+\begin{cases}
+x' = x_c + (x - x_c)s_x \\
+y' = y_c + (y - y_c)s_y
+\end{cases}
+\end{equation}
+Công thức trên chứng minh rằng khi $s_x = s_y = 1$, điểm $P$ giữ nguyên vị trí, và khi $P$ trùng với tâm $C$ thì tọa độ hoàn toàn bất biến trước phép co giãn.
+
+\subsection{Xác định Ma trận Biến đổi Đối xứng qua một Trục Tuyến tính Bất kỳ trong Mặt phẳng 2D}
+\label{subsec:reflection_arbitrary_axis}
+
+Phép đối xứng qua trục (Reflection) là một phép biến đổi đẳng cự (Isometry) làm đảo ngược tính định hướng (Handedness) của không gian. Phép đối xứng cơ sở qua trục hoành $Ox$ được biểu diễn bởi ma trận:
+\begin{equation}
+\mathbf{R}_x = \begin{bmatrix} 1 & 0 & 0 \\ 0 & -1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\end{equation}
+Xét bài toán tổng quát: Tìm ma trận đối xứng qua một trục thẳng bất kỳ $L$ trong mặt phẳng 2D. Đường thẳng $L$ được cho bởi phương trình tường minh $y = mx + b$ hoặc đi qua một điểm $P_0(x_0, y_0)$ với góc nghiêng $\theta$ so với trục hoành ($m = \tan\theta, \theta = \arctan(m)$).
+
+Để xây dựng phép biến đổi, ta phân rã bài toán thành chuỗi năm phép biến đổi hình học cơ sở:
+\begin{enumerate}
+    \item Tịnh tiến đường thẳng $L$ về gốc tọa độ: Điểm giao của $L$ với trục tung là $(0, b)$, ta tịnh tiến không gian bởi ma trận $\mathbf{T}(0, -b)$ sao cho đường thẳng đi qua gốc tọa độ $O$.
+    \item Xoay đường thẳng $L$ trùng với trục hoành $Ox$: Áp dụng phép quay một góc $-\theta$ quanh gốc tọa độ bởi ma trận $\mathbf{R}(-\theta)$.
+    \item Thực hiện phép đối xứng cơ sở qua trục $Ox$: Áp dụng ma trận $\mathbf{R}_x$.
+    \item Xoay ngược đường thẳng về góc nghiêng ban đầu: Áp dụng ma trận quay $\mathbf{R}(\theta)$.
+    \item Tịnh tiến ngược đường thẳng về vị trí ban đầu: Áp dụng ma trận tịnh tiến $\mathbf{T}(0, b)$.
+\end{enumerate}
+
+Ma trận biến đổi đối xứng tổng hợp $\mathbf{M}_{\text{ref}}$ được xác lập thông qua tích chuỗi ma trận:
+\begin{equation}
+\label{eq:reflection_chain}
+\mathbf{M}_{\text{ref}} = \mathbf{T}(0, b) \cdot \mathbf{R}(\theta) \cdot \mathbf{R}_x \cdot \mathbf{R}(-\theta) \cdot \mathbf{T}(0, -b)
+\end{equation}
+Nhận xét rằng tích ba ma trận ở giữa chính là phép đối xứng qua đường thẳng đi qua gốc tọa độ nghiêng góc $\theta$:
+\begin{align}
+\mathbf{R}(\theta) \cdot \mathbf{R}_x \cdot \mathbf{R}(-\theta) &= \begin{bmatrix} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} 1 & 0 & 0 \\ 0 & -1 & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} \cos\theta & \sin\theta & 0 \\ -\sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix} \nonumber \\
+&= \begin{bmatrix} \cos^2\theta - \sin^2\theta & 2\sin\theta\cos\theta & 0 \\ 2\sin\theta\cos\theta & \sin^2\theta - \cos^2\theta & 0 \\ 0 & 0 & 1 \end{bmatrix} \nonumber \\
+&= \begin{bmatrix} \cos(2\theta) & \sin(2\theta) & 0 \\ \sin(2\theta) & -\cos(2\theta) & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\end{align}
+Kết hợp với các ma trận tịnh tiến $\mathbf{T}(0, b)$ và $\mathbf{T}(0, -b)$, ta thu được ma trận đối xứng tổng quát hoàn chỉnh:
+\begin{equation}
+\label{eq:reflection_final_matrix}
+\mathbf{M}_{\text{ref}} = \begin{bmatrix} \cos(2\theta) & \sin(2\theta) & -b\sin(2\theta) \\ \sin(2\theta) & -\cos(2\theta) & b(1 + \cos(2\theta)) \\ 0 & 0 & 1 \end{bmatrix}
+\end{equation}
+Sử dụng các hệ thức lượng giác liên hệ với hệ số góc $m = \tan\theta$:
+\begin{equation}
+\cos(2\theta) = \frac{1 - m^2}{1 + m^2}, \quad \sin(2\theta) = \frac{2m}{1 + m^2}
+\end{equation}
+ta có thể tính toán toàn bộ các hệ số của ma trận $\mathbf{M}_{\text{ref}}$ trực tiếp từ các tham số đại số $(m, b)$ của đường thẳng mà không cần gọi các hàm lượng giác tiêu tốn tài nguyên.
+
+\subsection{Vai trò của Phép Biến đổi từ Hệ Tọa độ Thế giới Thực sang Hệ Tọa độ Thiết bị Hiển thị}
+\label{subsec:world_to_display_transformation}
+
+Trong quy trình kết xuất đồ họa (Graphics Pipeline), sự phân tách giữa không gian thế giới thực và không gian thiết bị hiển thị là nguyên lý kiến trúc mang tính sống còn. Đối tượng đồ họa được định nghĩa trong Hệ tọa độ Thế giới (World Coordinate System, WCS) với đơn vị đo vật lý liên tục (như mét, kilomet hoặc micromet) và phạm vi tọa độ tùy ý. Ngược lại, thiết bị hiển thị như màn hình máy tính hoạt động trong Hệ tọa độ Thiết bị (Display Coordinate System, DCS) với đơn vị đo là các điểm ảnh số nguyên rời rạc (Pixels) và có gốc tọa độ thường đặt tại góc trên bên trái màn hình.
+
+Phép biến đổi từ tọa độ thế giới sang tọa độ thiết bị (Window-to-Viewport Transformation) đảm nhận các vai trò trọng yếu:
+\begin{itemize}
+    \item \textit{Độc lập hóa Thiết bị và Ứng dụng:} Lập trình viên có thể mô hình hóa các vật thể hình học hoàn toàn tự nhiên theo kích thước thực nghiệm của bài toán mà không cần quan tâm đến việc chương trình sẽ được chạy trên màn hình độ phân giải Full HD ($1920 \times 1080$), màn hình $4\text{K}$ hay màn hình hiển thị di động.
+    \item \textit{Định hình Khung nhìn và Tỉ lệ Thu phóng (Zoom \& Pan):} Bằng cách thay đổi tọa độ của cửa sổ quan sát (Window) trong thế giới thực, hệ thống cho phép người dùng phóng to từng chi tiết vi mô hoặc quan sát toàn cảnh vĩ mô của bản vẽ mà không làm biến dạng dữ liệu hình học gốc.
+    \item \textit{Thực hiện Cơ chế Xén tỉa Đồ họa (Clipping):} Phép biến đổi đưa các tọa độ về không gian chuẩn hóa, cho phép các giải thuật xén tỉa như Cohen-Sutherland hay Sutherland-Hodgman loại bỏ hoàn toàn các thực thể nằm ngoài vùng quan sát trước khi tiến hành raster hóa, tiết kiệm hàng triệu chu kỳ tính toán lãng phí của GPU.
+    \item \textit{Hỗ trợ Cơ chế Đa Cổng nhìn (Multiple Viewports):} Cùng một dữ liệu mô hình thế giới thực có thể được ánh xạ đồng thời lên nhiều cổng nhìn (Viewport) khác nhau trên màn hình để cung cấp các góc quan sát đa chiều (hình chiếu đứng, hình chiếu bằng, hình chiếu cạnh và phối cảnh 3D) trong các phần mềm thiết kế chuyên nghiệp.
+\end{itemize}
+
+\subsection{Tính Cần thiết của Cơ chế Đồng bộ Hai chiều Giữa Ánh xạ Cửa sổ - Cổng nhìn (Win-to-View) và Cổng nhìn - Cửa sổ (View-to-Win)}
+\label{subsec:sync_win_to_view_view_to_win}
+
+Một hệ thống đồ họa tương tác hoàn chỉnh không thể chỉ vận hành theo một chiều từ dữ liệu mô hình ra màn hình hiển thị. Bên cạnh luồng ánh xạ thuận từ cửa sổ sang cổng nhìn (\textit{Win-to-View}), hệ thống bắt buộc phải duy trì một luồng ánh xạ nghịch đồng bộ từ cổng nhìn ngược trở lại cửa sổ thế giới thực (\textit{View-to-Win}).
+
+\textbf{1. Bản chất Toán học của Hai Phép Ánh xạ:}
+Giả sử cửa sổ thế giới thực được giới hạn bởi $[x_{w\min}, x_{w\max}] \times [y_{w\min}, y_{w\max}]$ và cổng nhìn hiển thị trên màn hình được giới hạn bởi $[x_{v\min}, x_{v\max}] \times [y_{v\min}, y_{v\max}]$.
+Phép ánh xạ thuận đưa một điểm $P_w(x_w, y_w)$ trong thế giới thực sang điểm $P_v(x_v, y_v)$ trên màn hình tuân theo phương trình tỉ lệ:
+\begin{equation}
+\label{eq:win_to_view}
+\begin{cases}
+x_v = x_{v\min} + (x_w - x_{w\min}) \cdot s_x \\
+y_v = y_{v\min} + (y_w - y_{w\min}) \cdot s_y
+\end{cases}
+\end{equation}
+trong đó hệ số co giãn tỉ lệ là:
+\begin{equation}
+s_x = \frac{x_{v\max} - x_{v\min}}{x_{w\max} - x_{w\min}}, \quad s_y = \frac{y_{v\max} - y_{v\min}}{y_{w\max} - y_{w\min}}
+\end{equation}
+
+Ngược lại, khi người dùng thực hiện một tương tác chuột tại tọa độ pixel $(x_v, y_v)$ trên màn hình, hệ thống phải kích hoạt phép ánh xạ nghịch (\textit{View-to-Win}) để xác định vị trí hình học thực $P_w(x_w, y_w)$:
+\begin{equation}
+\label{eq:view_to_win}
+\begin{cases}
+x_w = x_{w\min} + (x_v - x_{v\min}) \cdot \frac{1}{s_x} \\
+y_w = y_{w\min} + (y_v - y_{v\min}) \cdot \frac{1}{s_y}
+\end{cases}
+\end{equation}
+
+\textbf{2. Sự Cần thiết Tuyệt đối của Tính Đồng bộ Hai chiều:}
+Hai phép biến đổi trên là nghịch đảo hàm số chặt chẽ của nhau: $\mathbf{M}_{\text{view-to-win}} = \mathbf{M}_{\text{win-to-view}}^{-1}$. Việc đồng bộ hóa hoàn hảo giữa hai phép ánh xạ này là điều kiện tiên quyết vì các lý do sau:
+\begin{itemize}
+    \item \textit{Đảm bảo Độ chính xác trong Thao tác Chọn Đối tượng (Picking \& Selection):} Khi người dùng nhấp chuột để chọn một đỉnh hoặc một đường cong, hệ thống phải chuyển tọa độ pixel của chuột về tọa độ thế giới thực để so khớp khoảng cách với các đối tượng hình học. Nếu có sự sai lệch hoặc không đồng bộ tham số giữa hai phép biến đổi, tia chọn (Picking Ray) sẽ bị lệch khỏi mục tiêu, khiến thao tác tương tác bị trượt hoặc chọn nhầm thực thể lân cận.
+    \item \textit{Bảo toàn Tính Nhất quán khi Vẽ Trực tiếp (Direct Manipulation):} Trong các ứng dụng CAD hay đồ họa vector, khi người dùng kéo thả chuột để tạo một điểm mút mới hay di chuyển một đường cong Bézier, tọa độ chuyển động của chuột phải được phiên dịch tức thời và chính xác sang không gian mô hình. Sự đồng bộ đảm bảo rằng điểm được vẽ ra trên màn hình luôn bám sát vị trí con trỏ chuột mà không xuất hiện độ trễ hay sai số tích lũy không gian.
+    \item \textit{Bảo toàn Tỉ lệ Khung hình (Aspect Ratio Preservation):} Khi cửa sổ ứng dụng bị người dùng kéo dãn thay đổi kích thước, nếu hệ số $s_x$ và $s_y$ không được đồng bộ điều chỉnh đồng thời trên cả hai chiều ánh xạ, các hình tròn trong thế giới thực sẽ bị méo mó thành hình ellipse khi hiển thị, và các thao tác tương tác chuột trên màn hình sẽ tạo ra những dịch chuyển méo mó phi tuyến trong thế giới thực.
+\end{itemize}
+
+\subsection{Xây dựng Ma trận Biến đổi Quay quanh một Trục Bất kỳ trong Không gian 3 Chiều}
+\label{subsec:rotate_arbitrary_axis_3d}
+
+Trong không gian ba chiều, việc quay một đối tượng quanh một trục tọa độ chuẩn ($Ox, Oy, Oz$) được thực hiện thông qua các ma trận cơ sở kinh điển. Tuy nhiên, bài toán tổng quát yêu cầu thực hiện phép quay một góc $\theta$ quanh một trục định hướng bất kỳ trong không gian, được xác định bởi điểm xuất phát $P_1(x_1, y_1, z_1)$ và điểm kết thúc $P_2(x_2, y_2, z_2)$~\citep{hearn2004computer}.
+
+Vector chỉ phương của trục quay được xác định bởi:
+\begin{equation}
+\mathbf{V} = \vec{P_1 P_2} = (x_2 - x_1, y_2 - y_1, z_2 - z_1)
+\end{equation}
+Chuẩn hóa vector chỉ phương để thu được vector đơn vị $\mathbf{u}$:
+\begin{equation}
+\label{eq:unit_vector_u}
+\mathbf{u} = \frac{\mathbf{V}}{\|\mathbf{V}\|} = (a, b, c), \quad \text{với } a^2 + b^2 + c^2 = 1
+\end{equation}
+
+Để xây dựng ma trận quay tổng hợp $\mathbf{R}(\mathbf{V}, \theta)$, ta áp dụng nguyên lý phân rã hình học liên hoàn gồm 5 bước tiêu chuẩn (minh họa tại Slide bài giảng số 9):
+\begin{enumerate}
+    \item \textit{Bước 1: Tịnh tiến trục quay về gốc tọa độ ($P_1 \to O$):} Dịch chuyển toàn bộ không gian sao cho điểm $P_1$ chuyển về trùng với gốc tọa độ $O(0, 0, 0)$, sử dụng ma trận tịnh tiến:
+    \begin{equation}
+    \mathbf{T}(P_1 \to O) = \begin{bmatrix} 1 & 0 & 0 & -x_1 \\ 0 & 1 & 0 & -y_1 \\ 0 & 0 & 1 & -z_1 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+    \end{equation}
+    \item \textit{Bước 2: Xoay trục quay trùng khít với trục tọa độ chuẩn $Oz$:} Quá trình này được phân rã thành hai phép quay liên tiếp:
+    \begin{itemize}
+        \item \textit{Bước 2a: Quay quanh trục $Ox$ một góc $\alpha$ để đưa vector $\mathbf{u}$ vào mặt phẳng tọa độ $Oxz$:} Phép chiếu của vector $\mathbf{u}$ lên mặt phẳng $Oyz$ là vector $\mathbf{u}' = (0, b, c)$ có độ dài $d = \sqrt{b^2 + c^2}$. Phép quay quanh trục $Ox$ đưa $\mathbf{u}'$ về trùng với trục $Oz$, ma trận quay tương ứng là:
+        \begin{equation}
+        \label{eq:rx_alpha}
+        \mathbf{R}_x(\alpha) = \begin{bmatrix} 1 & 0 & 0 & 0 \\ 0 & c/d & -b/d & 0 \\ 0 & b/d & c/d & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+        \end{equation}
+        Sau bước này, vector $\mathbf{u}$ biến thành vector $\mathbf{u}'' = (a, 0, d)$ nằm trọn vẹn trong mặt phẳng $Oxz$.
+        \item \textit{Bước 2b: Quay quanh trục $Oy$ một góc $-\beta$ để đưa vector $\mathbf{u}''$ trùng khít hoàn toàn với trục $Oz$:} Vector $\mathbf{u}''$ hợp với trục $Oz$ một góc $\beta$ thỏa mãn $\cos\beta = d$ và $\sin\beta = -a$. Phép quay quanh trục $Oy$ được xác lập bởi ma trận:
+        \begin{equation}
+        \label{eq:ry_beta}
+        \mathbf{R}_y(\beta) = \begin{bmatrix} d & 0 & -a & 0 \\ 0 & 1 & 0 & 0 \\ a & 0 & d & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+        \end{equation}
+    \end{itemize}
+    \item \textit{Bước 3: Thực hiện phép quay mong muốn quanh trục chuẩn $Oz$ một góc $\theta$:}
+    \begin{equation}
+    \mathbf{R}_z(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta & 0 & 0 \\ \sin\theta & \cos\theta & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+    \end{equation}
+    \item \textit{Bước 4: Thực hiện các phép quay ngược để khôi phục hướng ban đầu của trục quay:} Áp dụng lần lượt ma trận nghịch đảo của phép quay quanh trục $Oy$ và phép quay quanh trục $Ox$:
+    \begin{equation}
+    \mathbf{R}_y^{-1}(\beta) = \mathbf{R}_y(-\beta) = \begin{bmatrix} d & 0 & a & 0 \\ 0 & 1 & 0 & 0 \\ -a & 0 & d & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}, \quad \mathbf{R}_x^{-1}(\alpha) = \mathbf{R}_x(-\alpha) = \begin{bmatrix} 1 & 0 & 0 & 0 \\ 0 & c/d & b/d & 0 \\ 0 & -b/d & c/d & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+    \end{equation}
+    \item \textit{Bước 5: Tịnh tiến ngược toàn bộ không gian để đưa trục quay về vị trí ban đầu ($O \to P_1$):}
+    \begin{equation}
+    \mathbf{T}^{-1}(P_1 \to O) = \mathbf{T}(O \to P_1) = \begin{bmatrix} 1 & 0 & 0 & x_1 \\ 0 & 1 & 0 & y_1 \\ 0 & 0 & 1 & z_1 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+    \end{equation}
+\end{enumerate}
+
+Ma trận biến đổi quay tổng quát hoàn chỉnh $\mathbf{R}(\mathbf{V}, \theta)$ được thiết lập thông qua tích chuỗi của 7 ma trận cơ sở:
+\begin{equation}
+\label{eq:composite_arbitrary_axis_rotation}
+\mathbf{R}(\mathbf{V}, \theta) = \mathbf{T}(P_1) \cdot \mathbf{R}_x^{-1}(\alpha) \cdot \mathbf{R}_y^{-1}(\beta) \cdot \mathbf{R}_z(\theta) \cdot \mathbf{R}_y(\beta) \cdot \mathbf{R}_x(\alpha) \cdot \mathbf{T}(-P_1)
+\end{equation}
+Đặt $\mathbf{A}(\mathbf{V}) = \mathbf{R}_x(\alpha) \cdot \mathbf{R}_y(\beta)$ là ma trận canh chỉnh trục quay trùng với trục $Oz$, công thức trên được viết lại dưới dạng cô đọng:
+\begin{equation}
+\mathbf{R}(\mathbf{V}, \theta) = \mathbf{T}(P_1) \cdot \mathbf{A}^{-1}(\mathbf{V}) \cdot \mathbf{R}_z(\theta) \cdot \mathbf{A}(\mathbf{V}) \cdot \mathbf{T}(-P_1)
+\end{equation}
+
+\subsection{Chứng minh Sự Đồng nhất của Hai Góc \texorpdfstring{$\alpha$}{alpha} trong Bài toán Quay quanh Trục 3D (Slide 28)}
+\label{subsec:proof_alpha_angles_identical}
+
+Trong tài liệu bài giảng (Lecture 9, trang 28), việc xác định góc quay quanh trục $Ox$ được minh họa thông qua hai sơ đồ hình học kề nhau: sơ đồ bên trái thể hiện góc hợp bởi vector hình chiếu $\mathbf{u}'$ và vector đơn vị trục $Oz$, trong khi sơ đồ bên phải thể hiện góc quay của trục tọa độ để đưa không gian về trạng thái canh chỉnh. Cần chứng minh rằng hai góc được ký hiệu cùng bằng $\alpha$ trong hai sơ đồ này thực chất là hoàn toàn đồng nhất về mặt giải tích và hình học.
+
+\textbf{1. Thiết lập Hình học:}
+Xét vector đơn vị chỉ phương của trục quay $\mathbf{u} = (a, b, c)$ xuất phát từ gốc tọa độ $O$. Ta có thể phân tích duy nhất vector $\mathbf{u}$ thành tổng của hai thành phần trực giao:
+\begin{equation}
+\mathbf{u} = a \mathbf{u}_x + \mathbf{u}'
+\end{equation}
+trong đó $\mathbf{u}_x = (1, 0, 0)$ là vector đơn vị dọc theo trục $Ox$, và $\mathbf{u}' = (0, b, c)$ là vector hình chiếu trực giao của $\mathbf{u}$ lên mặt phẳng tọa độ $Oyz$. Độ dài của vector hình chiếu là $d = \|\mathbf{u}'\| = \sqrt{b^2 + c^2}$.
+
+Trong sơ đồ bên trái (Slide 28), góc $\alpha$ được định nghĩa là góc phẳng nằm trong mặt phẳng $Oyz$, hợp bởi vector hình chiếu $\mathbf{u}' = (0, b, c)$ và vector đơn vị của trục $Oz$ là $\mathbf{u}_z = (0, 0, 1)$. Áp dụng định nghĩa tích vô hướng trong mặt phẳng $Oyz$:
+\begin{equation}
+\label{eq:proof_alpha_dot}
+\cos\alpha = \frac{\mathbf{u}' \cdot \mathbf{u}_z}{\|\mathbf{u}'\| \|\mathbf{u}_z\|} = \frac{0 \cdot 0 + b \cdot 0 + c \cdot 1}{d \cdot 1} = \frac{c}{d}
+\end{equation}
+
+\textbf{2. Phân tích Góc Quay Không gian trong Sơ đồ bên Phải:}
+Trong sơ đồ bên phải (Slide 28a), mục tiêu hình học là thực hiện một phép quay không gian ba chiều quanh trục $Ox$ một góc $\theta_x$ sao cho vector $\mathbf{u}$ sau phép quay nằm trọn vẹn trong mặt phẳng tọa độ $Oxz$.
+Một vector bất kỳ nằm trong mặt phẳng $Oxz$ khi và chỉ khi thành phần tung độ $y$ của nó triệt tiêu hoàn toàn ($y = 0$).
+
+Xét tác động của phép quay quanh trục $Ox$ một góc $\theta_x$ lên vector $\mathbf{u}$:
+\begin{equation}
+\mathbf{u}_{\text{new}} = \mathbf{R}_x(\theta_x) \mathbf{u} = \mathbf{R}_x(\theta_x) \left( a \mathbf{u}_x + \mathbf{u}' \right) = a \mathbf{u}_x + \mathbf{R}_x(\theta_x) \mathbf{u}'
+\end{equation}
+Bởi vì trục quay là $Ox$, thành phần $a \mathbf{u}_x$ hoàn toàn bất biến trước phép quay. Do đó, yêu cầu vector $\mathbf{u}_{\text{new}}$ nằm trong mặt phẳng $Oxz$ tương đương tuyệt đối với yêu cầu:
+\begin{equation}
+\mathbf{R}_x(\theta_x) \mathbf{u}' \text{ phải nằm dọc theo trục } Oz \iff \mathbf{R}_x(\theta_x) \begin{bmatrix} 0 \\ b \\ c \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \\ d \end{bmatrix}
+\end{equation}
+
+Xét phép quay trong mặt phẳng $Oyz$: Tọa độ của vector $\mathbf{u}'$ trong hệ trục $(Oy, Oz)$ là $(b, c) = (d\sin\alpha, d\cos\alpha)$. Phép quay một góc $\theta_x$ biến tọa độ này thành:
+\begin{equation}
+\begin{bmatrix} y_{\text{new}} \\ z_{\text{new}} \end{bmatrix} = \begin{bmatrix} \cos\theta_x & -\sin\theta_x \\ \sin\theta_x & \cos\theta_x \end{bmatrix} \begin{bmatrix} b \\ c \end{bmatrix} = \begin{bmatrix} b\cos\theta_x - c\sin\theta_x \\ b\sin\theta_x + c\cos\theta_x \end{bmatrix}
+\end{equation}
+Để thành phần tung độ triệt tiêu ($y_{\text{new}} = 0$):
+\begin{equation}
+b\cos\theta_x - c\sin\theta_x = 0 \iff \tan\theta_x = \frac{b}{c}
+\end{equation}
+Mặt khác, từ tam giác vuông tạo bởi vector hình chiếu $\mathbf{u}'(0, b, c)$ và trục $Oz$, ta có:
+\begin{equation}
+\tan\alpha = \frac{b}{c}
+\end{equation}
+Do cả hai góc đều nằm trong khoảng xác định của phép quay hướng dương quanh trục $Ox$, ta suy ra trực tiếp:
+\begin{equation}
+\theta_x = \alpha
+\end{equation}
+Điều này chứng minh hoàn toàn tính tương đương chặt chẽ: Góc quay cần thiết quanh trục $Ox$ để đưa vector $\mathbf{u}$ vào mặt phẳng $Oxz$ chính là góc phẳng $\alpha$ hợp bởi vector hình chiếu $\mathbf{u}'$ và trục $Oz$.
+
+\subsection{Cơ sở Hiệu năng và Ứng dụng Thực tiễn của Tích Vô hướng và Tích Hữu hướng trong Đồ họa}
+\label{subsec:dot_cross_product_applications}
+
+Trong toàn bộ kho tàng đại số tuyến tính ứng dụng cho đồ họa máy tính, tích vô hướng (Dot Product) và tích hữu hướng (Cross Product) là hai phép toán có tần suất sử dụng cao nhất và mang lại hiệu quả tính toán vượt trội nhất.
+
+\textbf{1. Cơ sở Hiệu năng Tính toán:}
+\begin{itemize}
+    \item \textit{Tích vô hướng $\mathbf{a} \cdot \mathbf{b} = a_x b_x + a_y b_y + a_z b_z$:} Phép toán này chỉ tiêu tốn đúng 3 phép nhân và 2 phép cộng dấu phẩy động trên CPU/GPU. Mặc dù chi phí tính toán cực kỳ thấp, giá trị vô hướng thu được lại cung cấp ngay lập tức thông tin góc giữa hai vector ($\cos\theta = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|}$) và dấu của nó xác định điểm kiểm tra nằm ở phía trước, phía sau hay nằm trên một mặt phẳng siêu việt mà không cần gọi hàm lượng giác nghịch đảo tiêu tốn tài nguyên.
+    \item \textit{Tích hữu hướng $\mathbf{a} \times \mathbf{b} = (a_y b_z - a_z b_y, a_z b_x - a_x b_z, a_x b_y - a_y b_x)$:} Phép toán này tiêu tốn 6 phép nhân và 3 phép trừ, cho kết quả là một vector trực giao đồng thời với cả hai vector thành phần, có độ lớn bằng diện tích hình bình hành căng bởi hai vector đó.
+\end{itemize}
+
+\textbf{2. Danh mục Ứng dụng Thực tiễn Tiêu biểu trong Đồ họa:}
+\begin{itemize}
+    \item \textit{Tính toán Vector Pháp tuyến Bề mặt (Surface Normal Computation):} Với mọi đa giác phẳng hoặc tam giác 3D tạo bởi ba đỉnh $V_0, V_1, V_2$, vector pháp tuyến đơn vị của mặt được tính trực tiếp thông qua tích hữu hướng:
+    \begin{equation}
+    \mathbf{N} = \frac{(V_1 - V_0) \times (V_2 - V_0)}{\|(V_1 - V_0) \times (V_2 - V_0)\|}
+    \end{equation}
+    \item \textit{Mô hình Chiếu sáng và Đánh bóng Bề mặt (Illumination \& Shading):}
+    Trong mô hình phản xạ Lambertian, cường độ ánh sáng khuếch tán tỉ lệ thuận với tích vô hướng giữa pháp tuyến bề mặt $\mathbf{N}$ và vector hướng sáng $\mathbf{L}$: $I_{\text{diff}} = I_l k_d \max(0, \mathbf{N} \cdot \mathbf{L})$. Trong mô hình Phong và Blinn-Phong, phản xạ gương được xác định bằng lũy thừa của tích vô hướng: $(\mathbf{R} \cdot \mathbf{V})^n$ hoặc $(\mathbf{N} \cdot \mathbf{H})^n$.
+    \item \textit{Khử Mặt khuất Bằng Phép Kiểm tra Mặt sau (Back-face Culling):} Một tam giác có pháp tuyến ngoài $\mathbf{N}$ sẽ quay lưng về phía người quan sát nếu tích vô hướng giữa pháp tuyến và vector hướng nhìn $\mathbf{V}_{\text{view}}$ thỏa mãn $\mathbf{N} \cdot \mathbf{V}_{\text{view}} \ge 0$. Kỹ thuật này loại bỏ ngay lập tức $50\%$ số lượng tam giác trước khi gửi vào đường ống raster hóa.
+    \item \textit{Thiết lập Hệ Khung nhìn Camera (Camera Basis Construction):} Cho trước vị trí camera $\mathbf{E}$, điểm ngắm $\mathbf{T}$ và vector hướng lên $\mathbf{V}_{\text{up}}$, ba trục tọa độ trực chuẩn của camera được kiến tạo thuần túy bằng các phép tích hữu hướng liên hoàn:
+    \begin{equation}
+    \mathbf{w} = \frac{\mathbf{E} - \mathbf{T}}{\|\mathbf{E} - \mathbf{T}\|}, \quad \mathbf{u} = \frac{\mathbf{V}_{\text{up}} \times \mathbf{w}}{\|\mathbf{V}_{\text{up}} \times \mathbf{w}\|}, \quad \mathbf{v} = \mathbf{w} \times \mathbf{u}
+    \end{equation}
+    \item \textit{Thuật toán Xén tỉa Đoạn thẳng Cyrus-Beck:} Xác định giao điểm giữa tia và đa giác lồi thông qua dấu của tích vô hướng giữa vector chỉ phương đoạn thẳng và vector pháp tuyến trong của từng cạnh.
+    \item \textit{Kiểm tra Giao điểm Tia - Tam giác (Möller-Trumbore Algorithm):} Sử dụng kết hợp tích hữu hướng và tích vô hướng (tích hỗn tạp Scalar Triple Product) để giải trực tiếp hệ phương trình tọa độ tỉ cự (Barycentric Coordinates) mà không cần tính phương trình mặt phẳng chứa tam giác.
+\end{itemize}
+
+\subsection{Chứng minh Biểu thức Tích Hữu hướng \texorpdfstring{$\vec{u}' \times \vec{u}_z = b \cdot \vec{u}_x$}{u' x uz = b * ux} (Slide 29)}
+\label{subsec:proof_cross_product_slide29}
+
+Trong tài liệu bài giảng (Lecture 9, Slide 29), khi giải bài toán tìm $\sin\alpha$ phục vụ cho việc thiết lập ma trận quay $\mathbf{R}_x(\alpha)$, tài liệu đưa ra hai biểu thức đồng thời:
+\begin{equation}
+\label{eq:slide29_system}
+\begin{cases}
+\mathbf{u}' \times \mathbf{u}_z = \mathbf{u}_x \cdot \|\mathbf{u}'\| \cdot \|\mathbf{u}_z\| \cdot \sin\alpha \\
+\mathbf{u}' \times \mathbf{u}_z = \mathbf{u}_x \cdot b
+\end{cases}
+\implies \sin\alpha = \frac{b}{d}
+\end{equation}
+Dưới đây là chứng minh giải tích chi tiết cho biểu thức tích hữu hướng $\mathbf{u}' \times \mathbf{u}_z = \mathbf{u}_x \cdot b$.
+
+\textbf{1. Thiết lập Tọa độ Đại số của các Vector:}
+Trong không gian ba chiều Euclid với hệ tọa độ trực chuẩn ba chiều bàn tay phải $\{O; \mathbf{u}_x, \mathbf{u}_y, \mathbf{u}_z\}$, ta có:
+\begin{align}
+\mathbf{u}' &= (0, b, c) = 0 \cdot \mathbf{u}_x + b \cdot \mathbf{u}_y + c \cdot \mathbf{u}_z \\
+\mathbf{u}_z &= (0, 0, 1) = 0 \cdot \mathbf{u}_x + 0 \cdot \mathbf{u}_y + 1 \cdot \mathbf{u}_z
+\end{align}
+
+\textbf{2. Khai triển Định thức Tích Hữu hướng:}
+Theo định nghĩa đại số của tích hữu hướng giữa hai vector trong không gian $\mathbb{R}^3$, ta thiết lập định thức hình thức cấp 3:
+\begin{equation}
+\label{eq:cross_product_determinant}
+\mathbf{u}' \times \mathbf{u}_z = \begin{vmatrix} \mathbf{u}_x & \mathbf{u}_y & \mathbf{u}_z \\ 0 & b & c \\ 0 & 0 & 1 \end{vmatrix}
+\end{equation}
+Khai triển định thức theo hàng thứ nhất:
+\begin{align}
+\mathbf{u}' \times \mathbf{u}_z &= \mathbf{u}_x \begin{vmatrix} b & c \\ 0 & 1 \end{vmatrix} - \mathbf{u}_y \begin{vmatrix} 0 & c \\ 0 & 1 \end{vmatrix} + \mathbf{u}_z \begin{vmatrix} 0 & b \\ 0 & 0 \end{vmatrix} \nonumber \\
+&= \mathbf{u}_x (b \cdot 1 - c \cdot 0) - \mathbf{u}_y (0 \cdot 1 - c \cdot 0) + \mathbf{u}_z (0 \cdot 0 - b \cdot 0) \nonumber \\
+&= \mathbf{u}_x \cdot b - \mathbf{u}_y \cdot 0 + \mathbf{u}_z \cdot 0 \nonumber \\
+&= b \cdot \mathbf{u}_x
+\end{align}
+
+\textbf{3. Đối chiếu với Định nghĩa Hình học của Tích Hữu hướng:}
+Theo định nghĩa hình học, tích hữu hướng của hai vector $\mathbf{u}'$ và $\mathbf{u}_z$ là một vector có:
+\begin{itemize}
+    \item Phương trực giao với mặt phẳng chứa $\mathbf{u}'$ và $\mathbf{u}_z$: Vì cả hai vector đều nằm trong mặt phẳng tọa độ $Oyz$ ($x = 0$), vector tích hữu hướng bắt buộc phải có phương song song hoặc trùng với trục hoành $Ox$, tức cùng phương với vector đơn vị $\mathbf{u}_x$.
+    \item Chiều tuân theo quy tắc bàn tay phải: Khi quay ngón tay từ $\mathbf{u}'$ sang $\mathbf{u}_z$, ngón cái chỉ dọc theo chiều dương của trục $Ox$, tức cùng hướng với $\mathbf{u}_x$ khi $b > 0$.
+    \item Độ lớn bằng diện tích hình bình hành:
+    \begin{equation}
+    \|\mathbf{u}' \times \mathbf{u}_z\| = \|\mathbf{u}'\| \cdot \|\mathbf{u}_z\| \cdot \sin\alpha = d \cdot 1 \cdot \sin\alpha
+    \end{equation}
+\end{itemize}
+So sánh độ lớn từ kết quả khai triển đại số $\|\mathbf{u}' \times \mathbf{u}_z\| = \|b \cdot \mathbf{u}_x\| = |b| = b$ (với giả thiết vị trí góc phần tư thứ nhất $b \ge 0$), ta thu được phương trình:
+\begin{equation}
+d \cdot \sin\alpha = b \implies \sin\alpha = \frac{b}{d}
+\end{equation}
+Biểu thức này kết hợp hoàn hảo với công thức tích vô hướng $\cos\alpha = \frac{c}{d}$ ở phương trình~\eqref{eq:proof_alpha_dot}, cung cấp đầy đủ hai thành phần lượng giác chính xác để điền trực tiếp vào ma trận quay $\mathbf{R}_x(\alpha)$ tại phương trình~\eqref{eq:rx_alpha} mà không phát sinh bất kỳ phép tính góc lượng giác thực nghiệm nào.
