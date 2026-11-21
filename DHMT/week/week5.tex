@@ -187,7 +187,7 @@ Khi đó, vector tiếp tuyến của hai đoạn cong tại mối nối cùng p
 \textbf{Không biến đổi từng điểm ảnh, mà biến đổi các điểm điều khiển.} Nhờ tính bất biến affine (mục~\ref{subsec:w5_affine}), ảnh của đường cong qua phép affine $\mathbf{x} \mapsto A\mathbf{x} + T$ chính là đường Bézier có điểm điều khiển $A\mathbf{p}_k + T$. Quy trình:
 \begin{enumerate}
     \item Lưu đường cong dưới dạng mảng điểm điều khiển số thực trong WCS (không lưu điểm ảnh).
-    \item Lập ma trận thuần nhất $3 \times 3$ của phép biến đổi (tịnh tiến, quay quanh tâm bất kỳ, tỉ lệ theo tâm, đối xứng\ldots{}, xem mục~\ref{subsec:w6_rot_pivot}--\ref{subsec:w6_reflect}) hoặc tích của nhiều phép.
+    \item Lập ma trận thuần nhất $3 \times 3$ của phép biến đổi (tịnh tiến, quay quanh tâm bất kỳ, tỉ lệ theo tâm, đối xứng\ldots{}, xem mục~\ref{subsec:rotate_scale_arbitrary_pivot}--\ref{subsec:reflection_arbitrary_axis}) hoặc tích của nhiều phép.
     \item Nhân ma trận với $n + 1$ điểm điều khiển.
     \item Vẽ lại đường cong từ các điểm điều khiển mới bằng một trong các phương pháp ở mục~\ref{subsec:w5_bezier_grid}.
 \end{enumerate}
@@ -357,7 +357,7 @@ Một giao diện vẽ Bézier là một hệ thống đồ họa nhỏ gồm ba
     \item Trạng thái tương tác: chế độ hiện tại (thêm điểm/sửa/chọn), chỉ số điểm đang được kéo, cặp cửa sổ--khung nhìn (window--viewport) hiện tại.
 \end{itemize}
 
-\textbf{2. Xử lý sự kiện chuột.} Tọa độ chuột nằm trong DCS nên trước hết phải đổi sang WCS bằng phép biến đổi khung nhìn -- cửa sổ (viewport-to-window, mục~\ref{subsec:w6_v2w_sync}).
+\textbf{2. Xử lý sự kiện chuột.} Tọa độ chuột nằm trong DCS nên trước hết phải đổi sang WCS bằng phép biến đổi khung nhìn -- cửa sổ (viewport-to-window, mục~\ref{subsec:sync_win_to_view_view_to_win}).
 \begin{itemize}
     \item \emph{Thêm đường:} ở chế độ tạo, mỗi lần nhấp thêm một điểm; đủ 4 điểm thì tạo một \texttt{CubicSegment}. Các đoạn sau chỉ cần thêm 3 điểm (điểm đầu là điểm cuối của đoạn trước). Cách phổ biến hơn trong phần mềm vẽ (Pen tool): nhấp để đặt điểm neo, nhấn--kéo để kéo tay nắm $\mathbf{p}_1$/$\mathbf{p}_2$.
     \item \emph{Chọn điểm (hit-test):} khi nhấn chuột tại $\mathbf{m}$, tìm điểm điều khiển gần nhất với $\|\mathbf{p}_k - \mathbf{m}\| \le \varepsilon$ ($\varepsilon$ khoảng 5 pixel, đổi sang WCS). Để chọn chính đường cong, tìm $u$ có $\|\mathbf{P}(u) - \mathbf{m}\|$ nhỏ nhất trên các mẫu đã tính.

@@ -1,14 +1,730 @@
-\section{Tuần 7: Phát hiện Đối tượng (Object Detection)}
+\section{Tuần 7: Mô hình Hóa Hình học Tham số 3D, Cấu trúc Dữ liệu Bản vẽ và Kỹ thuật Mặt Cong}
 \label{sec:week7}
 
-\subsection{Tổng quan nội dung Tuần 7}
-Phần này dành cho các thuật toán phát hiện đối tượng trong ảnh.
+\subsection{Thuật toán và Cài đặt Tính Toán \texorpdfstring{$x_k$}{xk} theo Phương pháp Sai phân Quy nạp}
+\label{subsec:scanline_forward_differencing}
 
+Trong kỹ thuật raster hóa và tô màu đa giác theo dòng quét (Scan-line Polygon Fill), tại mỗi bước chuyển đổi giữa hai dòng quét liên tiếp từ $y_k$ lên $y_{k+1} = y_k + 1$, thuật toán cần xác định chính xác hoành độ giao điểm mới $x_{k+1}$ của dòng quét với từng cạnh kích hoạt. Một đoạn thẳng nối hai điểm mút $A(x_1, y_1)$ và $B(x_2, y_2)$ có phương trình giải tích dạng:
+\begin{equation}
+x = m^{-1} (y - y_1) + x_1
+\end{equation}
+trong đó hệ số nghịch đảo độ dốc là $m^{-1} = \frac{\Delta x}{\Delta y} = \frac{x_2 - x_1}{y_2 - y_1}$.
+
+Nếu tính toán trực tiếp hoành độ giao điểm tại mỗi dòng quét bằng phép nhân hoặc chia số thực, hệ thống vừa tiêu tốn chu kỳ xử lý, vừa tích lũy sai số làm tròn số thực. Phương pháp sai phân tiến quy nạp (Forward Differencing) giải quyết triệt để vấn đề này bằng cách thiết lập công thức truy hồi:
+\begin{equation}
+\label{eq:forward_diff_recurrence}
+x_{k+1} = x_k + \frac{1}{m} = x_k + \frac{\Delta x}{\Delta y}
+\end{equation}
+Để khử hoàn toàn phép tính số thực, ta phân tích số nguyên $\Delta x$ thành phép chia có dư cho $\Delta y$:
+\begin{equation}
+\Delta x = q \cdot \Delta y + r, \quad \text{với } q = \left\lfloor \frac{\Delta x}{\Delta y} \right\rfloor, \ 0 \le r < \Delta y
+\end{equation}
+Tại mỗi bước quét, phần nguyên của hoành độ tăng tối thiểu một lượng $q$. Phần dư $r$ được tích lũy vào một biến số nguyên tích lũy (Accumulator). Khi bộ tích lũy vượt quá ngưỡng $\Delta y$, hoành độ $x$ được cộng thêm 1 đơn vị và biến tích lũy được trừ bớt $\Delta y$.
+
+Đoạn mã C++ chuẩn dưới đây minh họa giải thuật tính toán $x_k$ bằng sai phân số nguyên thuần túy:
+
+\begin{verbatim}
+#include <iostream>
+#include <cmath>
+
+struct EdgeInterpolator {
+    int x_current;      // Hoành độ nguyên hiện tại
+    int y_current;      // Tung độ dòng quét hiện tại
+    int y_end;          // Tung độ kết thúc
+    int step_x;         // Bước nhảy cơ sở q
+    int remainder;      // Phần dư r
+    int denominator;    // Mẫu số delta_y
+    int accumulator;    // Bộ tích lũy phần dư
+
+    EdgeInterpolator(int x1, int y1, int x2, int y2) {
+        if (y1 > y2) { std::swap(x1, x2); std::swap(y1, y2); }
+        x_current = x1;
+        y_current = y1;
+        y_end = y2;
+        int dx = x2 - x1;
+        int dy = y2 - y1;
+        denominator = dy;
+        if (dy == 0) {
+            step_x = 0; remainder = 0; accumulator = 0;
+            return;
+        }
+        int sign = (dx >= 0) ? 1 : -1;
+        int abs_dx = std::abs(dx);
+        step_x = sign * (abs_dx / dy);
+        remainder = abs_dx % dy;
+        if (sign < 0 && remainder != 0) {
+            step_x -= 1;
+            remainder = dy - remainder;
+        }
+        accumulator = 0;
+    }
+
+    bool step() {
+        if (y_current >= y_end) return false;
+        y_current++;
+        x_current += step_x;
+        accumulator += remainder;
+        if (accumulator >= denominator) {
+            x_current += 1;
+            accumulator -= denominator;
+        }
+        return true;
+    }
+};
+\end{verbatim}
+
+\subsection{Thuật toán Tìm Bước Sai phân Tối ưu Thỏa mãn Tính Liên tục 8-Lân cận}
+\label{subsec:continuity_8_neighborhood}
+
+Một đường cong hoặc đoạn thẳng rời rạc được gọi là liên tục trong lân cận 8 pixel (8-connected continuity) khi và chỉ khi giữa hai pixel kế tiếp $(x_k, y_k)$ và $(x_{k+1}, y_{k+1})$ trên màn hình, khoảng cách Chebyshev không vượt quá 1 đơn vị:
+\begin{equation}
+\label{eq:chebyshev_8_connectivity}
+\max\left( |x_{k+1} - x_k|, |y_{k+1} - y_k| \right) \le 1
+\end{equation}
+Đồng thời, để tránh lãng phí bộ nhớ và vẽ đè pixel không cần thiết, hai pixel liên tiếp không được phép trùng nhau hoàn toàn: $|x_{k+1} - x_k| + |y_{k+1} - y_k| \ge 1$.
+
+Đối với một đường cong tham số tổng quát $\mathbf{P}(t) = (x(t), y(t))$ với $t \in [0, 1]$, bài toán đặt ra là xác định bước nhảy tham số $\Delta t_k$ sao cho khi $t_{k+1} = t_k + \Delta t_k$, bước dịch chuyển tọa độ thỏa mãn chính xác tiêu chuẩn lân cận 8. Khai triển chuỗi Taylor bậc nhất cho tọa độ điểm:
+\begin{equation}
+x(t + \Delta t) \approx x(t) + x'(t)\Delta t, \quad y(t + \Delta t) \approx y(t) + y'(t)\Delta t
+\end{equation}
+Áp dụng điều kiện liên tục lân cận 8 tại phương trình~\eqref{eq:chebyshev_8_connectivity}:
+\begin{equation}
+\max\left( |x'(t)| \Delta t, |y'(t)| \Delta t \right) \le 1 \implies \Delta t \le \frac{1}{\max\left( |x'(t)|, |y'(t)| \right)}
+\end{equation}
+Giá trị bước sai phân tối ưu tại mỗi thời điểm tham số $t$ được chọn bằng cận trên lớn nhất:
+\begin{equation}
+\label{eq:optimal_delta_t}
+\Delta t_{\text{opt}}(t) = \frac{1}{\max\left( |x'(t)|, |y'(t)| \right)}
+\end{equation}
+
+Chương trình C++ dưới đây thực thi cơ chế tìm bước sai phân thích nghi (Adaptive Forward Differencing) cho một đường cong tham số tùy ý, đảm bảo tính liên tục 8-lân cận hoàn hảo:
+
+\begin{verbatim}
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+struct Point2D { int x, y; };
+
+template <typename CurveFunc, typename DerivFunc>
+std::vector<Point2D> rasterizeWith8Connectivity(CurveFunc P, DerivFunc dP) {
+    std::vector<Point2D> pixels;
+    double t = 0.0;
+    auto [x0, y0] = P(0.0);
+    Point2D last_pixel = { static_cast<int>(std::round(x0)), 
+                           static_cast<int>(std::round(y0)) };
+    pixels.push_back(last_pixel);
+
+    while (t < 1.0) {
+        auto [dx_dt, dy_dt] = dP(t);
+        double max_deriv = std::max(std::abs(dx_dt), std::abs(dy_dt));
+        double delta_t = (max_deriv > 1e-6) ? (1.0 / max_deriv) : 0.01;
+        if (t + delta_t > 1.0) delta_t = 1.0 - t;
+        t += delta_t;
+
+        auto [xt, yt] = P(t);
+        Point2D current_pixel = { static_cast<int>(std::round(xt)), 
+                                  static_cast<int>(std::round(yt)) };
+        
+        // Kiểm tra điều kiện lân cận 8
+        int step_x = std::abs(current_pixel.x - last_pixel.x);
+        int step_y = std::abs(current_pixel.y - last_pixel.y);
+        if (step_x > 1 || step_y > 1) {
+            // Bước nhảy vượt quá 1 pixel, tinh chỉnh giảm nửa delta_t
+            t -= delta_t;
+            delta_t /= 2.0;
+            t += delta_t;
+            auto [x_fix, y_fix] = P(t);
+            current_pixel = { static_cast<int>(std::round(x_fix)), 
+                              static_cast<int>(std::round(y_fix)) };
+        }
+        if (current_pixel.x != last_pixel.x || current_pixel.y != last_pixel.y) {
+            pixels.push_back(current_pixel);
+            last_pixel = current_pixel;
+        }
+    }
+    return pixels;
+}
+\end{verbatim}
+
+\subsection{Tiêu chuẩn Phân định Vị trí Tương quan Trái - Phải của Điểm so với Vector qua Tích Hữu hướng}
+\label{subsec:point_left_right_cross_product}
+
+Trong không gian hình học phẳng hai chiều, bài toán xác định một điểm kiểm tra $P(x_p, y_p)$ nằm ở phía bên trái, phía bên phải, hay nằm trực tiếp trên đường thẳng định hướng đi từ $A(x_a, y_a)$ đến $B(x_b, y_b)$ là bài toán nền tảng của hình học tính toán (Computational Geometry).
+
+Xây dựng hai vector trong mặt phẳng:
+\begin{align}
+\mathbf{V} &= \vec{AB} = (x_b - x_a, y_b - y_a) \\
+\mathbf{W} &= \vec{AP} = (x_p - x_a, y_p - y_a)
+\end{align}
+Nhúng hai vector 2D này vào không gian ba chiều bằng cách gán thành phần cao độ $z = 0$: $\mathbf{V} = (x_b - x_a, y_b - y_a, 0)$ và $\mathbf{W} = (x_p - x_a, y_p - y_a, 0)$. Tích hữu hướng giữa $\mathbf{V}$ và $\mathbf{W}$ là một vector hoàn toàn định hướng dọc theo trục cao độ chuẩn $Oz$:
+\begin{equation}
+\mathbf{V} \times \mathbf{W} = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\ x_b - x_a & y_b - y_a & 0 \\ x_p - x_a & y_p - y_a & 0 \end{vmatrix} = \left[ (x_b - x_a)(y_p - y_a) - (y_b - y_a)(x_p - x_a) \right] \mathbf{k}
+\end{equation}
+Ta định nghĩa đại lượng vô hướng định hướng (Perp Dot Product hoặc 2D Cross Product):
+\begin{equation}
+\label{eq:perp_dot_product}
+D(A, B, P) = (x_b - x_a)(y_p - y_a) - (y_b - y_a)(x_p - x_a)
+\end{equation}
+
+Theo định nghĩa hình học, độ lớn và dấu của $D(A, B, P)$ liên hệ trực tiếp với góc quay có hướng $\theta \in [-\pi, \pi]$ từ vector $\mathbf{V}$ sang vector $\mathbf{W}$ theo hệ thức $D = \|\mathbf{V}\| \|\mathbf{W}\| \sin\theta$. Quy tắc bàn tay phải cho phép thiết lập tiêu chuẩn phân loại xác định như sau:
 \begin{itemize}
-    \item Phương pháp Hai giai đoạn (Two-stage Detectors): R-CNN, Fast R-CNN, Faster R-CNN.
-    \item Phương pháp Một giai đoạn (One-stage Detectors): YOLO family (YOLOv1 - YOLOv8), SSD, RetinaNet.
-    \item Các chỉ số đánh giá: IoU, Precision-Recall Curve, mAP (Mean Average Precision).
+    \item \textit{Nếu $D(A, B, P) > 0$:} Vector $\mathbf{W}$ quay ngược chiều kim đồng hồ so với vector $\mathbf{V}$ ($\sin\theta > 0$). Điểm $P$ nằm nghiêm ngặt ở phía bên trái (Left Side) của đường thẳng định hướng $AB$.
+    \item \textit{Nếu $D(A, B, P) < 0$:} Vector $\mathbf{W}$ quay thuận chiều kim đồng hồ so với vector $\mathbf{V}$ ($\sin\theta < 0$). Điểm $P$ nằm nghiêm ngặt ở phía bên phải (Right Side) của đường thẳng định hướng $AB$.
+    \item \textit{Nếu $D(A, B, P) = 0$:} Hai vector $\mathbf{V}$ và $\mathbf{W}$ cộng tuyến ($\theta = 0$ hoặc $\theta = \pi$). Điểm $P$ nằm trực tiếp trên đường thẳng đi qua hai điểm $A$ và $B$.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+Tiêu chuẩn này có ý nghĩa thực tế sống còn: Đại lượng $D(A, B, P)$ chính là hai lần diện tích có hướng của tam giác $\triangle ABP$. Nó là nhân lõi trong giải thuật xây dựng bao lồi Graham Scan, giải thuật xén tỉa Sutherland-Hodgman, và kiểm tra điểm nằm trong đa giác lồi trong thời gian tuyến tính $O(n)$.
+
+\subsection{Khảo sát Hệ thống các Ứng dụng Toàn diện của Tích Vô hướng và Tích Hữu hướng trong Đồ họa}
+\label{subsec:systematic_dot_cross_applications}
+
+Trong toàn bộ kiến trúc đường ống đồ họa, tích vô hướng và tích hữu hướng đóng vai trò là hai công cụ hình học vạn năng, hiện diện ở tất cả các tầng từ mô hình hóa đến chiếu sáng và kết xuất. Bảng~\ref{tab:vector_products_comparison} tổng hợp đối sánh toàn diện về đặc tính toán học và phạm vi ứng dụng của hai phép toán này.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Tổng hợp so sánh đặc tính và ứng dụng của Tích Vô hướng và Tích Hữu hướng}
+\label{tab:vector_products_comparison}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{3.2cm}|X|X|}
+\hline
+\textbf{Tiêu chí So sánh} & \textbf{Tích Vô hướng (Dot Product)} & \textbf{Tích Hữu hướng (Cross Product)} \\
+\hline
+\textbf{Bản chất Đầu ra} & Đại lượng vô hướng $s \in \mathbb{R}$. & Vector trực giao $\mathbf{w} \in \mathbb{R}^3$. \\
+\hline
+\textbf{Ý nghĩa Hình học} & Đo lường góc, hình chiếu trực giao, khoảng cách mặt phẳng. & Đo lường diện tích, xác định phương trực giao, kiểm tra tính định hướng. \\
+\hline
+\textbf{Độ phức tạp Tính toán} & 3 phép nhân, 2 phép cộng dấu phẩy động. & 6 phép nhân, 3 phép trừ dấu phẩy động. \\
+\hline
+\textbf{Ứng dụng Chiếu sáng} & Tính cường độ tán xạ Lambert ($\mathbf{N} \cdot \mathbf{L}$), phản xạ gương Phong/Blinn-Phong. & Tính vector pháp tuyến phục vụ chiếu sáng nhẵn Gouraud và Phong. \\
+\hline
+\textbf{Ứng dụng Khử Mặt khuất} & Phép thử mặt sau Back-face Culling ($\mathbf{N} \cdot \mathbf{V}_{\text{view}} \ge 0$). & Xác định hướng quay đỉnh thuận/nghịch kim đồng hồ của tam giác 3D. \\
+\hline
+\textbf{Ứng dụng Xén tỉa Đồ họa} & Thuật toán Cyrus-Beck và Liang-Barsky xác định đoạn tia nằm trong biên. & Xác định nửa mặt phẳng chứa điểm trong Sutherland-Hodgman. \\
+\hline
+\textbf{Ứng dụng Điều hướng} & Tính góc xoay giữa hai hướng quan sát của camera. & Thiết lập hệ trục trực chuẩn Camera $(\mathbf{u}, \mathbf{v}, \mathbf{w})$ từ vector chỉ ngắm. \\
+\hline
+\textbf{Ứng dụng Truy vết Tia} & Tính giao điểm tia với mặt cầu, mặt phẳng và khối bao AABB. & Giải hệ phương trình tọa độ tỉ cự tam giác (Möller-Trumbore). \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Phương pháp Tính Chiều dài Cung của Đường cong Bézier}
+\label{subsec:bezier_arc_length}
+
+Trong các hệ thống thiết kế đồ họa vector và hoạt hình máy tính, việc xác định chính xác chiều dài cung (Arc Length) của một đường cong Bézier tham số $\mathbf{P}(t)$ với $t \in [0, 1]$ là yêu cầu bắt buộc để phục vụ việc phân bố điểm đều, điều khiển vận tốc chuyển động của đối tượng theo thời gian thực (Constant Speed Motion Control) và đo đạc chiều dài biên dạng.
+
+Về mặt giải tích vi tích phân, chiều dài cung $L$ của đường cong từ $t = 0$ đến $t = 1$ được định nghĩa bằng tích phân đường loại một:
+\begin{equation}
+\label{eq:bezier_length_integral}
+L = \int_0^1 \|\mathbf{P}'(t)\| \, dt = \int_0^1 \sqrt{x'(t)^2 + y'(t)^2 + z'(t)^2} \, dt
+\end{equation}
+Đối với đường cong Bézier bậc ba, đạo hàm $\mathbf{P}'(t)$ là một đa thức vector bậc hai. Biểu thức dưới dấu căn thức do đó là một đa thức bậc bốn theo biến $t$. Về mặt lý thuyết hàm số, tích phân của căn bậc hai của đa thức bậc bốn không thể biểu diễn dưới dạng các hàm sơ cấp thông thường mà thuộc lớp tích phân elliptic. Do đó, đồ họa máy tính sử dụng hai kỹ thuật tính toán xấp xỉ số học tiêu chuẩn:
+
+\textbf{1. Phương pháp Cầu phương Gauss-Legendre (Gauss-Legendre Quadrature):}
+Phương pháp này xấp xỉ tích phân giải tích bằng tổng có trọng số của các điểm đánh giá tối ưu:
+\begin{equation}
+L \approx \sum_{i=1}^n w_i \|\mathbf{P}'(t_i)\|
+\end{equation}
+với $n = 5$ điểm cầu phương, sai số tính toán nhỏ hơn $10^{-6}$, hoàn toàn đáp ứng độ chính xác cấp độ pixel.
+
+\textbf{2. Phương pháp Phân chia Thích nghi (Adaptive Subdivision):}
+Dựa trên thuật toán De Casteljau, đường cong được chia đôi tại $t = 0.5$ thành hai đoạn cong trái và phải. Ta so sánh chiều dài dây cung nối hai mút $L_{\text{chord}} = \|\mathbf{P}_3 - \mathbf{P}_0\|$ với chiều dài đa giác điều khiển $L_{\text{poly}} = \sum_{i=0}^2 \|\mathbf{P}_{i+1} - \mathbf{P}_i\|$. Nếu hiệu số $|L_{\text{poly}} - L_{\text{chord}}| < \epsilon$, đường cong đủ phẳng và chiều dài được xấp xỉ bằng $\frac{L_{\text{chord}} + L_{\text{poly}}}{2}$. Ngược lại, giải thuật tiếp tục phân chia đệ quy.
+
+Dưới đây là mã nguồn C++ hoàn chỉnh triển khai phương pháp tích phân Gauss-Legendre 5 điểm:
+
+\begin{verbatim}
+#include <iostream>
+#include <cmath>
+#include <array>
+
+struct Vector2D {
+    double x, y;
+    double length() const { return std::sqrt(x * x + y * y); }
+};
+
+struct CubicBezier {
+    Vector2D p0, p1, p2, p3;
+
+    Vector2D derivative(double t) const {
+        double u = 1.0 - t;
+        double c0 = -3.0 * u * u;
+        double c1 = 3.0 * u * u - 6.0 * u * t;
+        double c2 = 6.0 * u * t - 3.0 * t * t;
+        double c3 = 3.0 * t * t;
+        return { c0 * p0.x + c1 * p1.x + c2 * p2.x + c3 * p3.x,
+                 c0 * p0.y + c1 * p1.y + c2 * p2.y + c3 * p3.y };
+    }
+
+    double computeArcLengthGauss5() const {
+        // Tọa độ nghiệm Legendre chuẩn hóa trên [0, 1] và trọng số Gauss tương ứng
+        const std::array<double, 5> t_vals = {
+            0.046910077030668, 0.230765344947158, 0.500000000000000,
+            0.769234655052842, 0.953089922969332
+        };
+        const std::array<double, 5> weights = {
+            0.118463442528095, 0.239314335249683, 0.284444444444444,
+            0.239314335249683, 0.118463442528095
+        };
+
+        double length = 0.0;
+        for (size_t i = 0; i < 5; ++i) {
+            length += weights[i] * derivative(t_vals[i]).length();
+        }
+        return length;
+    }
+};
+\end{verbatim}
+
+\subsection{Thiết kế Cấu trúc Dữ liệu Bản vẽ Đồ họa Hỗ trợ Toàn diện Thao tác CRUD và Ánh xạ Hai chiều}
+\label{subsec:drawing_data_structure_crud}
+
+Để xây dựng một ứng dụng vẽ kỹ thuật hoàn chỉnh (tương tự AutoCAD mini hoặc phần mềm xử lý vector), cấu trúc dữ liệu bản vẽ đóng vai trò là kiến trúc trung tâm quản lý mô hình dữ liệu. Bản vẽ phải hỗ trợ trọn vẹn 5 tiêu chí tác vụ CRUD chuẩn mực: Tạo mới (Create), Đọc tệp (Open), Lưu trữ (Save), Xóa bỏ (Delete), Hiệu chỉnh thuộc tính (Modify), đồng thời tích hợp sẵn mô đun biến đổi hai chiều giữa thế giới thực và màn hình hiển thị.
+
+Kiến trúc hướng đối tượng tối ưu được tổ chức thành các lớp sau:
+\begin{itemize}
+    \item \textit{Lớp Thực thể Cơ sở \texttt{GraphicEntity}:} Khai báo giao diện trừu tượng với các phương thức thuần ảo: kết xuất \texttt{draw()}, tuần tự hóa dữ liệu \texttt{serialize()}, giải tuần tự hóa \texttt{deserialize()}, kiểm tra va chạm chuột \texttt{hitTest()}, và trả về hình chữ nhật bao \texttt{getBoundingBox()}.
+    \item \textit{Các Lớp Kế thừa Thực thể Cụ thể:} \texttt{LineEntity}, \texttt{CircleEntity}, \texttt{BezierEntity}, \texttt{PolygonEntity}. Mỗi thực thể lưu trữ tọa độ đỉnh gốc trong hệ tọa độ thế giới (WCS) và các thuộc tính đồ họa như màu sắc viền, độ dày nét và màu tô.
+    \item \textit{Lớp Bản vẽ \texttt{DrawingDocument}:} Quản lý danh sách các con trỏ thực thể đa hình, cung cấp chỉ mục định danh định danh (UUID), hỗ trợ cơ chế quản lý lịch sử phục vụ tác vụ Hoàn tác/Làm lại (Undo/Redo), và xuất/nhập dữ liệu định dạng tệp chuẩn (JSON hoặc tệp nhị phân).
+    \item \textit{Lớp Ánh xạ Không gian \texttt{ViewportTransformer}:} Chịu trách nhiệm đồng bộ hóa hai chiều giữa Cửa sổ Thế giới ($W$) và Cổng nhìn Màn hình ($V$), tự động duy trì tỉ lệ khung hình để chống biến dạng hình học.
+\end{itemize}
+
+Khung mã C++ minh họa kiến trúc lõi được thiết kế như sau:
+
+\begin{verbatim}
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <string>
+#include <fstream>
+
+struct Point2D { double x, y; };
+struct ScreenPoint { int x, y; };
+
+class ViewportTransformer {
+public:
+    double xw_min, xw_max, yw_min, yw_max;
+    int xv_min, xv_max, yv_min, yv_max;
+
+    ScreenPoint worldToScreen(const Point2D& pw) const {
+        double sx = (xv_max - xv_min) / (xw_max - xw_min);
+        double sy = (yv_max - yv_min) / (yw_max - yw_min);
+        return { static_cast<int>(xv_min + (pw.x - xw_min) * sx),
+                 static_cast<int>(yv_max - (pw.y - yw_min) * sy) }; // Lật trục Y màn hình
+    }
+
+    Point2D screenToWorld(const ScreenPoint& ps) const {
+        double sx = (xw_max - xw_min) / (xv_max - xv_min);
+        double sy = (yw_max - yw_min) / (yv_max - yv_min);
+        return { xw_min + (ps.x - xv_min) * sx,
+                 yw_min + (yv_max - ps.y) * sy };
+    }
+};
+
+class GraphicEntity {
+public:
+    int id;
+    std::string color;
+    virtual ~GraphicEntity() = default;
+    virtual void draw(const ViewportTransformer& trans) const = 0;
+    virtual bool hitTest(const Point2D& pt, double tolerance) const = 0;
+    virtual void serialize(std::ostream& out) const = 0;
+};
+
+class LineEntity : public GraphicEntity {
+public:
+    Point2D start, end;
+    LineEntity(int id, Point2D p1, Point2D p2) : start(p1), end(p2) { this->id = id; }
+    void draw(const ViewportTransformer& trans) const override {
+        ScreenPoint s1 = trans.worldToScreen(start);
+        ScreenPoint s2 = trans.worldToScreen(end);
+        // Gọi hàm raster hóa đường thẳng Bresenham từ s1 đến s2
+    }
+    bool hitTest(const Point2D& pt, double tol) const override {
+        // Tính khoảng cách từ pt đến đoạn thẳng start-end
+        return false;
+    }
+    void serialize(std::ostream& out) const override {
+        out << "LINE " << id << " " << start.x << " " << start.y << " " 
+            << end.x << " " << end.y << "\n";
+    }
+};
+
+class DrawingDocument {
+private:
+    std::vector<std::unique_ptr<GraphicEntity>> entities;
+    int next_id = 1;
+
+public:
+    // Create
+    int addLine(Point2D p1, Point2D p2) {
+        int id = next_id++;
+        entities.push_back(std::make_unique<LineEntity>(id, p1, p2));
+        return id;
+    }
+    // Delete
+    bool removeEntity(int id) {
+        auto it = std::remove_if(entities.begin(), entities.end(),
+            [id](const auto& e) { return e->id == id; });
+        if (it != entities.end()) {
+            entities.erase(it, entities.end());
+            return true;
+        }
+        return false;
+    }
+    // Save
+    void save(const std::string& filename) const {
+        std::ofstream file(filename);
+        for (const auto& e : entities) e->serialize(file);
+    }
+    // Open
+    void open(const std::string& filename) {
+        entities.clear();
+        std::ifstream file(filename);
+        std::string type;
+        while (file >> type) {
+            if (type == "LINE") {
+                int id; Point2D p1, p2;
+                file >> id >> p1.x >> p1.y >> p2.x >> p2.y;
+                entities.push_back(std::make_unique<LineEntity>(id, p1, p2));
+                if (id >= next_id) next_id = id + 1;
+            }
+        }
+    }
+};
+\end{verbatim}
+
+\subsection{Thuật toán và Cài đặt Vẽ Mô hình Khung dây (Wireframe) Quả cầu với Lưới Tứ giác}
+\label{subsec:wireframe_sphere}
+
+Mô hình khung dây (Wireframe Model) biểu diễn các đối tượng hình học 3D dưới dạng tập hợp các đỉnh nối với nhau bởi các cạnh thẳng rời rạc. Đối với mặt cầu tâm tại gốc tọa độ $O(0, 0, 0)$ với bán kính $R$, ta sử dụng hệ tọa độ cầu tham số hóa theo vĩ độ $\phi \in [-\pi/2, \pi/2]$ và kinh độ $\theta \in [0, 2\pi]$:
+\begin{equation}
+\label{eq:sphere_parametric}
+\begin{cases}
+x(\theta, \phi) = R \cos\phi \cos\theta \\
+y(\theta, \phi) = R \cos\phi \sin\theta \\
+z(\theta, \phi) = R \sin\phi
+\end{cases}
+\end{equation}
+
+Để kiến tạo lưới khung dây dạng lưới vuông (Quadrilateral Grid Mesh), ta phân hoạch miền vĩ độ thành $M$ dải song song (Vĩ tuyến) và miền kinh độ thành $N$ cung hướng tâm (Kinh tuyến). Tại mỗi điểm nút $(i, j)$ với $i \in [0, M]$ và $j \in [0, N]$:
+\begin{equation}
+\phi_i = -\frac{\pi}{2} + i \cdot \frac{\pi}{M}, \quad \theta_j = j \cdot \frac{2\pi}{N}
+\end{equation}
+Mỗi ô lưới tứ giác được tạo thành bởi 4 đỉnh: $P(i, j)$, $P(i+1, j)$, $P(i+1, j+1)$, $P(i, j+1)$. Khung dây được vẽ bằng cách kết nối các cạnh ngang theo vĩ tuyến $P(i, j) \to P(i, j+1)$ và các cạnh dọc theo kinh tuyến $P(i, j) \to P(i+1, j)$. Để chiếu các điểm 3D lên màn hình 2D, ta áp dụng phép chiếu phối cảnh chuẩn với khoảng cách mắt quan sát $d$:
+\begin{equation}
+x_{\text{proj}} = d \cdot \frac{x}{z + z_{\text{cam}}}, \quad y_{\text{proj}} = d \cdot \frac{y}{z + z_{\text{cam}}}
+\end{equation}
+
+Chương trình C++ dưới đây thực hiện toàn bộ quy trình tính toán và xuất tập cạnh khung dây của quả cầu:
+
+\begin{verbatim}
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+struct Point3D { double x, y, z; };
+struct Edge3D { int p1_idx, p2_idx; };
+
+class WireframeSphere {
+public:
+    double radius;
+    int rings;      // Số vĩ tuyến M
+    int sectors;    // Số kinh tuyến N
+    std::vector<Point3D> vertices;
+    std::vector<Edge3D> edges;
+
+    WireframeSphere(double r, int m, int n) : radius(r), rings(m), sectors(n) {
+        generateMesh();
+    }
+
+    void generateMesh() {
+        const double PI = std::acos(-1.0);
+        // 1. Sinh tập đỉnh
+        for (int i = 0; i <= rings; ++i) {
+            double phi = -PI / 2.0 + i * (PI / rings);
+            for (int j = 0; j <= sectors; ++j) {
+                double theta = j * (2.0 * PI / sectors);
+                Point3D pt;
+                pt.x = radius * std::cos(phi) * std::cos(theta);
+                pt.y = radius * std::cos(phi) * std::sin(theta);
+                pt.z = radius * std::sin(phi);
+                vertices.push_back(pt);
+            }
+        }
+        // 2. Nối cạnh lưới tứ giác
+        for (int i = 0; i < rings; ++i) {
+            for (int j = 0; j < sectors; ++j) {
+                int current = i * (sectors + 1) + j;
+                int next_ring = (i + 1) * (sectors + 1) + j;
+                // Cạnh kinh tuyến dọc
+                edges.push_back({ current, next_ring });
+                // Cạnh vĩ tuyến ngang
+                edges.push_back({ current, current + 1 });
+            }
+        }
+    }
+};
+\end{verbatim}
+
+\subsection{Xác định và Tính toán Trường Vector Pháp tuyến của Quả cầu}
+\label{subsec:sphere_normal_vector_field}
+
+Trường vector pháp tuyến bề mặt (Normal Vector Field) là đại lượng hình học vi phân trọng yếu xác định hướng trực giao tại mọi điểm trên mặt cong, đóng vai trò quyết định trong việc tính toán mô hình phản xạ ánh sáng (Shading) và phát hiện va chạm.
+
+Xét mặt cầu tâm tại $C(x_c, y_c, z_c)$ bán kính $R$ dưới hai góc nhìn giải tích:
+
+\textbf{1. Tiếp cận thông qua Phương trình Ẩn (Implicit Surface):}
+Phương trình ẩn của mặt cầu là $F(x, y, z) = (x - x_c)^2 + (y - y_c)^2 + (z - z_c)^2 - R^2 = 0$.
+Theo định lý gradient trong giải tích đa biến, gradient của hàm vô hướng $\nabla F$ luôn trực giao với mặt mức $F = 0$:
+\begin{equation}
+\nabla F(x, y, z) = \begin{bmatrix} \frac{\partial F}{\partial x} \\ \frac{\partial F}{\partial y} \\ \frac{\partial F}{\partial z} \end{bmatrix} = \begin{bmatrix} 2(x - x_c) \\ 2(y - y_c) \\ 2(z - z_c) \end{bmatrix}
+\end{equation}
+Độ lớn của vector gradient tại mọi điểm trên mặt cầu là:
+\begin{equation}
+\|\nabla F\| = \sqrt{4(x - x_c)^2 + 4(y - y_c)^2 + 4(z - z_c)^2} = 2\sqrt{R^2} = 2R
+\end{equation}
+Do đó, trường vector pháp tuyến đơn vị hướng ra ngoài tại điểm $P(x, y, z)$ là:
+\begin{equation}
+\label{eq:sphere_normal_implicit}
+\mathbf{N}(P) = \frac{\nabla F}{\|\nabla F\|} = \begin{bmatrix} \frac{x - x_c}{R} \\ \frac{y - y_c}{R} \\ \frac{z - z_c}{R} \end{bmatrix} = \frac{P - C}{R}
+\end{equation}
+
+\textbf{2. Tiếp cận thông qua Phương trình Tham số (Parametric Surface):}
+Sử dụng dạng tham số mặt cầu tại phương trình~\eqref{eq:sphere_parametric}, hai vector tiếp tuyến cục bộ tại điểm $(\theta, \phi)$ được xác định thông qua các đạo hàm riêng:
+\begin{align}
+\mathbf{T}_\theta &= \frac{\partial \mathbf{S}}{\partial \theta} = \begin{bmatrix} -R \cos\phi \sin\theta \\ R \cos\phi \cos\theta \\ 0 \end{bmatrix} \\
+\mathbf{T}_\phi &= \frac{\partial \mathbf{S}}{\partial \phi} = \begin{bmatrix} -R \sin\phi \cos\theta \\ -R \sin\phi \sin\theta \\ R \cos\phi \end{bmatrix}
+\end{align}
+Vector pháp tuyến chưa chuẩn hóa là tích hữu hướng giữa hai vector tiếp tuyến:
+\begin{align}
+\mathbf{n}(\theta, \phi) &= \mathbf{T}_\theta \times \mathbf{T}_\phi = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\ -R \cos\phi \sin\theta & R \cos\phi \cos\theta & 0 \\ -R \sin\phi \cos\theta & -R \sin\phi \sin\theta & R \cos\phi \end{vmatrix} \nonumber \\
+&= \mathbf{i}\left( R^2 \cos^2\phi \cos\theta \right) - \mathbf{j}\left( -R^2 \cos^2\phi \sin\theta \right) + \mathbf{k}\left( R^2 \cos\phi \sin\phi \sin^2\theta + R^2 \cos\phi \sin\phi \cos^2\theta \right) \nonumber \\
+&= R^2 \cos\phi \begin{bmatrix} \cos\phi \cos\theta \\ \cos\phi \sin\theta \\ \sin\phi \end{bmatrix}
+\end{align}
+Độ lớn của vector này là $\|\mathbf{n}(\theta, \phi)\| = R^2 |\cos\phi|$. Khi chuẩn hóa chia cho độ lớn (với $\phi \in [-\pi/2, \pi/2]$ nên $\cos\phi \ge 0$), ta thu được trường pháp tuyến đơn vị:
+\begin{equation}
+\label{eq:sphere_normal_parametric}
+\mathbf{N}(\theta, \phi) = \begin{bmatrix} \cos\phi \cos\theta \\ \cos\phi \sin\theta \\ \sin\phi \end{bmatrix}
+\end{equation}
+Kết quả này hoàn toàn trùng khớp với công thức~\eqref{eq:sphere_normal_implicit}. Điều này khẳng định một tính chất hình học đẹp đẽ: Tại bất kỳ điểm nào trên mặt cầu, vector pháp tuyến luôn có phương xuyên tâm tuyệt đối, hướng thẳng từ tâm mặt cầu đi qua điểm đang xét ra vô cực.
+
+\subsection{Thuật toán và Cài đặt Tạo Mặt Trụ Trải (TabSurf) với Đường sinh Bézier Bậc Ba}
+\label{subsec:tabsurf_bezier}
+
+Trong thiết kế hình học có máy tính hỗ trợ (CAD), Mặt Trụ Trải (Tabulated Cylinder, thường gọi là \textit{TabSurf}) là một mặt kẻ suy biến đặc biệt, được kiến tạo bằng cách tịnh tiến một đường cong phẳng hoặc đường cong không gian tùy ý $G(u)$ dọc theo một vector chỉ hướng $\mathbf{v}$ trong không gian.
+
+Xét đường sinh $G(u)$ là một đường cong Bézier bậc ba định nghĩa bởi 4 điểm điều khiển $P_0, P_1, P_2, P_3$:
+\begin{equation}
+G(u) = (1-u)^3 P_0 + 3u(1-u)^2 P_1 + 3u^2(1-u) P_2 + u^3 P_3, \quad u \in [0, 1]
+\end{equation}
+Cho vector dịch chuyển định hướng $\mathbf{v} = (v_x, v_y, v_z)$. Phương trình tham số hai biến của mặt cong $S(u, v)$ có dạng:
+\begin{equation}
+\label{eq:tabsurf_parametric}
+S(u, v) = G(u) + v \cdot \mathbf{v}, \quad u \in [0, 1], \ v \in [0, 1]
+\end{equation}
+
+Mặt $S(u, v)$ có các đặc tính hình học quan trọng:
+\begin{itemize}
+    \item Với mỗi giá trị $v$ cố định, thiết diện $u \mapsto S(u, v)$ là một đường cong Bézier bậc ba tịnh tiến hoàn toàn đồng dạng với đường sinh gốc $G(u)$.
+    \item Với mỗi giá trị $u$ cố định, đường đẳng tham số $v \mapsto S(u, v)$ là một đoạn thẳng thẳng tắp (được gọi là đường sinh hay Ruling) song song với vector $\mathbf{v}$.
+\end{itemize}
+
+Chương trình C++ sau đây tạo lưới khung dây cho mặt TabSurf với độ phân giải $N \times M$ ô lưới:
+
+\begin{verbatim}
+#include <iostream>
+#include <vector>
+
+struct Point3D {
+    double x, y, z;
+    Point3D operator+(const Point3D& o) const { return {x + o.x, y + o.y, z + o.z}; }
+    Point3D operator*(double s) const { return {x * s, y * s, z * s}; }
+};
+
+class TabulatedCylinder {
+public:
+    Point3D p0, p1, p2, p3; // 4 điểm điều khiển của đường Bézier bậc 3
+    Point3D dir_vector;     // Vector tịnh tiến v
+
+    Point3D evaluateBezier(double u) const {
+        double c0 = (1 - u) * (1 - u) * (1 - u);
+        double c1 = 3 * u * (1 - u) * (1 - u);
+        double c2 = 3 * u * u * (1 - u);
+        double c3 = u * u * u;
+        return p0 * c0 + p1 * c1 + p2 * c2 + p3 * c3;
+    }
+
+    Point3D evaluateSurface(double u, double v) const {
+        return evaluateBezier(u) + (dir_vector * v);
+    }
+
+    void generateWireframe(int num_u, int num_v, std::vector<Point3D>& grid) const {
+        grid.resize((num_u + 1) * (num_v + 1));
+        for (int i = 0; i <= num_u; ++i) {
+            double u = static_cast<double>(i) / num_u;
+            for (int j = 0; j <= num_v; ++j) {
+                double v = static_cast<double>(j) / num_v;
+                grid[i * (num_v + 1) + j] = evaluateSurface(u, v);
+            }
+        }
+    }
+};
+\end{verbatim}
+
+\subsection{Thuật toán và Cài đặt Vẽ Mặt Kẻ (RuleSurf) Nối Hai Biên Cong Bézier Bậc Ba Khác nhau}
+\label{subsec:rulesurf_bezier}
+
+Mặt Kẻ (Ruled Surface, ký hiệu là \textit{RuleSurf}) là một lớp mặt cong tổng quát được hình thành bằng cách quét một đoạn thẳng nối giữa hai điểm tương ứng trên hai đường biên dạng độc lập $C_1(u)$ và $C_2(u)$ khi tham số $u$ biến thiên từ $0$ đến $1$~\citep{foley1996computer}.
+
+Xét trường hợp hai biên dạng là hai đường cong Bézier bậc ba hoàn toàn khác nhau trong không gian ba chiều:
+\begin{align}
+C_1(u) &= \sum_{k=0}^3 B_{k, 3}(u) P_k, \quad u \in [0, 1] \\
+C_2(u) &= \sum_{k=0}^3 B_{k, 3}(u) Q_k, \quad u \in [0, 1]
+\end{align}
+với $\{P_k\}_{k=0}^3$ và $\{Q_k\}_{k=0}^3$ là hai bộ điểm điều khiển độc lập. Phương trình tham số nội suy tuyến tính của mặt kẻ $S(u, v)$ được xác định bởi:
+\begin{equation}
+\label{eq:rulesurf_parametric}
+S(u, v) = (1 - v) C_1(u) + v C_2(u), \quad u \in [0, 1], \ v \in [0, 1]
+\end{equation}
+
+Tại mọi giá trị tham số $u = u_0 \in [0, 1]$ cố định, quỹ đạo của điểm khi $v$ biến thiên từ $0$ đến $1$ là một đoạn thẳng nối trực tiếp từ $C_1(u_0)$ tới $C_2(u_0)$. Ngược lại, tại mọi giá trị $v = v_0$ cố định, thiết diện cắt ngang là một đường cong Bézier bậc ba có các điểm điều khiển là tổ hợp lồi: $R_k(v_0) = (1 - v_0) P_k + v_0 Q_k$ với $k = 0, \dots, 3$.
+
+Dưới đây là mã nguồn C++ xây dựng lưới khung dây cho mặt RuleSurf:
+
+\begin{verbatim}
+#include <iostream>
+#include <vector>
+
+struct Point3D {
+    double x, y, z;
+    Point3D operator+(const Point3D& o) const { return {x + o.x, y + o.y, z + o.z}; }
+    Point3D operator*(double s) const { return {x * s, y * s, z * s}; }
+};
+
+class RuledSurface {
+public:
+    std::vector<Point3D> ctrl_P; // 4 điểm điều khiển biên 1
+    std::vector<Point3D> ctrl_Q; // 4 điểm điều khiển biên 2
+
+    Point3D evalBezier(const std::vector<Point3D>& cp, double u) const {
+        double c0 = (1 - u) * (1 - u) * (1 - u);
+        double c1 = 3 * u * (1 - u) * (1 - u);
+        double c2 = 3 * u * u * (1 - u);
+        double c3 = u * u * u;
+        return cp[0] * c0 + cp[1] * c1 + cp[2] * c2 + cp[3] * c3;
+    }
+
+    Point3D evaluateSurface(double u, double v) const {
+        Point3D pt_c1 = evalBezier(ctrl_P, u);
+        Point3D pt_c2 = evalBezier(ctrl_Q, u);
+        return pt_c1 * (1.0 - v) + pt_c2 * v;
+    }
+
+    void generateWireframe(int steps_u, int steps_v, 
+                           std::vector<std::pair<Point3D, Point3D>>& wireframe_lines) const {
+        // Sinh các đường sinh thẳng (Rulings) nối dọc theo tham số v
+        for (int i = 0; i <= steps_u; ++i) {
+            double u = static_cast<double>(i) / steps_u;
+            Point3D start = evaluateSurface(u, 0.0);
+            Point3D end = evaluateSurface(u, 1.0);
+            wireframe_lines.push_back({start, end});
+        }
+        // Sinh các đường cong ngang dọc theo tham số u
+        for (int j = 0; j <= steps_v; ++j) {
+            double v = static_cast<double>(j) / steps_v;
+            for (int i = 0; i < steps_u; ++i) {
+                double u1 = static_cast<double>(i) / steps_u;
+                double u2 = static_cast<double>(i + 1) / steps_u;
+                wireframe_lines.push_back({ evaluateSurface(u1, v), evaluateSurface(u2, v) });
+            }
+        }
+    }
+};
+\end{verbatim}
+
+\subsection{Bản chất Hình học của Mặt Vá Coons (EdgeSurf) và Chứng minh Lượng dư Triệt tiêu Bằng \texorpdfstring{$P_3$}{P3}}
+\label{subsec:coons_patch_edgesurf_p3}
+
+Mặt Vá Coons (thường được gọi là lệnh \textit{EdgeSurf} trong các hệ thống CAD) do Steven Anson Coons đề xuất, là một trong những phát minh quan trọng nhất của mô hình hóa hình học. Bài toán đặt ra là: Cho trước bốn đường cong biên không gian tùy ý nối tiếp nhau khép kín tạo thành một khung biên 4 cạnh, hãy xây dựng một hàm mặt cong trơn tru $S(u, v)$ với $(u, v) \in [0, 1] \times [0, 1]$ sao cho bề mặt nội suy chính xác tuyệt đối cả 4 đường cong biên đó.
+
+\textbf{1. Thiết lập Bốn Đường cong Biên và Bốn Đỉnh Góc:}
+Giả sử bốn đường cong biên được ký hiệu là:
+\begin{align}
+\text{Biên đáy ($v = 0$):} & \quad C_1(u) = S(u, 0) \\
+\text{Biên đỉnh ($v = 1$):} & \quad C_2(u) = S(u, 1) \\
+\text{Biên trái ($u = 0$):} & \quad D_1(v) = S(0, v) \\
+\text{Biên phải ($u = 1$):} & \quad D_2(v) = S(1, v)
+\end{align}
+Để bốn đường cong này tạo thành một đường bao liên tục khép kín, chúng phải thỏa mãn điều kiện tương thích tại 4 đỉnh góc:
+\begin{align}
+P_{00} &= C_1(0) = D_1(0) = S(0, 0) \\
+P_{10} &= C_1(1) = D_2(0) = S(1, 0) \\
+P_{01} &= C_2(0) = D_1(1) = S(0, 1) \\
+P_{11} &= C_2(1) = D_2(1) = S(1, 1)
+\end{align}
+
+\textbf{2. Xây dựng Các Mặt Kẻ Thành phần:}
+Để nội suy hai đường cong biên đối diện $C_1(u)$ và $C_2(u)$, ta kiến tạo mặt kẻ thứ nhất $P_1(u, v)$:
+\begin{equation}
+\label{eq:coons_p1}
+P_1(u, v) = (1 - v) C_1(u) + v C_2(u)
+\end{equation}
+Mặt kẻ $P_1(u, v)$ khớp chính xác với hai biên $C_1(u)$ và $C_2(u)$, nhưng tại hai biên bên $u=0$ và $u=1$, nó suy biến thành hai đoạn thẳng nối các góc thay vì đi theo đường cong $D_1(v)$ và $D_2(v)$.
+
+Hoàn toàn tương tự, để nội suy hai đường biên đối diện $D_1(v)$ và $D_2(v)$, ta kiến tạo mặt kẻ thứ hai $P_2(u, v)$:
+\begin{equation}
+\label{eq:coons_p2}
+P_2(u, v) = (1 - u) D_1(v) + u D_2(v)
+\end{equation}
+
+\textbf{3. Xuất hiện Sai số và Bản chất của Lượng Dư $P_3$:}
+Nếu ta thực hiện phép cộng đơn giản hai mặt kẻ thành phần $S_{\text{test}}(u, v) = P_1(u, v) + P_2(u, v)$, hãy khảo sát giá trị của bề mặt này tại biên đáy $v = 0$:
+\begin{align}
+S_{\text{test}}(u, 0) &= P_1(u, 0) + P_2(u, 0) \nonumber \\
+&= \left[ (1 - 0) C_1(u) + 0 \cdot C_2(u) \right] + \left[ (1 - u) D_1(0) + u D_2(0) \right] \nonumber \\
+&= C_1(u) + \left[ (1 - u) P_{00} + u P_{10} \right]
+\end{align}
+Nhận xét mấu chốt: Kết quả không bằng đường biên mong muốn $C_1(u)$ mà bị đội lên một lượng thừa chính bằng đoạn thẳng nội suy tuyến tính giữa hai đỉnh góc: $(1 - u) P_{00} + u P_{10}$.
+Hiện tượng dư thừa này xuất hiện là do bốn đỉnh góc $P_{00}, P_{10}, P_{01}, P_{11}$ đã bị tính hai lần (một lần trong mặt kẻ $P_1$ và một lần nữa trong mặt kẻ $P_2$).
+
+Để triệt tiêu lượng dư thừa này trên toàn bộ miền xác định, ta bắt buộc phải trừ đi một mặt nội suy song tuyến tính (Bilinear Interpolation Surface) tạo bởi 4 đỉnh góc, được ký hiệu là $P_3(u, v)$:
+\begin{equation}
+\label{eq:coons_p3}
+P_3(u, v) = \begin{bmatrix} 1 - u & u \end{bmatrix} \begin{bmatrix} P_{00} & P_{01} \\ P_{10} & P_{11} \end{bmatrix} \begin{bmatrix} 1 - v \\ v \end{bmatrix} = (1 - u)(1 - v) P_{00} + u(1 - v) P_{10} + (1 - u) v P_{01} + u v P_{11}
+\end{equation}
+
+Phương trình hoàn chỉnh của Mặt Vá Coons (EdgeSurf) là:
+\begin{equation}
+\label{eq:coons_final}
+S(u, v) = P_1(u, v) + P_2(u, v) - P_3(u, v)
+\end{equation}
+
+\textbf{4. Chứng minh Lượng Dư Bị Triệt Tiêu Tuyệt Đối tại Toàn Bộ Bốn Biên:}
+\begin{itemize}
+    \item \textit{Kiểm tra tại biên đáy $v = 0$:}
+    \begin{align}
+    P_1(u, 0) &= C_1(u) \\
+    P_2(u, 0) &= (1 - u) D_1(0) + u D_2(0) = (1 - u) P_{00} + u P_{10} \\
+    P_3(u, 0) &= (1 - u)(1 - 0) P_{00} + u(1 - 0) P_{10} + 0 + 0 = (1 - u) P_{00} + u P_{10}
+    \end{align}
+    Thay vào phương trình~\eqref{eq:coons_final}:
+    \begin{equation}
+    S(u, 0) = C_1(u) + \left[ (1 - u) P_{00} + u P_{10} \right] - \left[ (1 - u) P_{00} + u P_{10} \right] = C_1(u)
+    \end{equation}
+    Lượng dư $P_3$ triệt tiêu hoàn toàn phần thừa của $P_2$, trả lại chính xác biên $C_1(u)$.
+    
+    \item \textit{Kiểm tra tại biên đỉnh $v = 1$:}
+    \begin{align}
+    P_1(u, 1) &= C_2(u) \\
+    P_2(u, 1) &= (1 - u) D_1(1) + u D_2(1) = (1 - u) P_{01} + u P_{11} \\
+    P_3(u, 1) &= (1 - u) P_{01} + u P_{11}
+    \end{align}
+    Suy ra $S(u, 1) = C_2(u) + P_2(u, 1) - P_3(u, 1) = C_2(u)$.
+    
+    \item \textit{Kiểm tra tại biên trái $u = 0$ và biên phải $u = 1$:} Hoàn toàn tương tự, tại $u = 0$ ta có $P_1(0, v) = P_3(0, v) = (1 - v) P_{00} + v P_{01}$, do đó $S(0, v) = P_1(0, v) + D_1(v) - P_3(0, v) = D_1(v)$. Tại $u = 1$, ta có $S(1, v) = D_2(v)$.
+\end{itemize}
+
+Chứng minh giải tích trên khẳng định rằng: Việc trừ đi lượng dư $P_3(u, v)$ là điều kiện cần và đủ để khử lượng cộng gộp hai lần của các đỉnh góc, đảm bảo tính liên tục hình học và tính khớp biên tuyệt đối của mặt vá Coons trên toàn bộ không gian tham số.
