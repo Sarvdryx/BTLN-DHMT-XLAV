@@ -1,5 +1,245 @@
-\section{Tuần 8}
+\section{Tuần 8: Phép biến đổi Karhunen--Loève (Phân tích Thành phần Chính, PCA)}
 \label{sec:week8}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+Buổi học tuần này được giảng trực tiếp trên bảng, không có slide~\citep{xlav_lec8}. Các câu hỏi dựa trên nội dung ghi bảng: \emph{phép biến đổi Karhunen--Loève} (KLT), còn gọi là \emph{phân tích thành phần chính} (Principal Component Analysis, PCA)~\citep{jolliffe2002principal}.
+
+\textbf{Tóm tắt nội dung trên bảng và ký hiệu.} \emph{Mục đích}: tìm một phép biến đổi tuyến tính để (i) giảm số chiều, chỉ giữ $m$ đặc trưng nhưng vẫn giữ được các đặc trưng chính — có phương sai lớn và có tương quan bằng $0$ — và (ii) cực tiểu hóa lượng thông tin bị mất. Một ảnh $f(x, y)$ kích thước $1024 \times 1024$ được trải thành vector bằng cách nối các dòng liên tiếp:
+\begin{equation}
+\mathbf{x} = [x(0), x(1), \ldots, x(n - 1)]^T \in \mathbb{R}^n, \qquad n = 1024 \times 1024 \approx 10^6.
+\end{equation}
+Với ma trận $\mathbf{A} = [\mathbf{a}_0, \mathbf{a}_1, \ldots, \mathbf{a}_{n-1}]$ ($n \times n$) có các cột là một cơ sở trực chuẩn ($\mathbf{a}_i^T\mathbf{a}_j = 1$ nếu $i = j$, $0$ nếu $i \ne j$, do đó $\mathbf{A}^{-1} = \mathbf{A}^T$):
+\begin{equation}
+\mathbf{y} = \mathbf{A}^T\mathbf{x}, \qquad \mathbf{x} = \mathbf{A}\mathbf{y} = \sum_{i=0}^{n-1} y_i\,\mathbf{a}_i, \qquad y_i = \mathbf{a}_i^T\mathbf{x},
+\end{equation}
+tức $y_i$ là hình chiếu của $\mathbf{x}$ lên vector $\mathbf{a}_i$. Xấp xỉ $\mathbf{x}$ bằng $m \ll n$ thành phần đầu, $\hat{\mathbf{x}} = \sum_{i=0}^{m-1} y_i\mathbf{a}_i$, thì sai số
+\begin{equation}
+\|\mathbf{x} - \hat{\mathbf{x}}\|_2^2 = \Big\|\sum_{i=m}^{n-1} y_i\mathbf{a}_i\Big\|_2^2 = \sum_{i=m}^{n-1} y_i^2, \qquad
+\varepsilon = \mathbb{E}\big[\|\mathbf{x} - \hat{\mathbf{x}}\|_2^2\big] = \sum_{i=m}^{n-1}\mathbf{a}_i^T\,\mathbb{E}[\mathbf{x}\mathbf{x}^T]\,\mathbf{a}_i.
+\label{eq:w8_error}
+\end{equation}
+Bài toán: cực tiểu $\varepsilon$ với các ràng buộc trực chuẩn. Trên bảng, ma trận tương quan $\mathbf{R} = \mathbb{E}[\mathbf{x}\mathbf{x}^T]$ được dùng với giả thiết dữ liệu có kỳ vọng $\mathbf{0}$. Trong thực tế ta trừ vector trung bình $\boldsymbol{\mu} = \mathbb{E}[\mathbf{x}]$ trước, khi đó $\mathbf{R}$ trở thành ma trận hiệp phương sai $\mathbf{C} = \mathbb{E}[(\mathbf{x} - \boldsymbol{\mu})(\mathbf{x} - \boldsymbol{\mu})^T]$; mọi kết quả dưới đây giữ nguyên khi thay $\mathbf{R}$ bằng $\mathbf{C}$. Mã nguồn các thí nghiệm nằm trong tệp \texttt{XLAV/code/w8\_pca.py}.
+
+% =====================================================================
+\subsection{Hệ trục chiếu cực đại phương sai và triệt tiêu tương quan}
+\label{subsec:w8_max_variance}
+
+\textit{Câu hỏi: Tìm hệ trục (cơ sở trực chuẩn $\mathbf{a}_0, \mathbf{a}_1, \ldots$) để chiếu dữ liệu xuống sao cho phương sai của dữ liệu sau khi chiếu lớn nhất có thể (để các đặc trưng có tính khả tách), đồng thời các thành phần sau khi chiếu có tương quan bằng $0$.}
+
+\textbf{Trục thứ nhất.} Giả sử dữ liệu đã trừ trung bình, $\mathbb{E}[\mathbf{x}] = \mathbf{0}$, và $\mathbf{C} = \mathbb{E}[\mathbf{x}\mathbf{x}^T]$. Phương sai của hình chiếu $y = \mathbf{a}^T\mathbf{x}$ lên trục đơn vị $\mathbf{a}$ là
+\begin{equation}
+\mathrm{Var}(y) = \mathbb{E}\big[(\mathbf{a}^T\mathbf{x})(\mathbf{x}^T\mathbf{a})\big] = \mathbf{a}^T\mathbf{C}\,\mathbf{a}.
+\end{equation}
+Cần giải $\max_{\mathbf{a}} \mathbf{a}^T\mathbf{C}\mathbf{a}$ với ràng buộc $\mathbf{a}^T\mathbf{a} = 1$ (không có ràng buộc thì $\mathbf{a}$ càng dài phương sai càng lớn). Hàm Lagrange $\mathcal{L}(\mathbf{a}, \lambda) = \mathbf{a}^T\mathbf{C}\mathbf{a} + \lambda(1 - \mathbf{a}^T\mathbf{a})$; vì $\mathbf{C}$ đối xứng nên $\nabla_{\mathbf{a}}(\mathbf{a}^T\mathbf{C}\mathbf{a}) = 2\mathbf{C}\mathbf{a}$, và
+\begin{equation}
+\frac{\partial\mathcal{L}}{\partial\mathbf{a}} = 2\mathbf{C}\mathbf{a} - 2\lambda\mathbf{a} = \mathbf{0} \;\Longrightarrow\; \mathbf{C}\mathbf{a} = \lambda\mathbf{a}.
+\end{equation}
+Vậy $\mathbf{a}$ phải là vector riêng của $\mathbf{C}$, và khi đó $\mathrm{Var}(y) = \mathbf{a}^T\mathbf{C}\mathbf{a} = \lambda\,\mathbf{a}^T\mathbf{a} = \lambda$. Phương sai lớn nhất đạt được khi chọn $\mathbf{a}_0$ là vector riêng ứng với \emph{trị riêng lớn nhất} $\lambda_0$.
+
+\textbf{Các trục tiếp theo.} Trục $\mathbf{a}_1$ cũng cực đại $\mathbf{a}^T\mathbf{C}\mathbf{a}$ nhưng thêm ràng buộc $\mathbf{a}^T\mathbf{a}_0 = 0$ (không lặp lại thông tin của $\mathbf{a}_0$). Hàm Lagrange $\mathbf{a}^T\mathbf{C}\mathbf{a} + \lambda(1 - \mathbf{a}^T\mathbf{a}) - \gamma\,\mathbf{a}^T\mathbf{a}_0$ cho $2\mathbf{C}\mathbf{a} - 2\lambda\mathbf{a} - \gamma\mathbf{a}_0 = \mathbf{0}$. Nhân trái với $\mathbf{a}_0^T$: $2\mathbf{a}_0^T\mathbf{C}\mathbf{a} - 0 - \gamma = 0$, mà $\mathbf{a}_0^T\mathbf{C}\mathbf{a} = (\mathbf{C}\mathbf{a}_0)^T\mathbf{a} = \lambda_0\mathbf{a}_0^T\mathbf{a} = 0$, nên $\gamma = 0$ và lại có $\mathbf{C}\mathbf{a} = \lambda\mathbf{a}$. Do đó $\mathbf{a}_1$ là vector riêng ứng với trị riêng lớn thứ hai. Quy nạp: \textbf{$\mathbf{a}_i$ là vector riêng của $\mathbf{C}$ ứng với trị riêng lớn thứ $i + 1$}, với $\lambda_0 \ge \lambda_1 \ge \ldots \ge \lambda_{n-1}$. Theo định lý phổ, $\mathbf{C}$ đối xứng nửa xác định dương nên có đủ $n$ trị riêng thực $\lambda_i \ge 0$ và $n$ vector riêng trực chuẩn, nên hệ trục này luôn tồn tại.
+
+\textbf{Tương quan bằng $0$.} Với $\mathbf{A} = [\mathbf{a}_0, \ldots, \mathbf{a}_{n-1}]$ và $\mathbf{y} = \mathbf{A}^T\mathbf{x}$:
+\begin{equation}
+\mathrm{Cov}(\mathbf{y}) = \mathbb{E}[\mathbf{y}\mathbf{y}^T] = \mathbf{A}^T\mathbf{C}\mathbf{A}, \qquad
+\big(\mathbf{A}^T\mathbf{C}\mathbf{A}\big)_{ij} = \mathbf{a}_i^T(\lambda_j\mathbf{a}_j) = \lambda_j\,\delta_{ij},
+\end{equation}
+tức $\mathrm{Cov}(\mathbf{y}) = \mathrm{diag}(\lambda_0, \ldots, \lambda_{n-1})$: các thành phần $y_i$ đôi một \emph{không tương quan}, và phương sai của $y_i$ đúng bằng $\lambda_i$. KLT là phép biến đổi trực chuẩn \emph{chéo hóa} ma trận hiệp phương sai.
+
+\textbf{Liên hệ với cực tiểu sai số trên bảng.} Phép biến đổi trực chuẩn bảo toàn tổng phương sai: $\mathrm{tr}(\mathbf{C}) = \sum_{i=0}^{n-1}\lambda_i = \underbrace{\sum_{i<m}\lambda_i}_{\text{phương sai giữ lại}} + \underbrace{\sum_{i \ge m}\lambda_i}_{\text{sai số } \varepsilon}$. Vì tổng là hằng số, \emph{cực đại phương sai giữ lại} và \emph{cực tiểu sai số xấp xỉ}~(\ref{eq:w8_error}) là hai cách nhìn của cùng một bài toán, cùng cho ra hệ trục các vector riêng (Mục~\ref{subsec:w8_lagrange}).
+
+\textbf{Minh họa 2 chiều} (Hình~\ref{fig:w8_axes2d}). $400$ điểm có ma trận hiệp phương sai $\mathbf{C} = \begin{bmatrix} 2{,}77 & 2{,}07 \\ 2{,}07 & 2{,}13 \end{bmatrix}$ (hai tọa độ tương quan mạnh). Trị riêng $\lambda_0 = 4{,}54$, $\lambda_1 = 0{,}36$: trục $\mathbf{a}_0$ nằm dọc theo hướng trải rộng nhất của đám mây điểm và giữ $4{,}54/4{,}90 = 92{,}7\%$ tổng phương sai. Sau phép chiếu, $\mathrm{Cov}(\mathbf{y}) = \mathrm{diag}(4{,}543;\ 0{,}359)$, hiệp phương sai chéo bằng $0$.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{w8_axes2d.png}
+\caption{Trái: dữ liệu 2 chiều tương quan và hai trục chính (độ dài mũi tên $= 2\sqrt{\lambda_i}$). Phải: tọa độ trong hệ trục mới, các thành phần không còn tương quan.}
+\label{fig:w8_axes2d}
+\end{figure}
+
+\textbf{Vì sao phương sai lớn mang tính ``khả tách''.} Đặc trưng có phương sai lớn làm các mẫu \emph{trải xa nhau} trên trục đó, nên các mẫu khác nhau dễ phân biệt; các trục có phương sai rất nhỏ hầu như không thay đổi giữa các mẫu (thường chỉ chứa nhiễu) nên bỏ đi gần như không mất khả năng phân biệt. Tương quan bằng $0$ đảm bảo mỗi đặc trưng mang thông tin \emph{mới}, không lặp lại đặc trưng khác. \textbf{Lưu ý}: PCA là phương pháp \emph{không giám sát}, nó cực đại phương sai của toàn bộ dữ liệu chứ không cực đại khoảng cách giữa các lớp. Nếu hướng phương sai lớn nhất lại do ánh sáng hay tư thế (chung cho mọi người) thì nó không giúp phân biệt danh tính; khi có nhãn lớp, phân tích phân biệt tuyến tính (LDA, Fisherfaces~\citep{belhumeur1997eigenfaces}) phù hợp hơn cho mục đích phân lớp.
+
+% =====================================================================
+\subsection{Kết luận từ điều kiện cần của hàm Lagrange: \texorpdfstring{$\mathbb{E}[\mathbf{x}\mathbf{x}^T]\mathbf{a}_i = \lambda_i\mathbf{a}_i$}{E[xx\^{}T] a\_i = lambda\_i a\_i}}
+\label{subsec:w8_lagrange}
+
+\textit{Câu hỏi: Trên bảng, bài toán cực tiểu sai số $\varepsilon = \sum_{i=m}^{n-1}\mathbf{a}_i^T\mathbb{E}[\mathbf{x}\mathbf{x}^T]\mathbf{a}_i$ với ràng buộc $\mathbf{a}_i^T\mathbf{a}_i = 1$, $\mathbf{a}_i^T\mathbf{a}_j = 0$ ($i \ne j$) được chuyển thành bài toán tối ưu không ràng buộc bằng phương pháp nhân tử Lagrange, với hàm
+\[
+F(\mathbf{a}_i, \lambda_i, \gamma_{ij}) = \sum_{i=m}^{n-1}\mathbf{a}_i^T\mathbb{E}[\mathbf{x}\mathbf{x}^T]\mathbf{a}_i + \sum_{i=m}^{n-1}\lambda_i(1 - \mathbf{a}_i^T\mathbf{a}_i) + \sum_{i}\sum_{j \ne i}\gamma_{ij}\,\mathbf{a}_i^T\mathbf{a}_j.
+\]
+Điều kiện cần $\partial F/\partial\mathbf{a}_i = 0$, $\partial F/\partial\lambda_i = 0$, $\partial F/\partial\gamma_{ij} = 0$ dẫn đến kết quả được khoanh ở cuối bảng: $\mathbb{E}[\mathbf{x}\mathbf{x}^T]\,\mathbf{a}_i = \lambda_i\,\mathbf{a}_i$. Từ kết quả này rút ra kết luận gì?}
+
+\textbf{Chi tiết bước đạo hàm.} Đặt $\mathbf{R} = \mathbb{E}[\mathbf{x}\mathbf{x}^T]$ ($n \times n$, đối xứng). Lấy $\gamma_{ij} = \gamma_{ji}$ (hai số hạng $\mathbf{a}_i^T\mathbf{a}_j$ và $\mathbf{a}_j^T\mathbf{a}_i$ bằng nhau):
+\begin{equation}
+\frac{\partial F}{\partial\mathbf{a}_i} = 2\mathbf{R}\mathbf{a}_i - 2\lambda_i\mathbf{a}_i + 2\sum_{j \ne i}\gamma_{ij}\mathbf{a}_j = \mathbf{0}.
+\end{equation}
+Nhân trái với $\mathbf{a}_k^T$ ($k \ne i$, $k$ trong nhóm bị loại) và dùng các ràng buộc: $\gamma_{ik} = -\mathbf{a}_k^T\mathbf{R}\mathbf{a}_i$. Sai số $\varepsilon$ chỉ phụ thuộc vào \emph{không gian con} sinh bởi $\{\mathbf{a}_m, \ldots, \mathbf{a}_{n-1}\}$ (nó bằng $\mathrm{tr}(\mathbf{P}\mathbf{R})$ với $\mathbf{P}$ là phép chiếu lên không gian con đó), nên trong không gian con tối ưu ta luôn chọn được cơ sở trực chuẩn làm $\mathbf{R}$ chéo, tức $\mathbf{a}_k^T\mathbf{R}\mathbf{a}_i = 0$ và $\gamma_{ik} = 0$. Khi đó điều kiện còn lại chính là
+\begin{equation}
+\mathbf{R}\,\mathbf{a}_i = \lambda_i\,\mathbf{a}_i, \qquad \mathbf{a}_i^T\mathbf{a}_i = 1, \qquad \mathbf{a}_i^T\mathbf{a}_j = 0.
+\end{equation}
+
+\textbf{Kết luận.}
+\begin{enumerate}
+    \item \textbf{Các vector cơ sở tối ưu là vector riêng} của ma trận tương quan $\mathbf{R} = \mathbb{E}[\mathbf{x}\mathbf{x}^T]$ (ma trận hiệp phương sai khi dữ liệu đã trừ trung bình), và các \textbf{nhân tử Lagrange $\lambda_i$ chính là các trị riêng} tương ứng. Ma trận biến đổi $\mathbf{A}$ của KLT là ma trận có các cột là vector riêng của $\mathbf{R}$.
+    \item \textbf{Trị riêng là phương sai của thành phần tương ứng}: $\lambda_i = \lambda_i\mathbf{a}_i^T\mathbf{a}_i = \mathbf{a}_i^T\mathbf{R}\mathbf{a}_i = \mathbb{E}[y_i^2] \ge 0$. Đây cũng là ``lượng thông tin'' mà thành phần $i$ mang.
+    \item \textbf{Sai số chỉ còn là tổng các trị riêng bị bỏ}: thay vào~(\ref{eq:w8_error}),
+    \begin{equation}
+    \varepsilon = \sum_{i=m}^{n-1}\mathbf{a}_i^T\mathbf{R}\mathbf{a}_i = \sum_{i=m}^{n-1}\mathbf{a}_i^T\lambda_i\mathbf{a}_i = \sum_{i=m}^{n-1}\lambda_i.
+    \end{equation}
+    Đây là cơ sở để trả lời câu hỏi ``giữ vector nào'' ở Mục~\ref{subsec:w8_which_keep}.
+    \item \textbf{Các thành phần $y_i$ không tương quan}: $\mathbf{A}^T\mathbf{R}\mathbf{A} = \mathrm{diag}(\lambda_i)$ (Mục~\ref{subsec:w8_max_variance}), đúng với yêu cầu ``tương quan bằng $0$'' trong mục đích ghi trên bảng.
+    \item \textbf{KLT là phép biến đổi tuyến tính tối ưu theo nghĩa bình phương sai số}: trong mọi phép biến đổi trực chuẩn, với cùng số thành phần $m$, KLT cho sai số xấp xỉ nhỏ nhất. Khác với DFT (Tuần 7) dùng cơ sở sin cố định, cơ sở của KLT \emph{phụ thuộc vào dữ liệu}: mỗi tập dữ liệu có một hệ vector riêng riêng.
+    \item \textbf{Cái giá phải trả}: phải tính và phân rã trị riêng ma trận $\mathbf{R}$ kích thước $n \times n$. Với ảnh $1024 \times 1024$, $n \approx 10^6$, $\mathbf{R}$ có khoảng $10^{12}$ phần tử, không thể lưu và phân rã trực tiếp; cần kỹ thuật ở Mục~\ref{subsec:w8_eigenfaces}.
+\end{enumerate}
+
+% =====================================================================
+\subsection{Chọn vector riêng giữ lại và vector riêng loại bỏ}
+\label{subsec:w8_which_keep}
+
+\textit{Câu hỏi: Từ kết quả $\mathbb{E}[\mathbf{x}\mathbf{x}^T]\,\mathbf{a}_i = \lambda_i\,\mathbf{a}_i$ (ma trận $n \times n$ có $n$ cặp trị riêng -- vector riêng), cần giữ lại những vector riêng nào làm cơ sở xấp xỉ $\hat{\mathbf{x}} = \sum_{i=0}^{m-1}y_i\mathbf{a}_i$ và đặt những vector riêng nào vào phần bị loại bỏ ($i = m, \ldots, n - 1$), sao cho các vector được chọn không trùng nhau và sai số nhỏ nhất?}
+
+\clarify{Câu hỏi ghi ``giữ cái nào đặt cái nào để không bị trùng từ chỗ suy ra (sao xanh biển)''. Nhóm hiểu là: mỗi $\mathbf{a}_i$ đều là một vector riêng, cần quyết định vector riêng nào được giữ (chỉ số $0, \ldots, m - 1$) và vector riêng nào được xếp vào phần bị loại ($m, \ldots, n - 1$), mỗi vector riêng chỉ dùng một lần. Cần xác nhận lại.}
+
+\textbf{Sai số theo cách chọn.} Mọi $\mathbf{a}_i$ đều phải là vector riêng (Mục~\ref{subsec:w8_lagrange}), nhưng việc \emph{gán} vector riêng nào vào nhóm giữ lại, vector riêng nào vào nhóm bị loại là tự do. Với mọi cách gán, $\varepsilon = \sum_{i \in \text{nhóm bị loại}}\lambda_i$.
+
+\textbf{Quy tắc chọn.} Sắp các trị riêng giảm dần, như sơ đồ trên bảng:
+\begin{equation}
+\lambda_0 \ge \lambda_1 \ge \ldots \ge \lambda_{m-1} \;\ge\; \lambda_m \ge \ldots \ge \lambda_{n-1} \ge 0.
+\end{equation}
+\begin{itemize}
+    \item \textbf{Giữ lại} $m$ vector riêng ứng với $m$ trị riêng \emph{lớn nhất}: $\mathbf{a}_0, \ldots, \mathbf{a}_{m-1}$, các trục mang nhiều phương sai (thông tin) nhất.
+    \item \textbf{Đặt vào phần bị loại} $n - m$ vector riêng ứng với các trị riêng \emph{nhỏ nhất}: $\mathbf{a}_m, \ldots, \mathbf{a}_{n-1}$.
+\end{itemize}
+Khi đó $\varepsilon_{\min} = \sum_{i=m}^{n-1}\lambda_i$. \emph{Chứng minh}: tổng của $n - m$ trị riêng bất kỳ (khác chỉ số) luôn $\ge$ tổng của $n - m$ trị riêng nhỏ nhất, vì nếu nhóm bị loại chứa một $\lambda_p$ trong khi bỏ sót một $\lambda_q < \lambda_p$, đổi chỗ $p$ và $q$ làm sai số giảm $\lambda_p - \lambda_q > 0$.
+
+\textbf{Vì sao phải ``không trùng''.} Ràng buộc $\mathbf{a}_i^T\mathbf{a}_j = 0$ ($i \ne j$) không cho phép dùng một vector riêng hai lần (một vector không thể trực giao với chính nó). Mỗi vector riêng thuộc đúng một nhóm, và hai nhóm cùng nhau tạo thành cơ sở trực chuẩn đầy đủ của $\mathbb{R}^n$. Trường hợp cần chú ý: nếu có trị riêng \emph{bội} (ví dụ $\lambda_p = \lambda_q$), mọi tổ hợp tuyến tính của các vector riêng tương ứng cũng là vector riêng, nên phải chọn một cơ sở \emph{trực chuẩn} trong không gian riêng đó (Gram--Schmidt; các hàm \texttt{eigh}, \texttt{svd} của thư viện đã làm sẵn) để các vector không trùng hay phụ thuộc nhau. Nếu $\lambda_{m-1} = \lambda_m$ thì cách chọn không duy nhất, nhưng sai số như nhau.
+
+\textbf{Chọn $m$.} Thường chọn $m$ nhỏ nhất sao cho tỉ lệ phương sai giữ lại $\sum_{i<m}\lambda_i / \sum_i\lambda_i$ đạt ngưỡng (ví dụ $95\%$), hoặc dựa vào điểm ``gãy'' của đồ thị trị riêng.
+
+\textbf{Ví dụ.} Với dữ liệu 2 chiều ở Hình~\ref{fig:w8_axes2d} và $m = 1$: giữ $\mathbf{a}_0$ thì sai số bằng $\lambda_1 = 0{,}36$; nếu giữ nhầm $\mathbf{a}_1$ thì sai số bằng $\lambda_0 = 4{,}54$, lớn gấp $12{,}6$ lần. Với tập ảnh mặt người ở Mục~\ref{subsec:w8_eigenfaces}, sai số tái tạo trung bình đo được bằng đúng tổng các trị riêng bị loại ($9{,}5167$ khi giữ $5$ thành phần, $4{,}4188$ khi giữ $20$).
+
+% =====================================================================
+\subsection{Rút trích vector đặc trưng cho tập ảnh mặt người bằng PCA}
+\label{subsec:w8_eigenfaces}
+
+\textit{Câu hỏi: Cho tập ảnh mặt người gồm $m$ ảnh, mỗi ảnh kích thước $r \times c$. Áp dụng phương pháp PCA để rút trích vector đặc trưng cho từng ảnh: trình bày phương pháp, giải thuật và viết chương trình (có thể dùng hàm thư viện).}
+
+\textbf{Lưu ý ký hiệu.} Trong câu này, theo đề bài, $m$ là \emph{số ảnh}; số thành phần chính giữ lại được ký hiệu là $k$ (trên bảng ký hiệu là $m$).
+
+\textbf{1. Phương pháp} (eigenfaces~\citep{sirovich1987low,turk1991eigenfaces}).
+\begin{enumerate}
+    \item \textbf{Vector hóa.} Mỗi ảnh $I_j$ ($j = 1, \ldots, m$) được trải thành vector $\mathbf{x}_j \in \mathbb{R}^n$, $n = rc$, bằng cách nối các dòng. Ma trận dữ liệu $\mathbf{X} = [\mathbf{x}_1, \ldots, \mathbf{x}_m]$ kích thước $n \times m$. Các ảnh cần được căn chỉnh (mắt, mũi ở cùng vị trí) và cùng kích thước; có thể cân bằng lược đồ (Tuần 5) để giảm ảnh hưởng của ánh sáng.
+    \item \textbf{Trừ trung bình.} Mặt trung bình $\boldsymbol{\psi} = \frac{1}{m}\sum_j\mathbf{x}_j$; dữ liệu đã chuẩn hóa $\boldsymbol{\Phi} = [\mathbf{x}_1 - \boldsymbol{\psi}, \ldots, \mathbf{x}_m - \boldsymbol{\psi}]$.
+    \item \textbf{Ma trận hiệp phương sai} $\mathbf{C} = \frac{1}{m}\boldsymbol{\Phi}\boldsymbol{\Phi}^T$ ($n \times n$). Các vector riêng của $\mathbf{C}$ (có cùng kích thước với ảnh, nhìn giống những khuôn mặt mờ) gọi là \emph{eigenfaces}.
+    \item \textbf{Thủ thuật ma trận nhỏ.} $n$ thường rất lớn (ảnh $112 \times 92$ cho $n = 10\,304$, $\mathbf{C}$ có khoảng $10^8$ phần tử), trong khi số ảnh $m \ll n$ và $\mathrm{rank}(\mathbf{C}) \le m - 1$. Xét ma trận nhỏ $\mathbf{L} = \frac{1}{m}\boldsymbol{\Phi}^T\boldsymbol{\Phi}$ ($m \times m$). Nếu $\mathbf{L}\mathbf{v} = \mu\mathbf{v}$ thì
+    \begin{equation}
+    \mathbf{C}(\boldsymbol{\Phi}\mathbf{v}) = \tfrac{1}{m}\boldsymbol{\Phi}\boldsymbol{\Phi}^T\boldsymbol{\Phi}\mathbf{v} = \boldsymbol{\Phi}(\mathbf{L}\mathbf{v}) = \mu(\boldsymbol{\Phi}\mathbf{v}),
+    \end{equation}
+    tức $\mathbf{u} = \boldsymbol{\Phi}\mathbf{v}/\|\boldsymbol{\Phi}\mathbf{v}\|$ là vector riêng của $\mathbf{C}$ với cùng trị riêng $\mu$. Chỉ cần phân rã ma trận $m \times m$ thay cho $n \times n$. Tương đương, có thể dùng phân tích giá trị suy biến (SVD) $\boldsymbol{\Phi} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^T$: cột của $\mathbf{U}$ là eigenfaces và $\lambda_i = \sigma_i^2/m$.
+    \item \textbf{Chọn $k$ thành phần} có trị riêng lớn nhất (Mục~\ref{subsec:w8_which_keep}), ví dụ $k$ nhỏ nhất để giữ $95\%$ phương sai. $\mathbf{U}_k = [\mathbf{u}_0, \ldots, \mathbf{u}_{k-1}]$ ($n \times k$).
+    \item \textbf{Vector đặc trưng} của ảnh $j$ là tọa độ của nó trong ``không gian mặt'':
+    \begin{equation}
+    \mathbf{y}_j = \mathbf{U}_k^T(\mathbf{x}_j - \boldsymbol{\psi}) \in \mathbb{R}^k, \qquad k \ll n.
+    \label{eq:w8_feature}
+    \end{equation}
+    Một ảnh mới cũng được chiếu bằng cùng $\boldsymbol{\psi}$, $\mathbf{U}_k$ của tập huấn luyện. Ảnh tái tạo: $\hat{\mathbf{x}}_j = \boldsymbol{\psi} + \mathbf{U}_k\mathbf{y}_j$.
+\end{enumerate}
+Vector đặc trưng $\mathbf{y}_j$ dùng cho nhận dạng (so sánh khoảng cách Euclid giữa các vector đặc trưng, láng giềng gần nhất), cho phát hiện mặt người (ảnh có sai số tái tạo $\|\mathbf{x} - \hat{\mathbf{x}}\|$ nhỏ thì ``giống mặt người''), và cho nén ảnh.
+
+\textbf{2. Giải thuật.}
+\begin{algorithm}[ht]
+\caption{Rút trích vector đặc trưng PCA cho tập ảnh mặt người}
+\label{alg:w8_eigenfaces}
+\begin{algorithmic}[1]
+\Require $m$ ảnh xám $I_1, \ldots, I_m$ kích thước $r \times c$; ngưỡng phương sai $\tau$ (ví dụ $0{,}95$) hoặc số thành phần $k$
+\Ensure Mặt trung bình $\boldsymbol{\psi}$, eigenfaces $\mathbf{U}_k$, trị riêng $\lambda_0, \ldots, \lambda_{k-1}$, vector đặc trưng $\mathbf{y}_1, \ldots, \mathbf{y}_m \in \mathbb{R}^k$
+\State $n \gets rc$; \quad \textbf{for} $j = 1, \ldots, m$: $\mathbf{x}_j \gets$ vector hóa $I_j$ (nối các dòng) \Comment{$\mathbf{X}$: $n \times m$}
+\State $\boldsymbol{\psi} \gets \frac{1}{m}\sum_{j}\mathbf{x}_j$; \quad $\boldsymbol{\Phi} \gets [\mathbf{x}_1 - \boldsymbol{\psi}, \ldots, \mathbf{x}_m - \boldsymbol{\psi}]$
+\If{$m < n$}
+    \State $\mathbf{L} \gets \frac{1}{m}\boldsymbol{\Phi}^T\boldsymbol{\Phi}$ \Comment{$m \times m$}
+    \State Phân rã trị riêng $\mathbf{L}\mathbf{v}_i = \mu_i\mathbf{v}_i$; sắp $\mu_0 \ge \mu_1 \ge \ldots$; bỏ các $\mu_i \approx 0$
+    \State $\mathbf{u}_i \gets \boldsymbol{\Phi}\mathbf{v}_i / \|\boldsymbol{\Phi}\mathbf{v}_i\|$; \quad $\lambda_i \gets \mu_i$ \Comment{vector riêng của $\mathbf{C}$}
+\Else
+    \State $\mathbf{C} \gets \frac{1}{m}\boldsymbol{\Phi}\boldsymbol{\Phi}^T$; phân rã $\mathbf{C}\mathbf{u}_i = \lambda_i\mathbf{u}_i$, sắp giảm dần
+\EndIf
+\If{chưa cho $k$}
+    \State $k \gets \min\big\{k' : \sum_{i<k'}\lambda_i \ge \tau\sum_i\lambda_i\big\}$
+\EndIf
+\State $\mathbf{U}_k \gets [\mathbf{u}_0, \ldots, \mathbf{u}_{k-1}]$
+\For{$j = 1, \ldots, m$}
+    \State $\mathbf{y}_j \gets \mathbf{U}_k^T(\mathbf{x}_j - \boldsymbol{\psi})$ \Comment{vector đặc trưng $k$ chiều}
+\EndFor
+\State \Return $\boldsymbol{\psi}, \mathbf{U}_k, (\lambda_i), (\mathbf{y}_j)$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Độ phức tạp.} Tính $\mathbf{L}$ tốn $O(m^2 n)$, phân rã $\mathbf{L}$ tốn $O(m^3)$, tính $\mathbf{U}_k$ tốn $O(nmk)$, chiếu $m$ ảnh tốn $O(nmk)$. So với phân rã trực tiếp $\mathbf{C}$ ($O(n^3)$, bộ nhớ $O(n^2)$), khi $m \ll n$ chi phí giảm rất nhiều. Bộ nhớ chính là $O(nm)$ cho $\boldsymbol{\Phi}$.
+
+\textbf{3. Chương trình} (Python, NumPy; tệp \texttt{XLAV/code/w8\_pca.py}). Hàm \texttt{load\_faces} đọc ảnh từ thư mục; \texttt{pca\_fit} cài đặt Giải thuật~\ref{alg:w8_eigenfaces} bằng thủ thuật ma trận nhỏ; \texttt{pca\_transform} tính~(\ref{eq:w8_feature}).
+\begin{lstlisting}[language=Python]
+import glob, numpy as np, cv2
+
+def load_faces(folder, size=None):
+    """Read all grey-level images in a folder -> array (m, r, c)."""
+    imgs = []
+    for p in sorted(glob.glob(folder + '/*')):
+        im = cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+        if im is None: continue
+        if size is not None: im = cv2.resize(im, size)   # size = (c, r)
+        imgs.append(im)
+    return np.stack(imgs).astype(np.float64)
+
+def pca_fit(images, k=None, var_ratio=0.95):
+    m = images.shape[0]
+    X = images.reshape(m, -1).T                 # n x m, one image per column
+    psi = X.mean(axis=1, keepdims=True)         # mean face
+    Phi = X - psi                               # centred data
+    L = Phi.T @ Phi / m                         # small m x m matrix
+    mu, V = np.linalg.eigh(L)                   # eigen-decomposition (ascending)
+    idx = np.argsort(mu)[::-1]; mu, V = mu[idx], V[:, idx]
+    keep = mu > 1e-10 * mu[0]; mu, V = mu[keep], V[:, keep]
+    U = Phi @ V                                 # eigenvectors of C = Phi Phi^T / m
+    U /= np.linalg.norm(U, axis=0)              # unit length: a_i^T a_i = 1
+    if k is None:                               # smallest k keeping var_ratio of variance
+        k = int(np.searchsorted(np.cumsum(mu) / mu.sum(), var_ratio) + 1)
+    return psi.ravel(), U[:, :k], mu[:k], mu
+
+def pca_transform(images, psi, U):
+    """Feature vectors y_j = U^T (x_j - psi), one row per image."""
+    X = images.reshape(images.shape[0], -1)
+    return (X - psi) @ U
+
+# usage
+faces = load_faces('faces/')                    # m images r x c
+psi, U, lam, lam_all = pca_fit(faces, var_ratio=0.95)
+Y = pca_transform(faces, psi, U)                # m x k feature matrix
+\end{lstlisting}
+Dùng thư viện \texttt{scikit-learn}, phần tính toán chỉ còn vài dòng (thư viện dùng SVD; trị riêng được chia cho $m - 1$ thay vì $m$):
+\begin{lstlisting}[language=Python]
+from sklearn.decomposition import PCA
+X = faces.reshape(len(faces), -1)               # m x n
+pca = PCA(n_components=0.95, svd_solver='full').fit(X)
+Y = pca.transform(X)                            # feature vectors, m x k
+eigenfaces = pca.components_.reshape(-1, *faces.shape[1:])
+\end{lstlisting}
+
+\textbf{4. Thực nghiệm.} Nhóm chạy chương trình trên $m = 100$ ảnh mặt người kích thước $25 \times 25$ ($n = 625$) trong bộ \texttt{lfw\_subset} của thư viện \texttt{scikit-image}.
+\begin{itemize}
+    \item Có $99 = m - 1$ trị riêng khác $0$, đúng như $\mathrm{rank}(\mathbf{C}) \le m - 1$. Tỉ lệ phương sai tích lũy: $23{,}0\%$ ($k = 1$), $55{,}4\%$ ($k = 5$), $67{,}6\%$ ($k = 10$), $79{,}3\%$ ($k = 20$), $93{,}2\%$ ($k = 50$). Giữ $95\%$ phương sai cần $k = 58$: mỗi ảnh $625$ điểm ảnh được mô tả bằng vector đặc trưng $58$ chiều (Hình~\ref{fig:w8_variance}).
+    \item Kiểm tra các tính chất lý thuyết: $\max|\mathbf{U}_k^T\mathbf{U}_k - \mathbf{I}| = 1{,}5 \times 10^{-14}$ (trực chuẩn); ma trận hiệp phương sai của các vector đặc trưng có phần ngoài đường chéo $\le 2 \times 10^{-14}$ (không tương quan) và đường chéo bằng đúng $\lambda_i$; sai số tái tạo trung bình bằng đúng tổng các trị riêng bị loại ($9{,}5167$ với $k = 5$, $4{,}4188$ với $k = 20$, $1{,}0341$ với $k = 58$). Kết quả trùng với \texttt{sklearn} (sai khác $10^{-13}$, sai khác về dấu của vector riêng là bình thường).
+    \item Hình~\ref{fig:w8_eigenfaces}: mặt trung bình, các eigenfaces đầu tiên (thành phần đầu chủ yếu mô tả hướng chiếu sáng và độ sáng tổng thể), và ảnh tái tạo khi tăng dần $k$: với $k = 1$, $3$ chỉ thấy dáng mặt chung; từ $k = 20$--$40$ đã nhận ra đặc điểm riêng của người trong ảnh.
+\end{itemize}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{w8_eigenfaces.png}
+\caption{Hàng 1: một số ảnh trong tập. Hàng 2: mặt trung bình $\boldsymbol{\psi}$ và $7$ eigenfaces đầu. Hàng 3: tái tạo ảnh 1 từ $k$ thành phần, $\hat{\mathbf{x}} = \boldsymbol{\psi} + \mathbf{U}_k\mathbf{y}$.}
+\label{fig:w8_eigenfaces}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\textwidth]{w8_variance.png}
+\caption{Tỉ lệ phương sai của $30$ thành phần đầu và phương sai tích lũy theo $k$.}
+\label{fig:w8_variance}
+\end{figure}
+
+\textbf{Hạn chế.} PCA trên điểm ảnh nhạy với căn chỉnh, ánh sáng, tư thế và biểu cảm: các thành phần phương sai lớn nhất thường mô tả ánh sáng chứ không mô tả danh tính, nên một số hệ thống bỏ $2$--$3$ thành phần đầu, hoặc dùng LDA (Fisherfaces~\citep{belhumeur1997eigenfaces}) khi có nhãn. Hiện nay, đặc trưng khuôn mặt chủ yếu được rút trích bằng mạng học sâu, nhưng PCA vẫn được dùng để giảm chiều, nén và trực quan hóa các đặc trưng đó.
