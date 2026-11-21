@@ -1,14 +1,333 @@
-\section{Tuần 8: Phân đoạn Ngữ nghĩa \& Phân đoạn Thực thể}
+\section{Tuần 8: Biểu diễn Đối tượng 3D và Phép Chiếu}
 \label{sec:week8}
 
-\subsection{Tổng quan nội dung Tuần 8}
-Phần này dành cho bài toán Semantic Segmentation, Instance Segmentation và Panoptic Segmentation.
+Các câu hỏi trong tuần này dựa trên Bài giảng số 10 (\emph{Three-Dimensional Object Representations})~\citep{dhmt_lec10} và Bài giảng số 11 (\emph{Projection Transformations})~\citep{dhmt_lec11}. Ký hiệu theo Bài giảng 11: tâm chiếu $C$; mặt phẳng chiếu (view plane) $(R_0, \vec N)$ đi qua điểm $R_0(x_0, y_0, z_0)$ và có vector pháp tuyến $\vec N(n_1, n_2, n_3)$; điểm $P(x, y, z)$ được chiếu thành $P'(x', y', z')$; tọa độ thuần nhất $(x_H, y_H, z_H, H)$ với $x' = x_H/H$, $y' = y_H/H$, $z' = z_H/H$. Mã nguồn các ví dụ và hình vẽ nằm trong tệp \texttt{DHMT/code/d8\_projection.py}.
 
+% =====================================================================
+\subsection{Tương đương giữa ``một điểm và một vector pháp tuyến'' và ``ba điểm'' khi xác định mặt phẳng}
+\label{subsec:proj_plane_equiv}
+
+\textit{Câu hỏi: Bài giảng 10 (trang 8) biểu diễn mặt phẳng bởi phương trình $Ax + By + Cz + D = 0$ với vector pháp tuyến $\vec N = (A, B, C)$, các hệ số được tính từ ba điểm $(x_k, y_k, z_k)$, $k = 1, 2, 3$, của mặt phẳng; Bài giảng 11 lại xác định mặt phẳng chiếu bằng một điểm $R_0$ và một vector pháp tuyến $\vec N$. Chứng minh rằng xác định mặt phẳng bằng một điểm và một vector pháp tuyến tương đương với xác định mặt phẳng bằng ba điểm (không thẳng hàng).}
+
+Gọi $\Pi(R_0, \vec N) = \{P : \vec N \cdot (P - R_0) = 0\}$ là mặt phẳng đi qua $R_0$ nhận $\vec N \ne \vec 0$ làm pháp tuyến. Khai triển: $n_1 x + n_2 y + n_3 z - (n_1 x_0 + n_2 y_0 + n_3 z_0) = 0$, tức đúng dạng $Ax + By + Cz + D = 0$ với $(A, B, C) = \vec N$, $D = -\vec N \cdot R_0$.
+
+\textbf{($\Leftarrow$) Ba điểm không thẳng hàng xác định một điểm và một pháp tuyến.} Cho $P_1, P_2, P_3$ không thẳng hàng. Đặt
+\begin{equation}
+R_0 = P_1, \qquad \vec N = (P_2 - P_1) \times (P_3 - P_1).
+\label{eq:proj_plane_cross}
+\end{equation}
+Vì $P_1, P_2, P_3$ không thẳng hàng nên hai vector $P_2 - P_1$, $P_3 - P_1$ không cùng phương và $\vec N \ne \vec 0$. Tích có hướng vuông góc với cả hai thừa số nên $\vec N \cdot (P_k - P_1) = 0$ với $k = 1, 2, 3$: cả ba điểm thuộc $\Pi(P_1, \vec N)$. Mặt phẳng này duy nhất: mọi mặt phẳng chứa ba điểm đều chứa hai vector $P_2 - P_1$, $P_3 - P_1$, nên pháp tuyến của nó vuông góc với cả hai, tức cùng phương với $\vec N$; cùng đi qua $P_1$ nên trùng với $\Pi(P_1, \vec N)$.
+
+Đây cũng chính là các công thức ở trang 8. Thành phần thứ nhất của~(\ref{eq:proj_plane_cross}) là
+\[
+A = (y_2 - y_1)(z_3 - z_1) - (z_2 - z_1)(y_3 - y_1) = y_1(z_2 - z_3) + y_2(z_3 - z_1) + y_3(z_1 - z_2) = \begin{vmatrix} 1 & y_1 & z_1 \\ 1 & y_2 & z_2 \\ 1 & y_3 & z_3 \end{vmatrix},
+\]
+tương tự cho $B$, $C$; còn $D = -\vec N \cdot P_1 = -\begin{vmatrix} x_1 & y_1 & z_1 \\ x_2 & y_2 & z_2 \\ x_3 & y_3 & z_3 \end{vmatrix}$. Như vậy cách tính bằng định thức trong bài giảng chính là cách ``ba điểm $\Rightarrow$ điểm và pháp tuyến''.
+
+\textbf{($\Rightarrow$) Một điểm và một pháp tuyến xác định ba điểm không thẳng hàng.} Cho $R_0$ và $\vec N \ne \vec 0$. Chọn một vector $\vec e$ không cùng phương với $\vec N$ (ví dụ trục tọa độ ứng với thành phần có trị tuyệt đối nhỏ nhất của $\vec N$), đặt
+\begin{equation}
+\vec u = \vec N \times \vec e, \qquad \vec v = \vec N \times \vec u, \qquad P_1 = R_0,\ P_2 = R_0 + \vec u,\ P_3 = R_0 + \vec v.
+\end{equation}
+$\vec u \ne \vec 0$ (vì $\vec e \nparallel \vec N$), $\vec v \ne \vec 0$ và $\vec u \perp \vec v$, nên $P_1, P_2, P_3$ không thẳng hàng. Cả hai vector đều vuông góc với $\vec N$ nên ba điểm thuộc $\Pi(R_0, \vec N)$. Áp dụng chiều ($\Leftarrow$): $(P_2 - P_1) \times (P_3 - P_1) = \vec u \times \vec v$ cùng phương với $\vec N$, nên ba điểm này xác định lại đúng mặt phẳng ban đầu. \hfill $\square$
+
+\textbf{Nhận xét.} Hai cách biểu diễn có cùng ``bậc tự do'': mặt phẳng trong không gian có $3$ bậc tự do; ba điểm có $9$ tọa độ nhưng mọi bộ ba điểm trên cùng mặt phẳng đều cho cùng kết quả, còn cặp $(R_0, \vec N)$ có $6$ tọa độ nhưng $R_0$ chạy được trên mặt phẳng ($2$ bậc) và $\vec N$ chỉ quan trọng về phương ($1$ bậc). Trong cấu trúc dữ liệu (Polygon-surface table, trang 6), mỗi đa giác được lưu bằng các đỉnh; pháp tuyến được tính một lần theo~(\ref{eq:proj_plane_cross}) và lưu kèm để dùng cho chiếu, khử mặt khuất và chiếu sáng. Lưu ý thứ tự đỉnh quyết định chiều của $\vec N$ (quy tắc bàn tay phải): đổi thứ tự $P_2$, $P_3$ làm $\vec N$ đổi hướng, dùng để phân biệt mặt trước và mặt sau.
+
+% =====================================================================
+\subsection{Chiếu phối cảnh quả cầu tâm \texorpdfstring{$c$}{c}, bán kính \texorpdfstring{$r$}{r}}
+\label{subsec:proj_sphere}
+
+\textit{Câu hỏi: Chiếu một quả cầu tâm $c(c_x, c_y, c_z)$, bán kính $r$ bằng phép chiếu phối cảnh (perspective projection).}
+
+\textbf{Thiết lập.} Dùng cấu hình chuẩn của Bài giảng 11 (trang 4): tâm chiếu $C(0, 0, -d)$, mặt phẳng chiếu $z = 0$, quả cầu nằm hoàn toàn phía trước tâm chiếu ($c_z + d > r$). Mỗi điểm $P(x, y, z)$ được chiếu thành
+\begin{equation}
+x' = \frac{d\,x}{z + d}, \qquad y' = \frac{d\,y}{z + d}, \qquad z' = 0.
+\label{eq:proj_std}
+\end{equation}
+
+\textbf{Cách 1: chiếu mô hình khung dây (dùng trong cài đặt).} Biểu diễn mặt cầu bằng tham số (Bài giảng 10, trang 11)
+\[
+P(\phi, \theta) = \big(c_x + r\cos\phi\cos\theta,\ c_y + r\cos\phi\sin\theta,\ c_z + r\sin\phi\big), \quad -\tfrac{\pi}{2} \le \phi \le \tfrac{\pi}{2},\ -\pi \le \theta \le \pi,
+\]
+lấy mẫu thành lưới kinh tuyến -- vĩ tuyến (như mô hình khung dây ở Tuần 7), chiếu từng đỉnh bằng~(\ref{eq:proj_std}) (hoặc ma trận ở Mục~\ref{subsec:proj_slide4}) rồi nối các đỉnh đã chiếu theo đúng thứ tự cạnh. Vì phép chiếu phối cảnh biến đường thẳng thành đường thẳng, chiếu các đỉnh rồi nối thẳng là đúng.
+
+\textbf{Cách 2: tìm đường viền (silhouette) bằng giải tích.} Đường viền của ảnh quả cầu là tập các điểm $Q(x', y', 0)$ sao cho tia $CQ$ \emph{tiếp xúc} với quả cầu, tức khoảng cách từ tâm $c$ tới đường thẳng $CQ$ bằng $r$. Đặt $\vec s = c - C = (c_x, c_y, c_z + d)$, $\vec w = Q - C = (x', y', d)$. Khoảng cách từ $c$ tới đường thẳng qua $C$ có phương $\vec w$ là $\|\vec s \times \vec w\|/\|\vec w\|$, nên điều kiện tiếp xúc là $\|\vec s \times \vec w\|^2 = r^2\|\vec w\|^2$. Dùng $\|\vec s \times \vec w\|^2 = \|\vec s\|^2\|\vec w\|^2 - (\vec s \cdot \vec w)^2$:
+\begin{equation}
+\big(\|\vec s\|^2 - r^2\big)\big(x'^2 + y'^2 + d^2\big) = \big(c_x x' + c_y y' + (c_z + d)\,d\big)^2.
+\label{eq:proj_sphere_conic}
+\end{equation}
+Đây là phương trình bậc hai theo $(x', y')$, tức một \emph{đường conic}. Ma trận của phần bậc hai là $(\|\vec s\|^2 - r^2)\mathbf{I} - \begin{bmatrix} c_x \\ c_y \end{bmatrix}\begin{bmatrix} c_x & c_y \end{bmatrix}$, có hai trị riêng $\|\vec s\|^2 - r^2 > 0$ và $\|\vec s\|^2 - r^2 - c_x^2 - c_y^2 = (c_z + d)^2 - r^2$. Do đó:
 \begin{itemize}
-    \item Semantic Segmentation: Fully Convolutional Networks (FCN), U-Net, DeepLab series.
-    \item Instance Segmentation: Mask R-CNN.
-    \item Panoptic Segmentation \& Foundation Models: Segment Anything Model (SAM).
+    \item $(c_z + d)^2 > r^2$ (quả cầu nằm hoàn toàn phía trước mặt phẳng song song với mặt phẳng chiếu qua tâm chiếu — trường hợp thông thường): hai trị riêng cùng dương, \textbf{ảnh là một ellipse};
+    \item quả cầu tiếp xúc hoặc cắt mặt phẳng $z = -d$: ảnh là parabol hoặc hyperbol (không bị chặn) — trường hợp này phải xén (clipping) trước khi chiếu.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\textbf{Trường hợp đặc biệt: tâm cầu trên trục chiếu} ($c_x = c_y = 0$). Phương trình~(\ref{eq:proj_sphere_conic}) trở thành $\big((c_z + d)^2 - r^2\big)(x'^2 + y'^2) = d^2 r^2$, tức \textbf{đường tròn} bán kính
+\begin{equation}
+\rho = \frac{d\,r}{\sqrt{(c_z + d)^2 - r^2}} \approx \frac{d\,r}{c_z + d} \quad \text{khi } c_z + d \gg r.
+\end{equation}
+Bán kính ảnh tỉ lệ nghịch với khoảng cách từ tâm chiếu tới quả cầu: với $d = 3$, $r = 1$, ta có $\rho = 0{,}612$; $0{,}335$; $0{,}177$ khi $c_z = 2$; $6$; $14$ (Hình~\ref{fig:proj_sphere}, phải).
+
+\textbf{Lưu ý.} Ảnh của tâm cầu $\big(\frac{d c_x}{c_z + d}, \frac{d c_y}{c_z + d}\big)$ \emph{không} trùng với tâm của ellipse khi quả cầu lệch khỏi trục chiếu (Hình~\ref{fig:proj_sphere}, trái): phép chiếu phối cảnh không bảo toàn trung điểm. Vì vậy không thể vẽ ảnh quả cầu bằng cách chiếu tâm rồi vẽ đường tròn bán kính $\frac{d r}{c_z + d}$, trừ khi quả cầu nằm trên trục chiếu. Nhóm đã kiểm tra bằng số: các điểm tiếp xúc trên quả cầu sau khi chiếu thỏa~(\ref{eq:proj_sphere_conic}) với sai số $< 10^{-12}$.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{d8_sphere.png}
+\caption{Trái: ảnh phối cảnh của mặt cầu lệch trục — lưới khung dây đã chiếu (xám) nằm trong ellipse tính theo~(\ref{eq:proj_sphere_conic}) (đỏ); ảnh của tâm cầu (dấu $+$) không nằm ở tâm ellipse. Phải: mặt cầu trên trục chiếu ở ba độ sâu cho ba đường tròn nhỏ dần.}
+\label{fig:proj_sphere}
+\end{figure}
+
+% =====================================================================
+\subsection{Lý giải công thức \texorpdfstring{$x'$, $y'$}{x', y'} của phép chiếu phối cảnh (Bài giảng 11, trang 4)}
+\label{subsec:proj_slide4}
+
+\textit{Câu hỏi: Trang 4 của Bài giảng 11 cho phép chiếu phối cảnh với tâm chiếu $C(0, 0, -d)$ lên mặt phẳng $(O, \vec{Oz})$ (mặt phẳng $z = 0$):
+$x' = \frac{d\,x}{z + d} = \frac{x_H}{H}$, $y' = \frac{d\,y}{z + d} = \frac{y_H}{H}$, $z' = 0$, kèm hình vẽ các điểm $A(x, 0, z)$, $B(0, 0, z)$, $A'(x', 0, 0)$. Hãy lý giải: cần nhìn vào đâu trên hình để thấy được các công thức của $x'$, $y'$?}
+
+\textbf{Nhìn vào hai tam giác đồng dạng trong mặt phẳng $y = 0$} (nhìn hình từ trên xuống, chiếu điểm $P$ lên mặt phẳng $xOz$). Điểm $A(x, 0, z)$ là hình chiếu vuông góc của $P(x, y, z)$ lên mặt phẳng $y = 0$, $A'(x', 0, 0)$ là ảnh của $A$ trên mặt phẳng chiếu, $B(0, 0, z)$ là chân đường vuông góc từ $A$ xuống trục $Oz$. Xét hai tam giác vuông:
+\begin{itemize}
+    \item $\triangle C O A'$: vuông tại $O$, cạnh $CO = d$, cạnh $OA' = x'$;
+    \item $\triangle C B A$: vuông tại $B$, cạnh $CB = z + d$ (từ $z = -d$ tới $z$), cạnh $BA = x$.
+\end{itemize}
+Hai tam giác có chung góc ở đỉnh $C$ (vì $C$, $A'$, $A$ thẳng hàng — $A'$ nằm trên tia chiếu $CA$) và $OA' \parallel BA$ (cùng vuông góc với $Oz$), nên đồng dạng (định lý Thales):
+\begin{equation}
+\frac{OA'}{BA} = \frac{CO}{CB} \;\Longrightarrow\; \frac{x'}{x} = \frac{d}{z + d} \;\Longrightarrow\; x' = \frac{d\,x}{z + d}.
+\end{equation}
+\textbf{Với $y'$, nhìn vào mặt phẳng $x = 0$} (nhìn hình từ bên cạnh): làm tương tự với điểm $(0, y, z)$, chân $B(0, 0, z)$ và ảnh $(0, y', 0)$, được $\frac{y'}{y} = \frac{d}{z + d}$. Cuối cùng $z' = 0$ vì $P'$ nằm trên mặt phẳng chiếu $z = 0$.
+
+\textbf{Vì sao tách được thành hai mặt phẳng.} Tia chiếu $CP$ đi qua $C$ nằm trên trục $Oz$; chiếu vuông góc toàn bộ hình lên mặt phẳng $y = 0$ thì tia $CP$ thành tia $CA$ và $P'$ thành $A'$ (phép chiếu vuông góc bảo toàn tính thẳng hàng và giữ nguyên tọa độ $x$, $z$). Như vậy bài toán 3 chiều tách thành hai bài toán phẳng độc lập cho $x$ và $y$. Cùng kết quả có thể thấy bằng tham số: $P' = C + \alpha(P - C)$, điều kiện $z' = 0$ cho $-d + \alpha(z + d) = 0$, tức $\alpha = \frac{d}{z + d}$, và $x' = \alpha x$, $y' = \alpha y$.
+
+\textbf{Dạng thuần nhất.} Chọn $H = \frac{z + d}{d}$ (hoặc nhân cả tử và mẫu với $d$: $H = z + d$, $x_H = d\,x$, $y_H = d\,y$, $z_H = 0$) ta được phép chiếu viết bằng ma trận $4 \times 4$ ở trang 5:
+\begin{equation}
+\begin{bmatrix} x_H \\ y_H \\ z_H \\ H \end{bmatrix} = \begin{bmatrix} d & 0 & 0 & 0 \\ 0 & d & 0 & 0 \\ 0 & 0 & 0 & 0 \\ 0 & 0 & 1 & d \end{bmatrix}\begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix}.
+\label{eq:proj_slide5}
+\end{equation}
+\textbf{Ghi chú:} trang 5 (và trang 9, 13) in phần tử hàng $2$, cột $3$ bằng $1$; phần tử này phải bằng $0$, nếu không $y_H = d\,y + z$ và $y' = \frac{d y + z}{z + d}$ sai. Ví dụ $d = 4$, $P(1, 2, 3)$: ma trận như in cho $y' = 1{,}571$, còn đúng phải là $y' = \frac{4 \cdot 2}{7} = 1{,}143$.
+
+% =====================================================================
+\subsection{Thay đổi khi tâm chiếu là \texorpdfstring{$C$}{C} thay vì gốc \texorpdfstring{$O$}{O} (Bài giảng 11, trang 10)}
+\label{subsec:proj_center_c}
+
+\textit{Câu hỏi: Trang 6--9 của Bài giảng 11 xây dựng phép chiếu phối cảnh $Per(O, (R_0, \vec N))$ với tâm chiếu là gốc tọa độ $O(0, 0, 0)$ lên mặt phẳng $(R_0, \vec N)$; trang 10 chuyển sang trường hợp tổng quát $P' = Per(C, (R_0, \vec N)).P$ với tâm chiếu $C(c_x, c_y, c_z)$ bất kỳ. So với phép chiếu gốc dùng tâm $O$, cần sửa những gì?}
+
+\textbf{Phép chiếu gốc (tâm $O$, trang 7--8).} $P'$ nằm trên tia $OP$: $\vec{OP'} = \alpha\,\vec{OP}$, tức $P' = \alpha P$. Thay vào phương trình mặt phẳng $\vec N \cdot (P' - R_0) = 0$: $\alpha\,\vec N \cdot P = \vec N \cdot R_0 = d_0$, nên
+\begin{equation}
+\alpha = \frac{d_0}{n_1 x + n_2 y + n_3 z}, \qquad P' = \frac{d_0}{\vec N \cdot P}\,P, \qquad d_0 = n_1 x_0 + n_2 y_0 + n_3 z_0.
+\end{equation}
+
+\textbf{Những điểm cần sửa khi tâm chiếu là $C$} (trang 11--12). Ý tưởng: mọi vector phải được tính \emph{từ $C$} thay vì từ $O$.
+\begin{enumerate}
+    \item \textbf{Điều kiện thẳng hàng}: $P'$ nằm trên tia $CP$, nên thay $\vec{OP'} = \alpha\vec{OP}$ bằng $\vec{CP'} = \alpha\,\vec{CP}$, tức $P' = C + \alpha(P - C)$. Thay $P$ bằng $P - C$ ở mọi chỗ, rồi cộng thêm $C$ vào kết quả: $x' = \alpha(x - c_x) + c_x$, tương tự cho $y'$, $z'$.
+    \item \textbf{Khoảng cách tới mặt phẳng}: thay vào phương trình mặt phẳng, $\vec N \cdot (C + \alpha(P - C)) = d_0 \Rightarrow \alpha\,\vec N \cdot (P - C) = d_0 - \vec N \cdot C$. Hằng số $d_0$ (liên quan tới khoảng cách từ $O$ tới mặt phẳng) được thay bằng $d = d_0 - d_1$, với $d_1 = \vec N \cdot C = n_1 c_x + n_2 c_y + n_3 c_z$ (liên quan tới khoảng cách từ $C$ tới mặt phẳng):
+    \begin{equation}
+    \alpha = \frac{d}{n_1(x - c_x) + n_2(y - c_y) + n_3(z - c_z)} = \frac{d}{(n_1 x + n_2 y + n_3 z) - d_1}.
+    \end{equation}
+    \item \textbf{Mẫu số (thành phần $H$)}: từ $\vec N \cdot P$ thành $\vec N \cdot P - d_1$, nên hàng cuối của ma trận đổi từ $[n_1\ n_2\ n_3\ 0]$ thành $[n_1\ n_2\ n_3\ {-d_1}]$.
+\end{enumerate}
+Về mặt ma trận, đây là phép \emph{đổi gốc tọa độ} (trang 13): tịnh tiến để $C$ về gốc, chiếu với tâm $O$, rồi tịnh tiến ngược:
+\begin{equation}
+Per(C, (R_0, \vec N)) = T^{-1}(\vec{CO})\cdot Per(O, (R_0 - C, \vec N))\cdot T(\vec{CO}).
+\label{eq:proj_decomp}
+\end{equation}
+Sau phép tịnh tiến $T(\vec{CO})$, mặt phẳng đi qua $R_0 - C$ với cùng pháp tuyến, nên trong ma trận giữa $d_0$ được thay bằng $\vec N \cdot (R_0 - C) = d_0 - d_1 = d$ (trang 13 viết $d$ ở vị trí này). Pháp tuyến $\vec N$ không đổi vì phép tịnh tiến không làm thay đổi hướng. Trường hợp $C = O$ thì $d_1 = 0$, $d = d_0$, mọi công thức trở về phép chiếu gốc.
+
+% =====================================================================
+\subsection{Ma trận của phép chiếu phối cảnh tổng quát (Bài giảng 11, trang 12)}
+\label{subsec:proj_matrix_general}
+
+\textit{Câu hỏi: Trang 12 của Bài giảng 11 cho công thức chiếu phối cảnh với tâm chiếu $C(c_x, c_y, c_z)$ lên mặt phẳng $(R_0, \vec N)$:
+$x' = \frac{d(x - c_x)}{(n_1 x + n_2 y + n_3 z) - d_1} + c_x$, $y' = \frac{d(y - c_y)}{(n_1 x + n_2 y + n_3 z) - d_1} + c_y$, $z' = \frac{d(z - c_z)}{(n_1 x + n_2 y + n_3 z) - d_1} + c_z$,
+với $d_0 = n_1 x_0 + n_2 y_0 + n_3 z_0$, $d_1 = n_1 c_x + n_2 c_y + n_3 c_z$, $d = d_0 - d_1$. Hãy viết phép chiếu này dưới dạng ma trận.}
+
+\textbf{Đưa về cùng mẫu số.} Đặt $H = n_1 x + n_2 y + n_3 z - d_1$. Quy đồng:
+\[
+x' = \frac{d(x - c_x) + c_x H}{H}, \qquad x_H = d(x - c_x) + c_x(n_1 x + n_2 y + n_3 z - d_1).
+\]
+Gom theo $x$, $y$, $z$, $1$:
+\[
+x_H = (d + c_x n_1)\,x + c_x n_2\,y + c_x n_3\,z - c_x(d + d_1) = (d + c_x n_1)\,x + c_x n_2\,y + c_x n_3\,z - c_x d_0,
+\]
+vì $d + d_1 = d_0$. Làm tương tự với $y_H$, $z_H$, ta được ma trận chiếu (trang 14):
+\begin{equation}
+\begin{bmatrix} x_H \\ y_H \\ z_H \\ H \end{bmatrix} =
+\begin{bmatrix}
+d + c_x n_1 & c_x n_2 & c_x n_3 & -c_x d_0 \\
+c_y n_1 & d + c_y n_2 & c_y n_3 & -c_y d_0 \\
+c_z n_1 & c_z n_2 & d + c_z n_3 & -c_z d_0 \\
+n_1 & n_2 & n_3 & -d_1
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix},
+\label{eq:proj_general}
+\end{equation}
+và $x' = x_H/H$, $y' = y_H/H$, $z' = z_H/H$. Gọn hơn, khối $3 \times 3$ phía trên là $d\,\mathbf{I} + C\vec N^T$, cột cuối là $-d_0 C$, hàng cuối là $[\vec N^T,\ -d_1]$.
+
+\textbf{Kiểm tra.} (i) Với $C = (0, 0, -d)$, $\vec N = (0, 0, 1)$, $R_0 = O$: $d_0 = 0$, $d_1 = \vec N \cdot C = -d$, nên $d_0 - d_1 = d$. Khối $d\,\mathbf{I} + C\vec N^T$ chỉ khác $d\,\mathbf{I}$ ở phần tử hàng $3$, cột $3$: $d + c_z n_3 = d - d = 0$; cột cuối $-d_0 C = \vec 0$; hàng cuối $[0\ 0\ 1\ d]$. Ma trận~(\ref{eq:proj_general}) trở thành đúng~(\ref{eq:proj_slide5}). (ii) Nhân ba ma trận ở~(\ref{eq:proj_decomp}) cho đúng ma trận~(\ref{eq:proj_general}). Nhóm đã kiểm tra bằng số với $C$, $R_0$, $\vec N$, $P$ ngẫu nhiên: hai ma trận trùng nhau, $P'$ nằm trên mặt phẳng ($\vec N \cdot (P' - R_0) = 0$) và thẳng hàng với $C$, $P$. Hàm \texttt{per\_matrix(C, R0, N)} trong tệp mã cài đặt đúng ma trận~(\ref{eq:proj_general}).
+
+% =====================================================================
+\subsection{Phép chiếu khi camera nhìn theo hướng bất kỳ vào đối tượng 3D}
+\label{subsec:proj_camera}
+
+\textit{Câu hỏi: Xác định phép chiếu khi một camera đặt tại vị trí bất kỳ nhìn theo một hướng bất kỳ vào một đối tượng 3D. Viết chương trình chiếu đối tượng sao cho người dùng nhìn đúng hướng mình muốn. (Gợi ý: xác định tâm chiếu và mặt phẳng chiếu.)}
+
+\clarify{Câu hỏi ghi ``(CA và TA)''. Nhóm hiểu là hai đại lượng người dùng nhập vào: vị trí đặt camera (\emph{camera}, tâm chiếu) và điểm mà camera nhìn tới (\emph{target}, đích nhìn). Cần xác nhận lại.}
+
+\textbf{Đầu vào do người dùng chọn.} Vị trí mắt/camera $E$, điểm nhìn tới $T$ (thường là tâm của đối tượng), vector ``hướng lên'' $\vec{up}$ (thường là $(0, 0, 1)$ hoặc $(0, 1, 0)$, cho biết phía nào là phía trên của màn hình), và khoảng cách $d > 0$ từ mắt tới mặt phẳng chiếu (liên quan tới góc nhìn).
+
+\textbf{Xác định tâm chiếu và mặt phẳng chiếu.}
+\begin{enumerate}
+    \item \textbf{Tâm chiếu}: $C = E$.
+    \item \textbf{Hướng nhìn}: $\vec w = \dfrac{T - E}{\|T - E\|}$.
+    \item \textbf{Mặt phẳng chiếu}: vuông góc với hướng nhìn, nằm trước mắt một khoảng $d$: $\vec N = \vec w$, $R_0 = E + d\,\vec w$. Khi đó $d_1 = \vec N \cdot C$, $d_0 = \vec N \cdot R_0 = d_1 + d$, nên hằng số $d$ trong~(\ref{eq:proj_general}) đúng bằng khoảng cách $d$ đã chọn.
+    \item \textbf{Chiếu 3D}: $P' = Per(C, (R_0, \vec N)).P$ bằng ma trận~(\ref{eq:proj_general}). Điểm $P'$ vẫn là điểm 3 chiều nằm trên mặt phẳng chiếu.
+    \item \textbf{Đổi sang tọa độ màn hình 2D}: dựng hệ trục trực chuẩn trên mặt phẳng chiếu, $\vec u = \dfrac{\vec w \times \vec{up}}{\|\vec w \times \vec{up}\|}$ (sang phải), $\vec v = \vec u \times \vec w$ (lên trên). Tọa độ màn hình của $P'$ là
+    \begin{equation}
+    X = (P' - R_0) \cdot \vec u, \qquad Y = (P' - R_0) \cdot \vec v.
+    \end{equation}
+    Sau đó dùng phép biến đổi cửa sổ -- khung nhìn (Tuần 6) để ánh xạ $(X, Y)$ vào điểm ảnh trên màn hình.
+\end{enumerate}
+Bộ ba $(\vec u, \vec v, -\vec w)$ là hệ trục của camera; chiếu theo cách trên tương đương với việc \emph{đổi hệ trục} (tịnh tiến $E$ về gốc rồi quay để $\vec w$ trùng $Oz$, giống ma trận $A(\vec N)$ ở Mục~\ref{subsec:proj_slide24}) rồi áp dụng phép chiếu chuẩn ở trang 4. Đây chính là cách hàm \texttt{lookAt} của OpenGL kết hợp với ma trận chiếu phối cảnh.
+
+\textbf{Điều kiện và trường hợp đặc biệt.} $\vec{up}$ không được cùng phương với $\vec w$ (khi nhìn thẳng từ trên xuống phải đổi $\vec{up}$, ví dụ thành $(0, 1, 0)$). Chỉ những điểm nằm trước mắt ($\vec w \cdot (P - E) > 0$) mới được chiếu; điểm phía sau mắt cho $H < 0$ và phải bị loại bằng xén (clipping) trước khi chiếu.
+
+\textbf{Chương trình} (Python, NumPy; tệp \texttt{DHMT/code/d8\_projection.py}):
+\begin{verbatim}
+import numpy as np
+
+def per_matrix(C, R0, N):
+    """Perspective projection, centre C, view plane (R0, N)."""
+    C, R0, N = map(np.asarray, (C, R0, N))
+    d0, d1 = N @ R0, N @ C; d = d0 - d1
+    M = np.zeros((4, 4))
+    M[:3, :3] = d * np.eye(3) + np.outer(C, N)   # d I + C N^T
+    M[:3, 3] = -C * d0
+    M[3, :3] = N; M[3, 3] = -d1
+    return M
+
+def apply(M, P):                       # P: (k, 3) points
+    H = np.c_[P, np.ones(len(P))] @ M.T
+    return H[:, :3] / H[:, 3:4]          # homogeneous division
+
+def camera(eye, target, up=(0, 0, 1), d=1.0):
+    eye, target, up = (np.asarray(a, float) for a in (eye, target, up))
+    w = target - eye; w /= np.linalg.norm(w)   # viewing direction
+    u = np.cross(w, up); u /= np.linalg.norm(u)  # screen right
+    v = np.cross(u, w)                          # screen up
+    R0 = eye + d * w                            # view plane point
+    return per_matrix(eye, R0, w), R0, u, v
+
+def project_view(P, eye, target, up=(0, 0, 1), d=1.0):
+    M, R0, u, v = camera(eye, target, up, d)
+    Q = apply(M, P) - R0                   # 3-D points on the view plane
+    return np.c_[Q @ u, Q @ v]             # 2-D screen coordinates
+
+# the user chooses where to stand and where to look
+edges = cube_edges([-1, -1, 0], 2)         # list of (2, 3) arrays
+for e in edges:
+    xy = project_view(e, eye=(8, -6, 4), target=(0, 0, 1))
+    draw_line(xy[0], xy[1])                # any 2-D line routine
+\end{verbatim}
+
+\textbf{Cho người dùng điều khiển hướng nhìn.} Để người dùng xoay quanh đối tượng (như các phần mềm 3D), lưu $T$ cố định và vị trí mắt theo tọa độ cầu quanh $T$: $E = T + \rho(\cos\varphi\cos\theta, \cos\varphi\sin\theta, \sin\varphi)$. Kéo chuột ngang thay đổi $\theta$, kéo dọc thay đổi $\varphi$ (giới hạn $|\varphi| < 90^\circ$ để $\vec{up}$ không cùng phương với $\vec w$), lăn chuột thay đổi $\rho$ (lại gần/ra xa) hoặc $d$ (phóng to). Sau mỗi thao tác chỉ cần tính lại \texttt{camera(E, T, up, d)} và vẽ lại. Cấu trúc dữ liệu của đối tượng (bảng đỉnh -- cạnh -- mặt, Bài giảng 10 trang 6) không thay đổi; chỉ ma trận chiếu thay đổi.
+
+\textbf{Kết quả.} Hình~\ref{fig:proj_lookat}: cùng một cảnh (khối lập phương cạnh $2$ và mặt cầu bán kính $1$) nhìn từ ba vị trí do người dùng chọn: nhìn xiên từ trên, nhìn thẳng từ phía trước, và nhìn thẳng từ trên xuống (đổi $\vec{up} = (0, 1, 0)$).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{d8_lookat.png}
+\caption{Cùng một cảnh chiếu từ ba vị trí camera $C$ nhìn tới điểm $T$.}
+\label{fig:proj_lookat}
+\end{figure}
+
+% =====================================================================
+\subsection{Vì sao vẫn gọi là đồ họa ba chiều khi ảnh chiếu chỉ có hai chiều}
+\label{subsec:proj_why_3d}
+
+\textit{Câu hỏi: Mô phỏng đối tượng 3D nhưng cuối cùng lại chiếu thành ảnh 2D, tức đã mất đi một chiều. Vậy tại sao vẫn gọi là đồ họa ba chiều?}
+
+\textbf{1. ``Ba chiều'' nói về mô hình, không nói về thiết bị hiển thị.} Đối tượng được lưu trữ và xử lý bằng tọa độ 3 chiều đầy đủ: bảng đỉnh $(x, y, z)$, cạnh, mặt, pháp tuyến (Bài giảng 10). Mọi phép toán — biến đổi hình học 3D (Tuần 6), tính va chạm, chiếu sáng, khử mặt khuất — đều làm trên mô hình 3D. Phép chiếu chỉ là bước \emph{cuối cùng} để đưa mô hình lên màn hình, vốn chỉ có hai chiều. Từ cùng một mô hình có thể tạo ra \emph{vô số} ảnh 2D khác nhau theo mọi hướng nhìn (Hình~\ref{fig:proj_lookat}); một ảnh 2D thật (ảnh chụp) thì không làm được điều đó.
+
+\textbf{2. Thông tin độ sâu không thật sự bị vứt bỏ.} Ma trận ở trang 5 cho $z' = 0$, nhưng trong hệ thống đồ họa thực tế, giá trị độ sâu được giữ lại (ví dụ $z' = \frac{d_0 z}{\vec N \cdot P}$ ở trang 8, hay vùng đệm độ sâu z-buffer) để quyết định mặt nào che mặt nào (Bài giảng 12: khử mặt khuất).
+
+\textbf{3. Ảnh chiếu chứa các dấu hiệu chiều sâu.} Bản thân mắt người cũng chỉ thu nhận ảnh 2D trên võng mạc, và não tái tạo cảm giác 3 chiều từ các dấu hiệu chiều sâu (depth cues). Đồ họa 3D tạo ra đúng các dấu hiệu đó:
+\begin{itemize}
+    \item \emph{phối cảnh}: vật xa nhỏ hơn, các đường song song hội tụ về điểm tụ (Mục~\ref{subsec:proj_size_parallel});
+    \item \emph{che khuất}: vật gần che vật xa (khử mặt khuất);
+    \item \emph{chiếu sáng và đổ bóng}: độ sáng phụ thuộc pháp tuyến bề mặt và hướng nguồn sáng, cho biết hình dạng cong lồi lõm;
+    \item \emph{thị sai chuyển động}: khi camera di chuyển, vật gần dịch chuyển trên màn hình nhanh hơn vật xa;
+    \item \emph{thị giác hai mắt}: tạo hai ảnh chiếu từ hai tâm chiếu cách nhau khoảng cách hai mắt cho kính thực tế ảo (VR) và màn hình 3D, não ghép lại thành cảm giác nổi thật sự.
+\end{itemize}
+
+\textbf{4. Một chiều bị ``mất'' có thể khôi phục.} Từ nhiều ảnh chiếu ở các hướng khác nhau, có thể tái tạo lại hình dạng 3D (thị giác lập thể, structure-from-motion). Các phương pháp trí tuệ nhân tạo hiện nay còn ước lượng độ sâu từ một ảnh, hoặc học biểu diễn cảnh 3D từ tập ảnh 2D (NeRF, 3D Gaussian Splatting) rồi kết xuất ra ảnh mới ở hướng nhìn bất kỳ: thông tin ba chiều được ``mã hóa'' trong tập các ảnh hai chiều.
+
+Tóm lại: ảnh hiển thị là 2D, nhưng \emph{thế giới được mô phỏng}, \emph{các phép tính} và \emph{khả năng tương tác} (xoay, đi vòng quanh, nhìn từ bất kỳ đâu) đều là 3D. Phép chiếu chỉ là ``cửa sổ'' để nhìn vào thế giới ba chiều đó.
+
+% =====================================================================
+\subsection{Vật càng xa càng nhỏ trong phép chiếu phối cảnh; đường song song vẫn song song trong phép chiếu song song}
+\label{subsec:proj_size_parallel}
+
+\textit{Câu hỏi: Tại sao trong phép chiếu phối cảnh, đối tượng càng ở xa thì ảnh càng nhỏ? Tại sao trong phép chiếu song song, các đường thẳng song song sau khi chiếu vẫn song song?}
+
+\textbf{Phối cảnh: vật xa nhỏ dần.} Theo~(\ref{eq:proj_std}), đoạn thẳng đứng từ $(x, y_1, z)$ tới $(x, y_2, z)$, độ dài $h = |y_2 - y_1|$, đặt ở độ sâu $z$ có ảnh dài
+\begin{equation}
+h' = |y_2' - y_1'| = \frac{d}{z + d}\,h,
+\end{equation}
+\emph{tỉ lệ nghịch} với khoảng cách $z + d$ từ tâm chiếu tới vật. Nguyên nhân là mọi tia chiếu đều hội tụ tại tâm chiếu $C$: vật ở xa nhìn dưới một góc nhỏ hơn ($\tan\frac{\beta}{2} \approx \frac{h/2}{z + d}$), nên chiếm một đoạn nhỏ hơn trên mặt phẳng chiếu. Đây đúng là cách mắt người và máy ảnh hoạt động (mô hình camera lỗ kim). Kết quả cụ thể: quả cầu bán kính $1$ cho ảnh bán kính $0{,}612$; $0{,}335$; $0{,}177$ ở $c_z = 2$; $6$; $14$ (Mục~\ref{subsec:proj_sphere}); các khối lập phương bằng nhau ở Hình~\ref{fig:proj_per_par} nhỏ dần theo độ sâu.
+
+\textbf{Phối cảnh: đường song song hội tụ.} Xét đường thẳng $P(t) = P_0 + t\,\vec u$ với $u_z \ne 0$ (không song song với mặt phẳng chiếu). Ảnh của nó:
+\begin{equation}
+x'(t) = \frac{d(x_0 + t u_x)}{z_0 + t u_z + d} \xrightarrow{t \to \infty} \frac{d\,u_x}{u_z}, \qquad y'(t) \xrightarrow{t \to \infty} \frac{d\,u_y}{u_z}.
+\end{equation}
+Giới hạn chỉ phụ thuộc hướng $\vec u$, không phụ thuộc $P_0$: mọi đường thẳng cùng hướng $\vec u$ đều hội tụ về cùng một \emph{điểm tụ} (vanishing point) — hai thanh ray ở Hình~\ref{fig:proj_per_par}. Chỉ những đường song song với mặt phẳng chiếu ($u_z = 0$) mới vẫn song song sau khi chiếu. Về bản chất, phép chia cho $z + d$ làm phép chiếu phối cảnh không phải phép biến đổi affine mà là phép biến đổi xạ ảnh (projective).
+
+\textbf{Song song: đường song song vẫn song song.} Phép chiếu song song theo hướng $\vec V$ lên mặt phẳng $(R_0, \vec N)$ là $P' = P + k\vec V$ với $k$ chọn để $P'$ nằm trên mặt phẳng: $k = \frac{\vec N \cdot (R_0 - P)}{\vec N \cdot \vec V}$. Do đó
+\begin{equation}
+P' = \Big(\mathbf{I} - \frac{\vec V \vec N^T}{\vec N \cdot \vec V}\Big)P + \frac{\vec N \cdot R_0}{\vec N \cdot \vec V}\vec V = \mathbf{M}P + \vec b,
+\end{equation}
+một phép biến đổi \emph{affine} (trang 17--19: hàng cuối của ma trận là $[0\ 0\ 0\ 1]$, nên $H = 1$, không có phép chia). Ảnh của đường thẳng $P_0 + t\vec u$ là $(\mathbf{M}P_0 + \vec b) + t\,\mathbf{M}\vec u$: một đường thẳng có hướng $\mathbf{M}\vec u$ \emph{chỉ phụ thuộc $\vec u$}. Hai đường song song (cùng $\vec u$) có ảnh cùng hướng $\mathbf{M}\vec u$, nên vẫn song song (hoặc trùng nhau; hoặc cùng suy biến thành điểm nếu $\vec u \parallel \vec V$). Hơn nữa, tỉ số độ dài trên cùng một hướng được bảo toàn, nên kích thước ảnh không phụ thuộc khoảng cách tới mặt phẳng chiếu (Hình~\ref{fig:proj_per_par}, phải). Về hình học: các tia chiếu đều song song với $\vec V$ (tâm chiếu ở vô cực), nên không có sự hội tụ nào để thu nhỏ vật ở xa. Tính chất này làm phép chiếu song song được dùng trong bản vẽ kỹ thuật: đo được kích thước thật trên bản vẽ.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{d8_per_vs_par.png}
+\caption{Cùng một cảnh (đường ray thẳng và bốn khối lập phương bằng nhau ở các độ sâu $0, 5, 10, 20$). Trái: phép chiếu phối cảnh. Phải: phép chiếu song song xiên theo $\vec V = (0{,}5;\ -0{,}3;\ 1)$ lên mặt phẳng $z = 0$.}
+\label{fig:proj_per_par}
+\end{figure}
+
+% =====================================================================
+\subsection{Giải thích ma trận \texorpdfstring{$A(\vec N)$}{A(N)} (Bài giảng 11, trang 24)}
+\label{subsec:proj_slide24}
+
+\textit{Câu hỏi: Trang 21 của Bài giảng 11 phân rã phép chiếu song song lên mặt phẳng bất kỳ thành $Par(\vec V, (R_0, \vec N)) = T(\vec{OR_0})\cdot A^{-1}(\vec N)\cdot Par(\vec V, (O, \vec{Oz}))\cdot A(\vec N)\cdot T(\vec{R_0 O})$, trong đó trang 24 cho
+\[
+A(\vec N) = \begin{bmatrix}
+\frac{\lambda}{|\vec N|} & \frac{-n_1 n_2}{\lambda|\vec N|} & \frac{-n_1 n_3}{\lambda|\vec N|} & 0 \\
+0 & \frac{n_3}{\lambda} & \frac{-n_2}{\lambda} & 0 \\
+\frac{n_1}{|\vec N|} & \frac{n_2}{|\vec N|} & \frac{n_3}{|\vec N|} & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}, \qquad \lambda = \sqrt{n_2^2 + n_3^2}.
+\]
+Giải thích ý nghĩa từng thành phần của ma trận và tại sao ma trận có dạng như vậy.}
+
+\textbf{Vai trò của $A(\vec N)$.} Phép chiếu song song lên mặt phẳng $z = 0$ đã có ma trận đơn giản (trang 19). Để chiếu lên mặt phẳng bất kỳ $(R_0, \vec N)$, ta đổi hệ trục sao cho mặt phẳng đó trở thành mặt phẳng $z = 0$: tịnh tiến $R_0$ về gốc ($T(\vec{R_0 O})$), rồi \textbf{quay để pháp tuyến $\vec N$ trùng với trục $Oz$} — đó chính là $A(\vec N)$. Sau khi chiếu, thực hiện các phép ngược theo thứ tự ngược lại. Ma trận $A(\vec N)$ cũng chính là ma trận ``đưa trục quay về trục $Oz$'' trong phép quay quanh trục bất kỳ ở Tuần 6.
+
+\textbf{Vì sao có dạng như vậy: ghép hai phép quay.}
+\begin{enumerate}
+    \item \textbf{Quay quanh $Ox$ để đưa $\vec N$ vào mặt phẳng $xOz$.} Hình chiếu của $\vec N$ lên mặt phẳng $yOz$ là $(0, n_2, n_3)$, độ dài $\lambda = \sqrt{n_2^2 + n_3^2}$. Quay quanh $Ox$ một góc $\alpha$ với $\cos\alpha = \frac{n_3}{\lambda}$, $\sin\alpha = \frac{n_2}{\lambda}$:
+    \[
+    R_x = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \frac{n_3}{\lambda} & -\frac{n_2}{\lambda} \\ 0 & \frac{n_2}{\lambda} & \frac{n_3}{\lambda} \end{bmatrix}, \qquad R_x\vec N = (n_1,\ 0,\ \lambda).
+    \]
+    \item \textbf{Quay quanh $Oy$ để đưa $(n_1, 0, \lambda)$ về trục $Oz$.} Vector này dài $|\vec N|$, hợp với $Oz$ một góc $\beta$ có $\cos\beta = \frac{\lambda}{|\vec N|}$, $\sin\beta = \frac{n_1}{|\vec N|}$:
+    \[
+    R_y = \begin{bmatrix} \frac{\lambda}{|\vec N|} & 0 & -\frac{n_1}{|\vec N|} \\ 0 & 1 & 0 \\ \frac{n_1}{|\vec N|} & 0 & \frac{\lambda}{|\vec N|} \end{bmatrix}, \qquad R_y(n_1, 0, \lambda)^T = (0,\ 0,\ |\vec N|).
+    \]
+    \item \textbf{Nhân lại}: $A(\vec N) = R_y R_x$. Hàng $1$: $\big(\frac{\lambda}{|\vec N|},\ -\frac{n_1}{|\vec N|}\cdot\frac{n_2}{\lambda},\ -\frac{n_1}{|\vec N|}\cdot\frac{n_3}{\lambda}\big)$; hàng $2$: $\big(0, \frac{n_3}{\lambda}, -\frac{n_2}{\lambda}\big)$; hàng $3$: $\big(\frac{n_1}{|\vec N|},\ \frac{\lambda}{|\vec N|}\cdot\frac{n_2}{\lambda},\ \frac{\lambda}{|\vec N|}\cdot\frac{n_3}{\lambda}\big)$ — đúng từng phần tử của trang 24.
+\end{enumerate}
+
+\textbf{Ý nghĩa từng hàng.} Ma trận quay có các hàng là \emph{ba trục mới viết trong hệ trục cũ}: tọa độ mới của một điểm là tích vô hướng của nó với ba hàng.
+\begin{itemize}
+    \item \textbf{Hàng $3$} $= \frac{\vec N}{|\vec N|}$: vector pháp tuyến đơn vị, trở thành trục $Oz'$ mới. Tọa độ $z'$ mới $= \hat{\vec N} \cdot P$ là khoảng cách (có dấu) từ điểm tới mặt phẳng qua gốc vuông góc với $\vec N$; các điểm trên mặt phẳng chiếu có $z' = 0$. Kiểm tra: $A(\vec N)\vec N = (0, 0, |\vec N|)$.
+    \item \textbf{Hàng $2$} $= \frac{1}{\lambda}(0, n_3, -n_2)$: vector đơn vị vuông góc với cả $\vec N$ và trục $Ox$ (bằng $\frac{\vec e_x \times \vec N}{\|\vec e_x \times \vec N\|}$ đổi dấu), nằm trong mặt phẳng chiếu, trở thành trục $Oy'$. Nó không có thành phần $x$ vì phép quay đầu tiên quanh $Ox$ không làm thay đổi tọa độ $x$.
+    \item \textbf{Hàng $1$} $= \frac{1}{\lambda|\vec N|}(\lambda^2, -n_1 n_2, -n_1 n_3)$: vector đơn vị còn lại, bằng tích có hướng (hàng $2$) $\times$ (hàng $3$), cũng nằm trong mặt phẳng chiếu, trở thành trục $Ox'$. Nó là hình chiếu của trục $Ox$ lên mặt phẳng chiếu, đã chuẩn hóa: $\vec e_x - (\vec e_x \cdot \hat{\vec N})\hat{\vec N} = \big(1 - \frac{n_1^2}{|\vec N|^2}, -\frac{n_1 n_2}{|\vec N|^2}, -\frac{n_1 n_3}{|\vec N|^2}\big)$, có độ dài $\frac{\lambda}{|\vec N|}$.
+    \item \textbf{Hàng, cột thứ $4$} $(0, 0, 0, 1)$: $A$ là phép quay thuần túy, không tịnh tiến (phần tịnh tiến do $T(\vec{R_0 O})$ đảm nhận).
+\end{itemize}
+Ba hàng đôi một vuông góc, có độ dài $1$ và $\det A = 1$, nên $A$ là ma trận quay: bảo toàn độ dài và góc, và $A^{-1}(\vec N) = A^T(\vec N)$ — không cần tính nghịch đảo trong phân rã ở trang 21. Nhóm đã kiểm tra bằng số: $A A^T = \mathbf{I}$, $\det A = 1$, $A\vec N = (0, 0, |\vec N|)$ và $A = R_y R_x$.
+
+\textbf{Lưu ý.} (i) Khi $\lambda = 0$ ($\vec N$ cùng phương với $Ox$), ma trận không xác định (chia cho $0$); khi đó chỉ cần quay quanh $Oy$ một góc $\mp 90^\circ$. (ii) Trong phân rã ở trang 21, phép chiếu ở giữa phải dùng hướng chiếu \emph{đã quay} $\vec V' = A(\vec N)\vec V$ thay cho $\vec V$, vì sau khi đổi hệ trục, hướng chiếu cũng được biểu diễn trong hệ trục mới: $Par(\vec V, (R_0, \vec N)) = T(\vec{OR_0})\,A^{-1}(\vec N)\,Par(A(\vec N)\vec V, (O, \vec{Oz}))\,A(\vec N)\,T(\vec{R_0 O})$.
