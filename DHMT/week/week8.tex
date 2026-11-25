@@ -1,14 +1,509 @@
-\section{Tuần 8: Phân đoạn Ngữ nghĩa \& Phân đoạn Thực thể}
+\section{Tuần 8: Không gian Quan sát 3D, Phép Chiếu Phối cảnh và Ma trận Biến đổi Camera}
 \label{sec:week8}
 
-\subsection{Tổng quan nội dung Tuần 8}
-Phần này dành cho bài toán Semantic Segmentation, Instance Segmentation và Panoptic Segmentation.
+\subsection{Chứng minh Tính Tương đương Giữa Biểu diễn Mặt phẳng Qua Một Điểm và Vector Pháp tuyến với Ba Điểm Không Thẳng hàng}
+\label{subsec:plane_point_normal_vs_three_points}
 
+Trong không gian ba chiều $\mathbb{R}^3$, việc xác định một mặt phẳng có thể thực hiện thông qua nhiều dạng biểu diễn hình học và đại số khác nhau. Hai dạng biểu diễn phổ biến nhất trong đồ họa máy tính là: xác định mặt phẳng đi qua ba điểm phân biệt không thẳng hàng, và xác định mặt phẳng đi qua một điểm mốc kết hợp với một vector pháp tuyến trực giao. Định lý sau đây khẳng định tính tương đương toán học giữa hai cách tiếp cận này.
+
+\textbf{Định lý:} Cho trước một mặt phẳng $(P) \subset \mathbb{R}^3$. Việc xác định $(P)$ qua ba điểm phân biệt không thẳng hàng $P_1, P_2, P_3$ hoàn toàn tương đương với việc xác định $(P)$ qua một điểm $P_1$ và một vector pháp tuyến $\mathbf{n} \neq \mathbf{0}$.
+
+\textbf{Chứng minh:}
+
+\textit{1. Chiều thuận ($\implies$): Từ ba điểm không thẳng hàng suy ra dạng điểm và vector pháp tuyến.}
+
+Giả sử mặt phẳng $(P)$ đi qua ba điểm không thẳng hàng $P_1(x_1, y_1, z_1)$, $P_2(x_2, y_2, z_2)$ và $P_3(x_3, y_3, z_3)$. Ta xây dựng hai vector chỉ phương nằm hoàn toàn trong mặt phẳng $(P)$:
+\begin{align}
+\mathbf{u} &= \vec{P_1P_2} = (x_2 - x_1, y_2 - y_1, z_2 - z_1) \\
+\mathbf{v} &= \vec{P_1P_3} = (x_3 - x_1, y_3 - y_1, z_3 - z_1)
+\end{align}
+Do giả thiết ba điểm $P_1, P_2, P_3$ không thẳng hàng, hai vector $\mathbf{u}$ và $\mathbf{v}$ độc lập tuyến tính (không cùng phương). Tích có hướng giữa $\mathbf{u}$ và $\mathbf{v}$ xác định một vector $\mathbf{n}$:
+\begin{equation}
+\label{eq:normal_from_three_points}
+\mathbf{n} = \mathbf{u} \times \mathbf{v} = \begin{vmatrix}
+\mathbf{i} & \mathbf{j} & \mathbf{k} \\
+x_2 - x_1 & y_2 - y_1 & z_2 - z_1 \\
+x_3 - x_1 & y_3 - y_1 & z_3 - z_1
+\end{vmatrix} = \begin{bmatrix} A \\ B \\ C \end{bmatrix}
+\end{equation}
+Vì $\mathbf{u}$ và $\mathbf{v}$ không cùng phương, $\mathbf{n} \neq \mathbf{0}$. Theo tính chất của tích có hướng, vector $\mathbf{n}$ đồng thời trực giao với cả $\mathbf{u}$ và $\mathbf{v}$, do đó trực giao với mọi vector thuộc không gian phương của mặt phẳng $(P)$.
+
+Xét một điểm tùy ý $P(x, y, z) \in \mathbb{R}^3$. Điểm $P$ thuộc mặt phẳng $(P)$ khi và chỉ khi ba vector $\vec{P_1P}, \mathbf{u}, \mathbf{v}$ đồng phẳng, tương đương với tích hỗn tạp triệt tiêu:
+\begin{equation}
+\label{eq:plane_box_product}
+\vec{P_1P} \cdot (\mathbf{u} \times \mathbf{v}) = 0 \iff \mathbf{n} \cdot (P - P_1) = 0
+\end{equation}
+Khai triển tọa độ, ta thu được phương trình đại số:
+\begin{equation}
+A(x - x_1) + B(y - y_1) + C(z - z_1) = 0
+\end{equation}
+Như vậy, mặt phẳng $(P)$ được xác định bởi điểm $P_1$ và vector pháp tuyến $\mathbf{n} = (A, B, C)$.
+
+\textit{2. Chiều đảo ($\impliedby$): Từ một điểm và vector pháp tuyến suy ra ba điểm không thẳng hàng.}
+
+Giả sử mặt phẳng $(P)$ được xác định bởi điểm $P_1(x_1, y_1, z_1)$ và vector pháp tuyến $\mathbf{n} = (A, B, C)$ với $A^2 + B^2 + C^2 > 0$. Tập hợp các điểm $P(x, y, z) \in (P)$ thỏa mãn hệ thức:
+\begin{equation}
+A(x - x_1) + B(y - y_1) + C(z - z_1) = 0
+\end{equation}
+Đây là một phương trình tuyến tính thuần nhất đối với vector dịch chuyển $\Delta \mathbf{x} = P - P_1$. Không gian nghiệm của phương trình này có số chiều bằng $3 - \text{rank}(\mathbf{n}^T) = 3 - 1 = 2$. Do đó, ta luôn tìm được hai vector $\mathbf{w}_1, \mathbf{w}_2 \in \mathbb{R}^3$ độc lập tuyến tính cùng trực giao với $\mathbf{n}$:
+\begin{equation}
+\mathbf{n} \cdot \mathbf{w}_1 = 0, \quad \mathbf{n} \cdot \mathbf{w}_2 = 0, \quad \mathbf{w}_1 \times \mathbf{w}_2 \neq \mathbf{0}
+\end{equation}
+Chẳng hạn, nếu $A \neq 0$, ta có thể chọn trực tiếp:
+\begin{equation}
+\mathbf{w}_1 = \left( -\frac{B}{A}, 1, 0 \right), \quad \mathbf{w}_2 = \left( -\frac{C}{A}, 0, 1 \right)
+\end{equation}
+Đặt $P_2 = P_1 + \mathbf{w}_1$ và $P_3 = P_1 + \mathbf{w}_2$. Do $\mathbf{w}_1$ và $\mathbf{w}_2$ không cùng phương, ba điểm $P_1, P_2, P_3$ phân biệt và không thẳng hàng. Hơn nữa, cả ba điểm này đều thuộc mặt phẳng $(P)$. Do ba điểm không thẳng hàng xác định duy nhất một mặt phẳng trong $\mathbb{R}^3$, mặt phẳng tạo bởi $\{P_1, P_2, P_3\}$ trùng khớp hoàn toàn với $(P)$. Định lý được chứng minh.
+
+\textbf{Ý nghĩa trong Kiến trúc Đồ họa Máy tính:}
+Trong thực tế phát triển phần mềm đồ họa, dạng biểu diễn ba điểm $\{P_1, P_2, P_3\}$ là cấu trúc nền tảng của lưới tam giác (Triangle Mesh) trong các định dạng tệp chuẩn như OBJ hay STL. Ngược lại, dạng phương trình điểm - pháp tuyến $Ax + By + Cz + D = 0$ (với $D = -\mathbf{n} \cdot P_1$) được tối ưu hóa cho các tác vụ kiểm tra nửa không gian:
 \begin{itemize}
-    \item Semantic Segmentation: Fully Convolutional Networks (FCN), U-Net, DeepLab series.
-    \item Instance Segmentation: Mask R-CNN.
-    \item Panoptic Segmentation \& Foundation Models: Segment Anything Model (SAM).
+    \item \textit{Khử mặt khuất (Back-face Culling):} Dấu của tích vô hướng $\mathbf{n} \cdot \mathbf{V}_{\text{view}}$ cho biết đa giác đang hướng về hay quay lưng lại với camera.
+    \item \textit{Xén tỉa hình học (Clipping):} Khoảng cách có dấu từ một điểm tới các mặt phẳng của hình chóp quan sát (View Frustum) được tính nhanh chóng qua giá trị thế vào phương trình mặt phẳng: $d = \frac{Ax + By + Cz + D}{\sqrt{A^2 + B^2 + C^2}}$.
+    \item \textit{Cây phân vùng không gian nhị phân (BSP Trees):} Các mặt phẳng chia cắt không gian được biểu diễn dưới dạng $(A, B, C, D)$ để phân loại tập đa giác về hai phía trước và sau mặt phẳng.
 \end{itemize}
 
-\subsection{Câu hỏi \& Bài tập}
-\textit{(Nội dung câu hỏi và bài giải chi tiết sẽ được cập nhật tại đây)}
+\subsection{Khảo sát Hình chiếu Phối cảnh của Quả cầu trong Không gian 3D và Hiện tượng Biến dạng Ngoài trục}
+\label{subsec:sphere_perspective_projection}
+
+Xét một quả cầu tâm $C(x_c, y_c, z_c)$, bán kính $R > 0$ trong không gian ba chiều $\mathbb{R}^3$. Phương trình mặt cầu dạng ẩn là:
+\begin{equation}
+\label{eq:sphere_implicit_def}
+\|\mathbf{x} - \mathbf{C}\|^2 = (x - x_c)^2 + (y - y_c)^2 + (z - z_c)^2 = R^2
+\end{equation}
+Giả sử tâm chiếu (mắt người quan sát) đặt tại điểm $E(x_e, y_e, z_e)$. Để quả cầu nằm trọn vẹn trong vùng nhìn thấy của mắt, khoảng cách từ tâm chiếu đến tâm quả cầu phải lớn hơn bán kính: $\|\mathbf{C} - \mathbf{E}\| > R$.
+
+\textbf{1. Xây dựng Hình nón Tiếp xúc (Tangent Cone):}
+Tập hợp tất cả các tia chiếu phát xuất từ $E$ tiếp xúc với mặt cầu tạo thành một hình nón tròn xoay có đỉnh tại $E$ và nhận đường thẳng nối $EC$ làm trục đối xứng.
+
+Xét một tia bất kỳ phát xuất từ $E$ theo vector chỉ phương đơn vị $\mathbf{d}$ (với $\|\mathbf{d}\| = 1$):
+\begin{equation}
+\mathbf{r}(t) = \mathbf{E} + t \mathbf{d}, \quad t \ge 0
+\end{equation}
+Thay phương trình tia vào phương trình mặt cầu~\eqref{eq:sphere_implicit_def}:
+\begin{equation}
+\|(\mathbf{E} + t \mathbf{d}) - \mathbf{C}\|^2 = R^2 \iff t^2 \|\mathbf{d}\|^2 + 2t \, \mathbf{d} \cdot (\mathbf{E} - \mathbf{C}) + \|\mathbf{E} - \mathbf{C}\|^2 - R^2 = 0
+\end{equation}
+Đặt $\mathbf{v} = \mathbf{C} - \mathbf{E}$. Khi đó phương trình bậc hai theo biến $t$ có dạng:
+\begin{equation}
+\label{eq:ray_sphere_quad}
+t^2 - 2t(\mathbf{d} \cdot \mathbf{v}) + (\|\mathbf{v}\|^2 - R^2) = 0
+\end{equation}
+Tia $\mathbf{r}(t)$ tiếp xúc với mặt cầu khi và chỉ khi phương trình~\eqref{eq:ray_sphere_quad} có nghiệm kép, tức biệt thức $\Delta' = 0$:
+\begin{equation}
+\label{eq:cone_condition}
+\Delta' = (\mathbf{d} \cdot \mathbf{v})^2 - (\|\mathbf{v}\|^2 - R^2) = 0 \iff \cos^2\alpha = \frac{(\mathbf{d} \cdot \mathbf{v})^2}{\|\mathbf{d}\|^2 \|\mathbf{v}\|^2} = 1 - \frac{R^2}{\|\mathbf{v}\|^2}
+\end{equation}
+với $\alpha$ là nửa góc ở đỉnh của hình nón tiếp xúc, thỏa mãn $\sin\alpha = \frac{R}{\|\mathbf{v}\|}$.
+
+Với một điểm $P$ bất kỳ nằm trên bề mặt hình nón tiếp xúc, vector $\mathbf{x} - \mathbf{E}$ cùng phương với $\mathbf{d}$, do đó phương trình mặt nón tiếp xúc trong không gian là:
+\begin{equation}
+\label{eq:cone_equation_3d}
+[(\mathbf{x} - \mathbf{E}) \cdot (\mathbf{C} - \mathbf{E})]^2 = \|\mathbf{x} - \mathbf{E}\|^2 \left( \|\mathbf{C} - \mathbf{E}\|^2 - R^2 \right) \cos^2\alpha
+\end{equation}
+
+\textbf{2. Giao tuyến với Mặt phẳng Chiếu và Phân tích Biên dạng Conic:}
+Hình chiếu phối cảnh của quả cầu lên mặt phẳng chiếu $(P_{\text{proj}})$ chính là giao tuyến giữa hình nón tiếp xúc bậc hai với mặt phẳng chiếu đó. Theo lý thuyết hình học xạ ảnh, giao tuyến của một mặt nón tròn xoay với một mặt phẳng luôn là một đường conic (đường tròn, ellipse, parabol hoặc hyperbol).
+
+Do toàn bộ quả cầu nằm về một phía của mặt phẳng chiếu và khoảng cách từ tâm chiếu tới mặt phẳng chiếu là hữu hạn, chùm tia nón không cắt mặt phẳng chiếu tại vô cực theo hướng tiệm cận. Do đó, giao tuyến luôn là một đường conic đóng, tức một \textbf{hình Ellipse}.
+
+\begin{itemize}
+    \item \textit{Trường hợp suy biến thành Đường tròn (On-Axis):} Khi và chỉ khi trục của hình nón tiếp xúc (đoạn $EC$) vuông góc trực tiếp với mặt phẳng chiếu, thiết diện cắt thẳng góc sẽ tạo thành một đường tròn hoàn hảo. Điều này xảy ra khi tâm quả cầu nằm chính diện trên trục ngắm chính của camera.
+    \item \textit{Trường hợp Ellipse tổng quát (Off-Axis):} Khi quả cầu nằm lệch sang một bên so với trục ngắm chính (tức vector $\mathbf{C} - \mathbf{E}$ tạo với pháp tuyến mặt phẳng chiếu một góc nghiêng $\theta \neq 0$), mặt phẳng chiếu cắt hình nón theo một góc chéo. Kết quả là hình chiếu phối cảnh của quả cầu bị kéo dài thành một hình Ellipse có trục lớn hướng về phía tâm chiếu trên màn hình.
+\end{itemize}
+
+Hiện tượng này được gọi là \textit{sự biến dạng phối cảnh ngoài trục (Off-axis Perspective Distortion)} hay biến dạng mép biên (Marginal Distortion). Trong thực tế lập trình game 3D và đồ họa thực tế ảo (VR), khi người chơi quan sát các vật thể hình cầu ở góc rìa màn hình với góc mở trường nhìn lớn ($\text{FOV} > 90^\circ$), các vật thể hình cầu sẽ trông như hình trứng bầu dục, phản ánh chính xác bản chất giải tích của phép chiếu phối cảnh phẳng.
+
+\subsection{Bản chất Hình học và Đại số của Biểu thức Tọa độ Phối cảnh \texorpdfstring{$x' = \frac{dx}{z+d} = \frac{x_H}{H}$}{x' = dx/(z+d) = xH/H}}
+\label{subsec:perspective_coordinate_derivation}
+
+Xét hệ tọa độ quan sát ba chiều chuẩn tắc. Giả sử mặt phẳng chiếu (Projection Plane hay View Plane) được đặt tại mặt phẳng $z = 0$. Tâm chiếu (Center of Projection -- COP) đặt tại điểm $C(0, 0, -d)$ trên trục âm $Oz$, với khoảng cách tiêu cự $d > 0$.
+
+Xét một điểm trong không gian $P(x, y, z)$ với cao độ $z > -d$ (nằm trước tâm chiếu). Tia chiếu phát xuất từ tâm $C(0, 0, -d)$ đi qua điểm $P(x, y, z)$ cắt mặt phẳng chiếu $z = 0$ tại điểm ảnh $P'(x', y', 0)$.
+
+\textbf{1. Thiết lập Phương trình Hình học qua Tam giác Đồng dạng:}
+Chiếu hệ thống xuống mặt phẳng tọa độ $Oxz$ (mặt phẳng đứng nhìn từ bên cạnh):
+\begin{itemize}
+    \item Tam giác thứ nhất $\triangle C O P'_x$ có đáy nằm trên mặt phẳng chiếu với độ dài $x'$, chiều cao dọc theo trục $Oz$ từ $C$ đến gốc $O$ là $d$.
+    \item Tam giác thứ hai $\triangle C P_z P$ có đáy là khoảng cách hoành độ $x$, chiều cao dọc theo trục $Oz$ từ $C$ đến vị trí $z$ là $z + d$.
+\end{itemize}
+Do hai tam giác vuông này đồng dạng:
+\begin{equation}
+\frac{x'}{x} = \frac{d}{z + d} \implies x' = \frac{d \cdot x}{z + d}
+\end{equation}
+Tương tự, xét mặt cắt chiếu xuống mặt phẳng $Oyz$:
+\begin{equation}
+\frac{y'}{y} = \frac{d}{z + d} \implies y' = \frac{d \cdot y}{z + d}
+\end{equation}
+
+\textbf{2. Biểu diễn trong Hệ Tọa độ Đồng nhất (Homogeneous Coordinates):}
+Trong không gian Afin ba chiều, quan hệ giữa $(x', y')$ và $(x, y, z)$ là quan hệ phi tuyến do xuất hiện tọa độ chiều sâu $z$ dưới mẫu số. Để tích hợp phép biến đổi này vào chuỗi nhân ma trận của đường ống đồ họa, ta nhúng không gian $\mathbb{R}^3$ vào không gian xạ ảnh bốn chiều $\mathbb{P}^3$ thông qua tọa độ đồng nhất:
+\begin{equation}
+\mathbf{P} = \begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix} \in \mathbb{R}^4
+\end{equation}
+Tọa độ sau phép biến đổi chiếu phối cảnh được biểu diễn dưới dạng:
+\begin{equation}
+\mathbf{P}_H = \begin{bmatrix} x_H \\ y_H \\ z_H \\ H \end{bmatrix}
+\end{equation}
+Theo định nghĩa của không gian xạ ảnh, tọa độ thực trong không gian Descartes ba chiều được khôi phục thông qua phép chia phối cảnh (Perspective Division):
+\begin{equation}
+\label{eq:perspective_division_rules}
+x' = \frac{x_H}{H}, \quad y' = \frac{y_H}{H}, \quad z' = \frac{z_H}{H}
+\end{equation}
+Đối chiếu trực tiếp với các biểu thức tam giác đồng dạng ở trên:
+\begin{equation}
+x' = \frac{d \cdot x}{z + d} = \frac{x_H}{H}, \quad y' = \frac{d \cdot y}{z + d} = \frac{y_H}{H}
+\end{equation}
+Ta suy ra các thành phần tọa độ đồng nhất:
+\begin{equation}
+\label{eq:homogeneous_assignment}
+x_H = d \cdot x, \quad y_H = d \cdot y, \quad H = z + d
+\end{equation}
+(hoặc chia toàn bộ cho hằng số $d$: $x_H = x$, $y_H = y$, $H = \frac{z}{d} + 1$).
+
+\textbf{3. Ý nghĩa Đại số và Hình học của Biến số $H$:}
+\begin{itemize}
+    \item Thành phần $H$ đóng vai trò là thừa số chuẩn hóa (Homogeneous Scale Factor). Nó là một hàm bậc nhất tuyến tính phụ thuộc trực tiếp vào tọa độ chiều sâu: $H(z) = z + d$.
+    \item Việc đưa $z$ vào thành phần thứ tư $H$ cho phép ma trận chiếu biểu diễn được phép co dãn tỷ lệ nghịch với khoảng cách mà vẫn giữ nguyên dạng toán tử ma trận tuyến tính $4 \times 4$. Quá trình phi tuyến hóa duy nhất được dời về bước phần cứng chia phối cảnh (Perspective Divide) ngay trước giai đoạn raster hóa.
+\end{itemize}
+
+\subsection{Thiết lập Ma trận Biến đổi Chiếu Phối cảnh với Tâm Chiếu Tùy ý \texorpdfstring{$C(x_c, y_c, z_c)$}{C(xc, yc, zc)}}
+\label{subsec:perspective_matrix_arbitrary_cop}
+
+Trong các kịch bản mô phỏng đồ họa tổng quát, tâm chiếu không nhất thiết phải nằm tại gốc tọa độ hay trên trục $Oz$. Giả sử tâm chiếu đặt tại điểm bất kỳ $C(x_c, y_c, z_c)$ và mặt phẳng chiếu được định nghĩa bởi phương trình song song với mặt phẳng $Oxy$ tại cao độ $z = z_p$ (với $z_c \neq z_p$).
+
+Xét điểm cần chiếu $P(x, y, z)$. Đường thẳng tia chiếu đi qua hai điểm $C$ và $P$ có phương trình tham số:
+\begin{equation}
+\label{eq:arbitrary_ray_param}
+\mathbf{r}(t) = C + t(P - C) = \begin{bmatrix}
+x_c + t(x - x_c) \\
+y_c + t(y - y_c) \\
+z_c + t(z - z_c)
+\end{bmatrix}, \quad t \in \mathbb{R}
+\end{equation}
+Giao điểm $P'(x', y', z')$ của tia chiếu với mặt phẳng chiếu $z = z_p$ xảy ra khi thành phần cao độ thỏa mãn:
+\begin{equation}
+z_c + t(z - z_c) = z_p \implies t = \frac{z_p - z_c}{z - z_c}
+\end{equation}
+Đặt khoảng cách đại số giữa mặt phẳng chiếu và tâm chiếu là $d_p = z_p - z_c \neq 0$. Thay giá trị tham số $t$ vào các biểu thức hoành độ và tung độ:
+\begin{align}
+x' &= x_c + (x - x_c) \frac{z_p - z_c}{z - z_c} = \frac{x_c(z - z_c) + (x - x_c)(z_p - z_c)}{z - z_c} = \frac{x(z_p - z_c) + x_c(z - z_p)}{z - z_c} \\
+y' &= y_c + (y - y_c) \frac{z_p - z_c}{z - z_c} = \frac{y_c(z - z_c) + (y - y_c)(z_p - z_c)}{z - z_c} = \frac{y(z_p - z_c) + y_c(z - z_p)}{z - z_c} \\
+z' &= z_p = \frac{z_p(z - z_c)}{z - z_c}
+\end{align}
+
+Để biểu diễn phép chiếu này dưới dạng một ma trận biến đổi thuần nhất kích thước $4 \times 4$, ta chọn mẫu số chung làm thành phần đồng nhất $H$:
+\begin{equation}
+H = z - z_c
+\end{equation}
+Khi đó, các tọa độ đồng nhất tử số là:
+\begin{align}
+x_H &= (z_p - z_c) x + 0 \cdot y + x_c \cdot z - x_c z_p \\
+y_H &= 0 \cdot x + (z_p - z_c) y + y_c \cdot z - y_c z_p \\
+z_H &= 0 \cdot x + 0 \cdot y + z_p \cdot z - z_p z_c \\
+H   &= 0 \cdot x + 0 \cdot y + 1 \cdot z - z_c
+\end{align}
+Từ hệ phương trình tuyến tính trên, ma trận biến đổi phối cảnh tổng quát $\mathbf{M}_{\text{per}}(C, z_p)$ được xác lập chính xác như sau:
+\begin{equation}
+\label{eq:matrix_perspective_arbitrary_cop}
+\mathbf{M}_{\text{per}}(C, z_p) = \begin{bmatrix}
+z_p - z_c & 0 & x_c & -x_c z_p \\
+0 & z_p - z_c & y_c & -y_c z_p \\
+0 & 0 & z_p & -z_p z_c \\
+0 & 0 & 1 & -z_c
+\end{bmatrix}
+\end{equation}
+
+\textbf{Kiểm chứng tính đúng đắn:} Nhân ma trận $\mathbf{M}_{\text{per}}(C, z_p)$ với vector điểm đồng nhất $\mathbf{P} = [x, y, z, 1]^T$:
+\begin{equation}
+\mathbf{P}_H = \mathbf{M}_{\text{per}}(C, z_p) \begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix} = \begin{bmatrix}
+(z_p - z_c)x + x_c z - x_c z_p \\
+(z_p - z_c)y + y_c z - y_c z_p \\
+z_p z - z_p z_c \\
+z - z_c
+\end{bmatrix}
+\end{equation}
+Thực hiện phép chia phối cảnh:
+\begin{align}
+x' &= \frac{x_H}{H} = \frac{(z_p - z_c)x + x_c(z - z_p)}{z - z_c} \\
+y' &= \frac{y_H}{H} = \frac{(z_p - z_c)y + y_c(z - z_p)}{z - z_c} \\
+z' &= \frac{z_H}{H} = \frac{z_p(z - z_c)}{z - z_c} = z_p
+\end{align}
+Kết quả thu được hoàn toàn trùng khớp với phân tích hình học giải tích ban đầu. Ma trận~\eqref{eq:matrix_perspective_arbitrary_cop} cho phép xử lý camera đặt ở bất kỳ tọa độ lệch tâm nào trong không gian quan sát.
+
+\subsection{Hệ thống Ma trận Chiếu \texorpdfstring{$P' = \text{Per}()$}{P' = Per()} trong Các Cấu hình Hình học Kinh điển}
+\label{subsec:canonical_perspective_matrices}
+
+Trong giáo trình đồ họa máy tính chuẩn mực~\citep{hearn2004computer,foley1996computer}, các phép chiếu phối cảnh thường được phân loại và thiết lập thành ba dạng cấu hình ma trận chuẩn tắc, ký hiệu chung là $P' = \text{Per}(P)$.
+
+\textbf{1. Cấu hình 1: Tâm chiếu tại \texorpdfstring{$C(0, 0, -d)$}{C(0, 0, -d)}, Mặt phẳng chiếu \texorpdfstring{$z = 0$}{z = 0}}
+Đây là mô hình kinh điển thường dùng trong các bài toán khảo sát lý thuyết. Mắt quan sát đặt trên trục âm của chiều sâu, nhìn về phía các đối tượng có cao độ $z > 0$:
+\begin{equation}
+\label{eq:per_config_1}
+\mathbf{M}_{\text{Per1}} = \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & \frac{1}{d} & 1
+\end{bmatrix} \quad \text{hoặc nhân tỷ lệ với } d: \quad
+\begin{bmatrix}
+d & 0 & 0 & 0 \\
+0 & d & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & 1 & d
+\end{bmatrix}
+\end{equation}
+Tác động lên điểm $\mathbf{P} = [x, y, z, 1]^T$:
+\begin{equation}
+\mathbf{M}_{\text{Per1}} \begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix} = \begin{bmatrix} x \\ y \\ 0 \\ \frac{z}{d} + 1 \end{bmatrix} \implies x' = \frac{x}{\frac{z}{d} + 1} = \frac{d \cdot x}{z + d}, \quad y' = \frac{d \cdot y}{z + d}, \quad z' = 0
+\end{equation}
+
+\textbf{2. Cấu hình 2: Tâm chiếu tại Gốc tọa độ \texorpdfstring{$O(0, 0, 0)$}{O(0, 0, 0)}, Mặt phẳng chiếu \texorpdfstring{$z = d$}{z = d}}
+Mô hình này là chuẩn quy ước của camera quan sát (Eye Space) trong đồ họa máy tính hiện đại, nơi mắt đặt ngay tại gốc tọa độ và nhìn dọc theo trục $Oz$:
+\begin{equation}
+\label{eq:per_config_2}
+\mathbf{M}_{\text{Per2}} = \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & \frac{1}{d} & 0
+\end{bmatrix}
+\end{equation}
+Tác động lên điểm $\mathbf{P} = [x, y, z, 1]^T$:
+\begin{equation}
+\mathbf{M}_{\text{Per2}} \begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix} = \begin{bmatrix} x \\ y \\ z \\ \frac{z}{d} \end{bmatrix} \implies x' = \frac{d \cdot x}{z}, \quad y' = \frac{d \cdot y}{z}, \quad z' = d
+\end{equation}
+
+\textbf{3. Cấu hình 3: Mặt phẳng chiếu \texorpdfstring{$z = z_p$}{z = zp}, Điểm tham chiếu chiếu \texorpdfstring{$z = z_{\text{prp}}$}{z = zprp} (Chuẩn Hearn-Baker)}
+Trong chuẩn đồ họa PHIGS và giáo trình Hearn-Baker, điểm tham chiếu chiếu (Projection Reference Point -- PRP) được đặt tại $(0, 0, z_{\text{prp}})$ và mặt phẳng chiếu đặt tại $z = z_p$. Đặt khoảng cách đại số $d_p = z_{\text{prp}} - z_p$:
+\begin{equation}
+\label{eq:per_config_3}
+\mathbf{M}_{\text{Per3}} = \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & -\frac{z_p}{d_p} & \frac{z_p z_{\text{prp}}}{d_p} \\
+0 & 0 & -\frac{1}{d_p} & \frac{z_{\text{prp}}}{d_p}
+\end{bmatrix}
+\end{equation}
+Tác động lên điểm $\mathbf{P}$:
+\begin{equation}
+\mathbf{M}_{\text{Per3}} \begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix} = \begin{bmatrix}
+x \\
+y \\
+z \left( -\frac{z_p}{d_p} \right) + \frac{z_p z_{\text{prp}}}{d_p} \\
+\frac{z_{\text{prp}} - z}{d_p}
+\end{bmatrix} \implies x' = x \frac{d_p}{z_{\text{prp}} - z}, \quad y' = y \frac{d_p}{z_{\text{prp}} - z}, \quad z' = z_p
+\end{equation}
+
+Bảng~\ref{tab:perspective_configurations} tổng hợp đối chiếu ba cấu hình ma trận chiếu phối cảnh chuẩn tắc.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Tổng hợp đối chiếu ba cấu hình ma trận chiếu phối cảnh chuẩn tắc}
+\label{tab:perspective_configurations}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+\textbf{Cấu hình} & \textbf{Vị trí Tâm chiếu (COP)} & \textbf{Mặt phẳng Chiếu} & \textbf{Tọa độ Chiếu \texorpdfstring{$(x', y')$}{(x', y')}} \\
+\hline
+\textbf{Dạng 1 (Trục lệch)} & $C(0, 0, -d)$ & $z = 0$ & $x' = \frac{dx}{z+d}, \quad y' = \frac{dy}{z+d}$ \\
+\hline
+\textbf{Dạng 2 (Gốc tọa độ)} & $O(0, 0, 0)$ & $z = d$ & $x' = \frac{dx}{z}, \quad y' = \frac{dy}{z}$ \\
+\hline
+\textbf{Dạng 3 (Chuẩn PHIGS)} & $PRP(0, 0, z_{\text{prp}})$ & $z = z_p$ & $x' = \frac{x(z_{\text{prp}}-z_p)}{z_{\text{prp}}-z}, \quad y' = \frac{y(z_{\text{prp}}-z_p)}{z_{\text{prp}}-z}$ \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Xác định Toàn diện Chuỗi Phép Biến đổi Chiếu khi Camera Quan sát theo Hướng Bất kỳ}
+\label{subsec:camera_arbitrary_viewing_pipeline}
+
+Để hiển thị một cảnh 3D từ một góc nhìn máy ảnh tùy ý, hệ thống đồ họa phải chuyển đổi tọa độ các thực thể từ Hệ tọa độ Thế giới (World Coordinate System -- WCS) sang Hệ tọa độ Camera (Viewing Coordinate System -- VCS hay Eye Space), sau đó áp dụng phép chiếu chuẩn hóa.
+
+Một camera ảo trong không gian 3D được tham số hóa đầy đủ bởi ba thuộc tính hình học:
+\begin{itemize}
+    \item Điểm đặt mắt (Eye Point): $\mathbf{E} = (e_x, e_y, e_z) \in \mathbb{R}^3$.
+    \item Điểm ngắm mục tiêu (Target / LookAt Point): $\mathbf{T} = (t_x, t_y, t_z) \in \mathbb{R}^3$.
+    \item Vector chỉ hướng trên (Up Vector): $\mathbf{V}_{\text{up}} = (u_x, u_y, u_z) \in \mathbb{R}^3$ (không cùng phương với $\mathbf{T} - \mathbf{E}$).
+\end{itemize}
+
+\textbf{1. Xây dựng Hệ trục Trực chuẩn Camera \texorpdfstring{$(\mathbf{u}, \mathbf{v}, \mathbf{w})$}{(u, v, w)}:}
+Theo quy ước toán học của chuẩn đồ họa tay phải (Right-handed System):
+\begin{enumerate}[label=\alph*)]
+    \item Vector trục ngắm $\mathbf{w}$ (hướng từ điểm ngắm ngược về camera):
+    \begin{equation}
+    \mathbf{w} = \frac{\mathbf{E} - \mathbf{T}}{\|\mathbf{E} - \mathbf{T}\|}
+    \end{equation}
+    \item Vector trục ngang $\mathbf{u}$ (hướng sang phải của camera), xác định bằng tích có hướng giữa vector Up và trục ngắm:
+    \begin{equation}
+    \mathbf{u} = \frac{\mathbf{V}_{\text{up}} \times \mathbf{w}}{\|\mathbf{V}_{\text{up}} \times \mathbf{w}\|}
+    \end{equation}
+    \item Vector trục đứng thực sự $\mathbf{v}$ (hướng thẳng lên trên của camera), vuông góc với cả $\mathbf{u}$ và $\mathbf{w}$:
+    \begin{equation}
+    \mathbf{v} = \mathbf{w} \times \mathbf{u}
+    \end{equation}
+\end{enumerate}
+Bộ ba vector $\{\mathbf{u}, \mathbf{v}, \mathbf{w}\}$ tạo thành một hệ cơ sở trực chuẩn thuận hoàn chỉnh trong $\mathbb{R}^3$, thỏa mãn:
+\begin{equation}
+\|\mathbf{u}\| = \|\mathbf{v}\| = \|\mathbf{w}\| = 1, \quad \mathbf{u} \cdot \mathbf{v} = \mathbf{v} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{u} = 0, \quad \mathbf{u} \times \mathbf{v} = \mathbf{w}
+\end{equation}
+
+\textbf{2. Thiết lập Ma trận Biến đổi Góc nhìn (View Matrix):}
+Phép biến đổi từ WCS sang VCS là phép biến đổi đưa gốc tọa độ về điểm $\mathbf{E}$ và xoay hệ trục tọa độ thế giới sao cho ba trục $(x, y, z)$ trùng khớp với $(\mathbf{u}, \mathbf{v}, \mathbf{w})$. Ma trận View là tích của phép tịnh tiến và phép quay hệ quy chiếu:
+\begin{equation}
+\mathbf{M}_{\text{view}} = \mathbf{R} \cdot \mathbf{T}(-\mathbf{E}) = \begin{bmatrix}
+u_x & u_y & u_z & 0 \\
+v_x & v_y & v_z & 0 \\
+w_x & w_y & w_z & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix} \begin{bmatrix}
+1 & 0 & 0 & -e_x \\
+0 & 1 & 0 & -e_y \\
+0 & 0 & 1 & -e_z \\
+0 & 0 & 0 & 1
+\end{bmatrix} = \begin{bmatrix}
+u_x & u_y & u_z & -\mathbf{u} \cdot \mathbf{E} \\
+v_x & v_y & v_z & -\mathbf{v} \cdot \mathbf{E} \\
+w_x & w_y & w_z & -\mathbf{w} \cdot \mathbf{E} \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{equation}
+
+\textbf{3. Tích hợp Ma trận Chiếu Phối cảnh vào Thể tích Nhìn Chuẩn hóa (NDC):}
+Sau khi đưa các đối tượng về hệ tọa độ camera (nơi camera nằm tại gốc và hướng ngắm dọc theo $-z$), hình chóp cụt quan sát (Frustum) được giới hạn bởi góc mở $\text{FOV}_y$, tỉ lệ co khung hình $\text{aspect} = w/h$, mặt cắt gần $z = -n$ và mặt cắt xa $z = -f$ ($0 < n < f$).
+
+Ma trận chiếu phối cảnh chuẩn $\mathbf{M}_{\text{proj}}$ biến đổi hình chóp cụt quan sát thành khối lập phương chuẩn hóa $[-1, 1]^3$:
+\begin{equation}
+\label{eq:opengl_perspective_matrix}
+\mathbf{M}_{\text{proj}} = \begin{bmatrix}
+\frac{1}{\text{aspect} \cdot \tan(\text{FOV}_y/2)} & 0 & 0 & 0 \\
+0 & \frac{1}{\tan(\text{FOV}_y/2)} & 0 & 0 \\
+0 & 0 & -\frac{f + n}{f - n} & -\frac{2fn}{f - n} \\
+0 & 0 & -1 & 0
+\end{bmatrix}
+\end{equation}
+
+Chuỗi biến đổi tổng hợp tác động lên mỗi đỉnh $\mathbf{P}_{\text{world}}$ trong đường ống đồ họa là:
+\begin{equation}
+\mathbf{P}_{\text{clip}} = \mathbf{M}_{\text{proj}} \cdot \mathbf{M}_{\text{view}} \cdot \mathbf{M}_{\text{model}} \cdot \mathbf{P}_{\text{world}}
+\end{equation}
+Sau đó, phần cứng GPU tự động thực hiện phép chia phối cảnh để thu được tọa độ thiết bị chuẩn hóa (NDC): $\mathbf{P}_{\text{ndc}} = (x_{\text{clip}}/w_{\text{clip}}, y_{\text{clip}}/w_{\text{clip}}, z_{\text{clip}}/w_{\text{clip}})$, sẵn sàng cho các phép xén tỉa và ánh xạ cổng nhìn lên màn hình hiển thị.
+
+\subsection{Sự Bảo toàn và Lưu trữ Thông tin Chiều Sâu 3D khi Chiếu Xuống Màn hình 2D}
+\label{subsec:3d_information_in_2d_projection}
+
+Về bản chất giải tích, phép chiếu từ không gian ba chiều $\mathbb{R}^3$ xuống không gian hai chiều $\mathbb{R}^2$ là một ánh xạ suy giảm số chiều. Khi tọa độ $(x, y, z)$ được chuyển đổi thành tọa độ màn hình $(x_{\text{screen}}, y_{\text{screen}})$, một câu hỏi cốt lõi được đặt ra: \textit{Thông tin chiều thứ ba (chiều sâu $z$) thực chất nằm ở đâu và được bảo toàn như thế nào?}
+
+Vấn đề này được giải quyết ở hai cấp độ: cấp độ dữ liệu tính toán phần cứng và cấp độ cảm nhận tâm lý thị giác con người.
+
+\textbf{1. Cấp độ Kỹ thuật Đồ họa: Lưu trữ Chiều sâu trong Bộ đệm Z-Buffer}
+Trong đường ống đồ họa máy tính hiện đại, thông tin chiều thứ ba \textbf{không hề bị loại bỏ}. Ngược lại, nó được tính toán chính xác và lưu trữ trực tiếp trong một vùng nhớ phần cứng chuyên dụng gọi là Bộ đệm Độ sâu (Depth Buffer hay $Z$-Buffer).
+
+Khi thực hiện ma trận chiếu phối cảnh tại phương trình~\eqref{eq:opengl_perspective_matrix}, thành phần tọa độ $z$ trong không gian camera được ánh xạ phi tuyến vào khoảng chuẩn hóa $z_{\text{ndc}} \in [-1, 1]$:
+\begin{equation}
+\label{eq:z_ndc_mapping}
+z_{\text{ndc}} = \frac{z_{\text{clip}}}{w_{\text{clip}}} = \frac{-\frac{f+n}{f-n} z_{\text{eye}} - \frac{2fn}{f-n}}{-z_{\text{eye}}} = \frac{f+n}{f-n} + \frac{2fn}{f-n} \cdot \frac{1}{z_{\text{eye}}}
+\end{equation}
+Nhận xét quan trọng: Giá trị $z_{\text{ndc}}$ phụ thuộc tỷ lệ nghịch vào $1/z_{\text{eye}}$. Điều này mang lại hai lợi ích kỹ thuật lớn:
+\begin{itemize}
+    \item \textit{Bảo toàn thứ tự chiều sâu:} Ánh xạ $z_{\text{eye}} \mapsto z_{\text{ndc}}$ là một hàm đơn điệu tăng nghiêm ngặt trên đoạn $[-f, -n]$. Do đó, nếu vật thể $A$ nằm gần camera hơn vật thể $B$ ($|z_A| < |z_B|$), thì $z_{\text{ndc}}^A < z_{\text{ndc}}^B$. Thứ tự che khuất được bảo toàn tuyệt đối.
+    \item \textit{Nội suy tuyến tính trong không gian màn hình:} Mặc dù $z_{\text{eye}}$ không thể nội suy tuyến tính sau phép chiếu phối cảnh, đại lượng nghịch đảo $1/z_{\text{eye}}$ lại biến thiên tuyến tính hoàn hảo theo tọa độ màn hình $(x', y')$. Nhờ đó, phần cứng rasterizer có thể nội suy độ sâu tại từng pixel thông qua thuật toán sai phân số nguyên với chi phí $O(1)$.
+\end{itemize}
+Tọa độ chiều sâu lưu trong $Z$-Buffer được dùng trực tiếp cho giải thuật khử mặt khuất (Hidden Surface Removal), đổ bóng qua bản đồ độ sâu (Shadow Mapping), sương mù phối cảnh (Depth Fog) và hiệu ứng trường ảnh (Depth of Field).
+
+\textbf{2. Cấp độ Tri giác Thị giác: Các Chỉ dấu Chiều sâu (Psychological Depth Cues)}
+Trên màn hình 2D phẳng, mắt người vẫn tri giác được không gian ba chiều phong phú nhờ não bộ tổng hợp 6 chỉ dấu độ sâu thị giác:
+\begin{enumerate}
+    \item \textit{Độ lớn tương đối và co ngắn phối cảnh (Relative Size \& Foreshortening):} Hai vật thể có cùng kích thước thực tế thì vật ở xa sẽ tạo ra ảnh võng mạc nhỏ hơn, tuân theo quy luật chia phối cảnh tỷ lệ nghịch với $z$.
+    \item \textit{Đường tụ và điểm tụ (Linear Perspective \& Vanishing Points):} Các đường thẳng song song trong không gian khi chiếu xuống mặt phẳng sẽ quy tụ về một hoặc nhiều điểm tụ trên đường chân trời.
+    \item \textit{Sự che khuất (Occlusion / Interposition):} Nếu đường bao của đối tượng $A$ cắt ngang và che khuất một phần đối tượng $B$, hệ thống thị giác tự động kết luận $A$ nằm gần hơn $B$.
+    \item \textit{Đổ bóng và chiếu sáng (Shading \& Cast Shadows):} Sự biến thiên sắc thái ánh sáng theo định luật tán xạ Lambert cùng với bóng đổ của vật thể lên mặt đất cung cấp thông tin trực quan về khoảng cách và độ cao của vật thể trong không gian.
+    \item \textit{Gradient chất liệu (Texture Gradient):} Mật độ và độ mịn của các chi tiết bề mặt (như vân đá, ngói gạch) tăng dần theo chiều sâu khoảng cách.
+    \item \textit{Thị sai chuyển động (Motion Parallax):} Khi góc nhìn di chuyển, vận tốc trôi biểu kiến của các điểm trên màn hình tỷ lệ nghịch với khoảng cách chiều sâu: các vật ở gần di chuyển rất nhanh qua khung hình trong khi các vật ở xa dường như đứng yên.
+\end{enumerate}
+
+\subsection{Cơ chế Vật thể Càng xa Càng bé trong Phép Chiếu Phối cảnh và Tính Bảo toàn Song song của Phép Chiếu Song song}
+\label{subsec:perspective_shrinking_vs_parallel_invariance}
+
+\textbf{1. Giải thích Cơ chế "Đối tượng Càng xa Càng bé" trong Phép Chiếu Phối cảnh:}
+Xét một đối tượng hình học dạng đoạn thẳng có chiều dài thực tế $L = \Delta x = x_2 - x_1$ đặt song song với trục hoành tại cao độ chiều sâu $z > 0$. Giả sử tâm chiếu đặt tại $C(0, 0, -d)$ và mặt phẳng chiếu tại $z = 0$.
+
+Tọa độ chiếu của hai đầu mút đoạn thẳng lên mặt phẳng chiếu là:
+\begin{equation}
+x_1' = \frac{d \cdot x_1}{z + d}, \quad x_2' = \frac{d \cdot x_2}{z + d}
+\end{equation}
+Chiều dài biểu kiến của đối tượng trên mặt phẳng chiếu là:
+\begin{equation}
+\label{eq:projected_length_formula}
+L'(z) = x_2' - x_1' = \frac{d(x_2 - x_1)}{z + d} = \frac{d}{z + d} L
+\end{equation}
+Hệ số phóng đại phối cảnh là $s(z) = \frac{d}{z + d}$. Khảo sát đạo hàm của kích thước biểu kiến $L'$ theo biến khoảng cách chiều sâu $z$:
+\begin{equation}
+\frac{d L'}{dz} = -\frac{d}{(z + d)^2} L < 0, \quad \forall z > -d, \ L > 0
+\end{equation}
+Do đạo hàm luôn mang dấu âm nghiêm ngặt, chiều dài biểu kiến $L'(z)$ là một hàm số nghịch biến đơn điệu theo khoảng cách $z$. Khi khoảng cách $z$ tăng dần (đối tượng lùi xa khỏi camera), mẫu số $z + d$ tăng tuyến tính, làm cho hệ số phóng đại $s(z)$ giảm dần về $0$. Giới hạn tiệm cận:
+\begin{equation}
+\lim_{z \to \infty} L'(z) = \lim_{z \to \infty} \frac{d}{z + d} L = 0
+\end{equation}
+
+Dưới góc nhìn quang học hình học, chùm tia chiếu từ hai đầu mút đối tượng tới tâm chiếu tạo thành một góc nhìn thị giác (Visual Angle) $\theta$. Ta có $\tan(\theta/2) \approx \frac{L}{2(z + d)}$. Khi $z$ tăng, góc nhìn $\theta$ thu hẹp lại, làm hình ảnh đối tượng căng trên mặt phẳng chiếu co nhỏ lại tương ứng.
+
+\textbf{2. Chứng minh Tính Bảo toàn Tính chất Song song trong Phép Chiếu Song song:}
+Khác biệt căn bản với phép chiếu phối cảnh, trong phép chiếu song song (Parallel Projection), tâm chiếu được giả định nằm ở vô cực ($d \to \infty$). Tất cả các tia chiếu là các đường thẳng song song nhau có cùng vector chỉ phương $\mathbf{d}_{\text{proj}} = (d_x, d_y, d_z)$ thỏa mãn $\mathbf{d}_{\text{proj}} \cdot \mathbf{n} \neq 0$, với $\mathbf{n}$ là vector pháp tuyến của mặt phẳng chiếu $(P)$.
+
+\textbf{Chứng minh:}
+Xét hai đường thẳng song song tùy ý $L_1$ và $L_2$ trong không gian ba chiều, có phương trình tham số:
+\begin{align}
+L_1: & \quad P_1(t) = A_1 + t \mathbf{v}, \quad t \in \mathbb{R} \\
+L_2: & \quad P_2(s) = A_2 + s \mathbf{v}, \quad s \in \mathbb{R}
+\end{align}
+với $A_1, A_2$ là hai điểm mút ban đầu và $\mathbf{v} \neq \mathbf{0}$ là vector chỉ phương chung.
+
+Phép chiếu song song một điểm $P$ bất kỳ lên mặt phẳng chiếu $(P)$ đi qua gốc tọa độ $O$ có pháp tuyến đơn vị $\mathbf{n}$ theo hướng chiếu $\mathbf{d}_{\text{proj}}$ là một ánh xạ tuyến tính xác định bởi:
+\begin{equation}
+\label{eq:parallel_proj_affine_map}
+\pi(P) = P - \frac{P \cdot \mathbf{n}}{\mathbf{d}_{\text{proj}} \cdot \mathbf{n}} \mathbf{d}_{\text{proj}} = \left( \mathbf{I} - \frac{\mathbf{d}_{\text{proj}} \mathbf{n}^T}{\mathbf{d}_{\text{proj}} \cdot \mathbf{n}} \right) P
+\end{equation}
+Đặt ma trận chiếu song song kích thước $3 \times 3$ là $\mathbf{M}_{\text{par}} = \mathbf{I} - \frac{\mathbf{d}_{\text{proj}} \mathbf{n}^T}{\mathbf{d}_{\text{proj}} \cdot \mathbf{n}}$.
+
+Áp dụng ánh xạ chiếu $\pi$ lên hai đường thẳng $L_1$ và $L_2$:
+\begin{align}
+\pi(P_1(t)) &= \mathbf{M}_{\text{par}} (A_1 + t \mathbf{v}) = \mathbf{M}_{\text{par}} A_1 + t (\mathbf{M}_{\text{par}} \mathbf{v}) = A_1' + t \mathbf{v}' \\
+\pi(P_2(s)) &= \mathbf{M}_{\text{par}} (A_2 + s \mathbf{v}) = \mathbf{M}_{\text{par}} A_2 + s (\mathbf{M}_{\text{par}} \mathbf{v}) = A_2' + s \mathbf{v}'
+\end{align}
+trong đó $A_1' = \pi(A_1)$, $A_2' = \pi(A_2)$, và $\mathbf{v}' = \mathbf{M}_{\text{par}} \mathbf{v}$.
+
+Có hai trường hợp xảy ra đối với vector ảnh $\mathbf{v}'$:
+\begin{itemize}
+    \item \textit{Trường hợp 1 ($\mathbf{v}' = \mathbf{0}$):} Điều này xảy ra khi và chỉ khi vector chỉ phương ban đầu $\mathbf{v}$ song song với hướng chiếu $\mathbf{d}_{\text{proj}}$. Khi đó, cả hai đường thẳng $L_1$ và $L_2$ suy biến thành hai điểm ảnh riêng biệt $A_1'$ và $A_2'$ trên mặt phẳng chiếu.
+    \item \textit{Trường hợp 2 ($\mathbf{v}' \neq \mathbf{0}$):} Cả hai đường thẳng ảnh $L_1' = \pi(L_1)$ và $L_2' = \pi(L_2)$ trên mặt phẳng chiếu đều là các đường thẳng thẳng và nhận cùng một vector chỉ phương $\mathbf{v}'$.
+\end{itemize}
+Vì hai đường thẳng ảnh trong mặt phẳng chiếu có cùng vector chỉ phương $\mathbf{v}'$, chúng hoặc trùng nhau (nếu mặt phẳng chứa $L_1, L_2$ song song với hướng chiếu), hoặc song song với nhau. Tính song song do đó được bảo toàn nguyên vẹn.
+
+\textbf{Tổng kết đối chiếu:} Bảng~\ref{tab:perspective_vs_parallel} tổng hợp so sánh các tính chất hình học giữa phép chiếu phối cảnh và phép chiếu song song.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{So sánh đặc tính hình học giữa Phép Chiếu Phối cảnh và Phép Chiếu Song song}
+\label{tab:perspective_vs_parallel}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|p{3.5cm}|X|X|}
+\hline
+\textbf{Đặc tính So sánh} & \textbf{Phép Chiếu Phối cảnh (Perspective)} & \textbf{Phép Chiếu Song song (Parallel)} \\
+\hline
+\textbf{Vị trí Tâm chiếu (COP)} & Nằm tại khoảng cách hữu hạn $d$. & Nằm ở vô cực ($d \to \infty$). \\
+\hline
+\textbf{Phương của Tia chiếu} & Hội tụ tại một điểm tâm chiếu. & Tất cả các tia chiếu song song nhau. \\
+\hline
+\textbf{Tính biến dạng Chiều sâu} & Đối tượng càng xa càng nhỏ (tỷ lệ $1/(z+d)$). & Kích thước biểu kiến không phụ thuộc chiều sâu $z$. \\
+\hline
+\textbf{Bảo toàn Tính Song song} & Không bảo toàn (các đường song song hội tụ về điểm tụ). & Bảo toàn tuyệt đối (các đường song song vẫn song song). \\
+\hline
+\textbf{Bảo toàn Tỷ lệ Đo đạc} & Tỷ lệ thay đổi theo độ sâu; không đo trực tiếp được kích thước. & Bảo toàn tỉ lệ trên các phương song song; dùng làm bản vẽ kỹ thuật CAD. \\
+\hline
+\textbf{Cảm nhận Thị giác} & Tạo cảm giác thực tế, tái hiện thị giác mắt người. & Tạo cảm giác phẳng, hữu ích trong quan sát kỹ thuật chính xác. \\
+\hline
+\end{tabularx}
+\end{table}
